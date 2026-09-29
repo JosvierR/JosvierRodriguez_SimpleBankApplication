@@ -27,6 +27,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * Deposits, withdrawals, and balance checks live here instead of in the
  * controller so the rules stay reusable and can be tested without HTTP.
  * The balance is not changed until every check for that operation has passed.
+ *
+ * A successful deposit or withdrawal saves the account and then saves the
+ * transaction as two repository calls. This in-memory phase does not provide
+ * database transaction atomicity. The MySQL branch should run both writes
+ * inside one {@code @Transactional} boundary so the balance update and the
+ * history insert either both commit or both roll back.
  */
 @Service
 public class AccountServiceImpl implements AccountService {
@@ -113,6 +119,11 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    /**
+     * Stores the history row after the account save. These two writes are
+     * separate in this phase. A later JPA implementation should keep them in
+     * the same database transaction.
+     */
     private void recordTransaction(Long accountId, TransactionType type, BigDecimal amount) {
         transactionRepository.save(new Transaction(accountId, type, amount, LocalDateTime.now()));
     }

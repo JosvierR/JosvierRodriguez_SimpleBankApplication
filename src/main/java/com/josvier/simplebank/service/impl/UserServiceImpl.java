@@ -14,8 +14,9 @@ import java.time.LocalDateTime;
 /**
  * User business rules.
  *
- * Uniqueness of the email is decided here. The repository only stores and
- * looks up users; it does not decide whether a duplicate is allowed.
+ * Uniqueness of the email is decided here before the user is saved. The
+ * MySQL branch should also enforce that rule with a UNIQUE constraint on
+ * the email column. The repository only stores and looks up users.
  */
 @Service
 public class UserServiceImpl implements UserService {

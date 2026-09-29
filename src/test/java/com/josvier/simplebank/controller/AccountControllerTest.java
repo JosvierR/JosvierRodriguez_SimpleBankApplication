@@ -115,6 +115,34 @@ class AccountControllerTest {
     }
 
     @Test
+    void deposit_moreThanTwoDecimalPlaces_returnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/accounts/1/deposit")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"amount":10.126}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("amount: Amount must have at most 2 decimal places"))
+                .andExpect(jsonPath("$.path").value("/api/accounts/1/deposit"));
+
+        verify(accountService, never()).deposit(any(), any());
+    }
+
+    @Test
+    void deposit_acceptsUpToTwoDecimalPlaces() throws Exception {
+        when(accountService.deposit(eq(1L), any(BigDecimal.class))).thenReturn(account(new BigDecimal("10.12")));
+
+        for (String amount : new String[] {"10.12", "10", "0.01"}) {
+            mockMvc.perform(post("/api/accounts/1/deposit")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"amount\":" + amount + "}"))
+                    .andExpect(status().isOk());
+        }
+    }
+
+    @Test
     void withdraw_returnsOk() throws Exception {
         when(accountService.withdraw(eq(1L), any(BigDecimal.class))).thenReturn(account(new BigDecimal("300.00")));
 

@@ -118,7 +118,7 @@ Common error responses:
 
 | Situation | Status |
 | --- | --- |
-| Invalid body, non-positive amount, or insufficient funds | 400 |
+| Invalid body, non-positive amount, more than 2 decimal places, or insufficient funds | 400 |
 | Unknown user or account | 404 |
 | Email already registered | 409 |
 
@@ -141,3 +141,9 @@ The Postman collection in `postman/` follows this flow. Import it and run the fo
 This branch intentionally uses in-memory repositories and has no database.
 
 `InMemoryAccountRepository`, `InMemoryUserRepository`, and `InMemoryTransactionRepository` implement the repository interfaces. A future branch can replace those classes with Spring Data JPA repositories backed by MySQL. The controllers, and most of the service logic, can stay as they are because they depend on the interfaces rather than on the map-based classes.
+
+Deposit and withdrawal amounts must be at least `0.01` and may have at most two decimal places. `10.12`, `10`, and `0.01` are accepted. `10.126`, `0`, and `-10` return `400`. The API rejects extra precision instead of rounding it.
+
+This phase does not provide real database transaction atomicity. A deposit or withdrawal updates the account balance, saves the account, and then saves the transaction as separate in-memory steps. That is acceptable for this learning phase. In the MySQL/JPA branch those two writes should run inside one database transaction, conceptually with `@Transactional`, so the balance update and the history insert either both succeed or both roll back.
+
+That same database branch should put a UNIQUE constraint on the user email column. The service already rejects a duplicate email with HTTP `409`. The constraint will enforce the same rule in the database.

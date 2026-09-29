@@ -423,6 +423,39 @@
           }
         },
         {
+          "name": "Deposit More Than Two Decimal Places",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Extra decimal places are rejected', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('at most 2 decimal places');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 10.126\n}"
+            },
+            "url": "{{baseUrl}}/accounts/{{accountId}}/deposit"
+          }
+        },
+        {
           "name": "Get Missing Account",
           "event": [
             {
