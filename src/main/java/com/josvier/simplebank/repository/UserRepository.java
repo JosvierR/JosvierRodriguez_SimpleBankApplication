@@ -8,15 +8,15 @@ import java.util.Optional;
 /**
  * Storage contract for users.
  *
- * Services depend on this interface, not on the in-memory class. A later
- * branch can add a MySQL implementation without changing the controller
- * or the business rules.
+ * Services depend on this interface, not on MongoDB. The Mongo adapter is
+ * the current implementation. Another database can implement the same port
+ * without changing the controller or the business rules.
  */
 public interface UserRepository {
 
     User save(User user);
 
-    Optional<User> findById(Long id);
+    Optional<User> findById(String id);
 
     Optional<User> findByEmail(String email);
 

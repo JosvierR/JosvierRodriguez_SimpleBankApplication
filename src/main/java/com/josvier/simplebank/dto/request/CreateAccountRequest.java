@@ -9,8 +9,8 @@ import jakarta.validation.constraints.NotNull;
  */
 public record CreateAccountRequest(
         @NotNull(message = "User id is required")
-        @Schema(description = "Id returned by POST /api/users", example = "1")
-        Long userId,
+        @Schema(description = "Id returned by POST /api/users", example = "68dc1234567890abcdef1234")
+        String userId,
 
         @NotNull(message = "Account type is required")
         @Schema(description = "CHECKING or SAVINGS", example = "CHECKING")

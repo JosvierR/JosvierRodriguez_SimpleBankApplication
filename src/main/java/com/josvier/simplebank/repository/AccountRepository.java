@@ -8,14 +8,14 @@ import java.util.Optional;
 /**
  * Storage contract for accounts.
  *
- * The interface is the stable boundary. {@code InMemoryAccountRepository}
- * is only today's implementation.
+ * The interface is the stable boundary. The Mongo adapter is today's
+ * implementation and is the only one registered in this branch.
  */
 public interface AccountRepository {
 
     Account save(Account account);
 
-    Optional<Account> findById(Long id);
+    Optional<Account> findById(String id);
 
     List<Account> findAll();
 }

@@ -21,5 +21,5 @@ public interface UserService {
      *
      * @throws com.josvier.simplebank.exception.ResourceNotFoundException if the id does not exist
      */
-    UserResponse getUser(Long userId);
+    UserResponse getUser(String userId);
 }

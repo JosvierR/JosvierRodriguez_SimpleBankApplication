@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
  * One entry in an account's transaction history.
  */
 public record TransactionResponse(
-        Long transactionId,
-        Long accountId,
+        String transactionId,
+        String accountId,
         TransactionType type,
         BigDecimal amount,
         LocalDateTime createdAt

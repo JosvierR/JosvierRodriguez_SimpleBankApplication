@@ -14,9 +14,10 @@ import java.time.LocalDateTime;
 /**
  * User business rules.
  *
- * Uniqueness of the email is decided here before the user is saved. The
- * MySQL branch should also enforce that rule with a UNIQUE constraint on
- * the email column. The repository only stores and looks up users.
+ * The email check here produces a friendly 409 before a save is attempted.
+ * The Mongo unique index is the race-safe guarantee: if two requests pass
+ * this check together, the adapter turns the database duplicate into the
+ * same {@link DuplicateResourceException}.
  */
 @Service
 public class UserServiceImpl implements UserService {
@@ -41,7 +42,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse getUser(Long userId) {
+    public UserResponse getUser(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with id " + userId + " was not found"));
         return toResponse(user);

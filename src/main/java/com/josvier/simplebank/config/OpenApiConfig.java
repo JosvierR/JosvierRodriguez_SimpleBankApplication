@@ -19,7 +19,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Simple Bank API")
-                        .description("In-memory bank API. Data is wiped when the application stops. "
+                        .description("Bank API persisted in MongoDB Atlas. Identifiers are ObjectId strings. "
                                 + "Create a user, open an account, then deposit, withdraw, and read history.")
                         .version("0.0.1"));
     }

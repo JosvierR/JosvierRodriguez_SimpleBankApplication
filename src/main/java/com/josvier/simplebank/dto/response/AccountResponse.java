@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
  * Balance stays a {@link BigDecimal} so the JSON value is a decimal amount.
  */
 public record AccountResponse(
-        Long accountId,
-        Long userId,
+        String accountId,
+        String userId,
         String userName,
         AccountType accountType,
         BigDecimal balance,

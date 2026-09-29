@@ -11,20 +11,20 @@ import java.time.LocalDateTime;
  */
 public class Account {
 
-    private Long id;
-    private final Long userId;
+    private String id;
+    private final String userId;
     private BigDecimal balance;
     private final AccountType accountType;
     private final LocalDateTime createdAt;
 
-    public Account(Long userId, BigDecimal balance, AccountType accountType, LocalDateTime createdAt) {
+    public Account(String userId, BigDecimal balance, AccountType accountType, LocalDateTime createdAt) {
         this.userId = userId;
         this.balance = balance;
         this.accountType = accountType;
         this.createdAt = createdAt;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -42,11 +42,11 @@ public class Account {
         return copy;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public Long getUserId() {
+    public String getUserId() {
         return userId;
     }
 

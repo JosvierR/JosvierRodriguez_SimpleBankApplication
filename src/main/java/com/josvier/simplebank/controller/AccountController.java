@@ -62,7 +62,7 @@ public class AccountController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
-    public ResponseEntity<AccountResponse> getAccount(@PathVariable Long id) {
+    public ResponseEntity<AccountResponse> getAccount(@PathVariable String id) {
         return ResponseEntity.ok(accountService.getAccount(id));
     }
 
@@ -75,7 +75,7 @@ public class AccountController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/{id}/deposit")
-    public ResponseEntity<AccountResponse> deposit(@PathVariable Long id, @Valid @RequestBody AmountRequest request) {
+    public ResponseEntity<AccountResponse> deposit(@PathVariable String id, @Valid @RequestBody AmountRequest request) {
         return ResponseEntity.ok(accountService.deposit(id, request.amount()));
     }
 
@@ -88,7 +88,7 @@ public class AccountController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/{id}/withdraw")
-    public ResponseEntity<AccountResponse> withdraw(@PathVariable Long id, @Valid @RequestBody AmountRequest request) {
+    public ResponseEntity<AccountResponse> withdraw(@PathVariable String id, @Valid @RequestBody AmountRequest request) {
         return ResponseEntity.ok(accountService.withdraw(id, request.amount()));
     }
 
@@ -99,7 +99,7 @@ public class AccountController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}/transactions")
-    public ResponseEntity<List<TransactionResponse>> getTransactions(@PathVariable Long id) {
+    public ResponseEntity<List<TransactionResponse>> getTransactions(@PathVariable String id) {
         return ResponseEntity.ok(accountService.getTransactions(id));
     }
 }

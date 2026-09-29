@@ -27,7 +27,7 @@ public interface AccountService {
      *
      * @throws com.josvier.simplebank.exception.ResourceNotFoundException if the account or its user does not exist
      */
-    AccountResponse getAccount(Long accountId);
+    AccountResponse getAccount(String accountId);
 
     /**
      * Adds a positive amount to the account and records one DEPOSIT transaction.
@@ -35,7 +35,7 @@ public interface AccountService {
      * @throws com.josvier.simplebank.exception.ResourceNotFoundException if the account does not exist
      * @throws com.josvier.simplebank.exception.InvalidTransactionException if the amount is not positive
      */
-    AccountResponse deposit(Long accountId, BigDecimal amount);
+    AccountResponse deposit(String accountId, BigDecimal amount);
 
     /**
      * Removes a positive amount when the balance can cover it and records one WITHDRAW transaction.
@@ -44,12 +44,12 @@ public interface AccountService {
      * @throws com.josvier.simplebank.exception.ResourceNotFoundException if the account does not exist
      * @throws com.josvier.simplebank.exception.InvalidTransactionException if the amount is not positive or funds are insufficient
      */
-    AccountResponse withdraw(Long accountId, BigDecimal amount);
+    AccountResponse withdraw(String accountId, BigDecimal amount);
 
     /**
      * Returns the account's transactions from oldest to newest.
      *
      * @throws com.josvier.simplebank.exception.ResourceNotFoundException if the account does not exist
      */
-    List<TransactionResponse> getTransactions(Long accountId);
+    List<TransactionResponse> getTransactions(String accountId);
 }

@@ -14,6 +14,7 @@ import com.josvier.simplebank.repository.TransactionRepository;
 import com.josvier.simplebank.repository.UserRepository;
 import com.josvier.simplebank.service.AccountService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -28,11 +29,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * controller so the rules stay reusable and can be tested without HTTP.
  * The balance is not changed until every check for that operation has passed.
  *
- * A successful deposit or withdrawal saves the account and then saves the
- * transaction as two repository calls. This in-memory phase does not provide
- * database transaction atomicity. The MySQL branch should run both writes
- * inside one {@code @Transactional} boundary so the balance update and the
- * history insert either both commit or both roll back.
+ * {@link Transactional} deposit and withdraw methods run the account update
+ * and the history insert inside one MongoDB transaction. If the history
+ * insert fails, the balance update rolls back with it.
+ *
+ * The map below is only a process-local lock. It stops two threads in this
+ * JVM from applying the same account's balance at the same time. It is not
+ * account storage, and it does not coordinate other application instances.
+ * Durable atomicity is the MongoDB transaction.
  */
 @Service
 public class AccountServiceImpl implements AccountService {
@@ -43,12 +47,7 @@ public class AccountServiceImpl implements AccountService {
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
 
-    /**
-     * One lock per account so two deposits on the same account cannot both
-     * read the old balance and overwrite each other. Different accounts
-     * still proceed in parallel.
-     */
-    private final ConcurrentHashMap<Long, Object> accountLocks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Object> accountLocks = new ConcurrentHashMap<>();
 
     public AccountServiceImpl(AccountRepository accountRepository,
                               UserRepository userRepository,
@@ -67,7 +66,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AccountResponse getAccount(Long accountId) {
+    public AccountResponse getAccount(String accountId) {
         synchronized (lockFor(accountId)) {
             Account account = findAccount(accountId);
             User user = findUser(account.getUserId());
@@ -76,7 +75,8 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AccountResponse deposit(Long accountId, BigDecimal amount) {
+    @Transactional
+    public AccountResponse deposit(String accountId, BigDecimal amount) {
         synchronized (lockFor(accountId)) {
             Account account = findAccount(accountId);
             BigDecimal normalizedAmount = requirePositiveAmount(amount);
@@ -90,7 +90,8 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AccountResponse withdraw(Long accountId, BigDecimal amount) {
+    @Transactional
+    public AccountResponse withdraw(String accountId, BigDecimal amount) {
         synchronized (lockFor(accountId)) {
             Account account = findAccount(accountId);
             BigDecimal normalizedAmount = requirePositiveAmount(amount);
@@ -110,7 +111,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public List<TransactionResponse> getTransactions(Long accountId) {
+    public List<TransactionResponse> getTransactions(String accountId) {
         synchronized (lockFor(accountId)) {
             findAccount(accountId);
             return transactionRepository.findByAccountId(accountId).stream()
@@ -120,20 +121,19 @@ public class AccountServiceImpl implements AccountService {
     }
 
     /**
-     * Stores the history row after the account save. These two writes are
-     * separate in this phase. A later JPA implementation should keep them in
-     * the same database transaction.
+     * Stores the history row after the account save. Both calls participate
+     * in the transaction started by {@link #deposit} or {@link #withdraw}.
      */
-    private void recordTransaction(Long accountId, TransactionType type, BigDecimal amount) {
+    private void recordTransaction(String accountId, TransactionType type, BigDecimal amount) {
         transactionRepository.save(new Transaction(accountId, type, amount, LocalDateTime.now()));
     }
 
-    private Account findAccount(Long accountId) {
+    private Account findAccount(String accountId) {
         return accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account with id " + accountId + " was not found"));
     }
 
-    private User findUser(Long userId) {
+    private User findUser(String userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with id " + userId + " was not found"));
     }
@@ -161,7 +161,7 @@ public class AccountServiceImpl implements AccountService {
         return new BigDecimal("0.00");
     }
 
-    private Object lockFor(Long accountId) {
+    private Object lockFor(String accountId) {
         return accountLocks.computeIfAbsent(accountId, id -> new Object());
     }
 

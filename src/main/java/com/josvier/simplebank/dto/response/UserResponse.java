@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
  * The domain {@code User} is not exposed directly.
  */
 public record UserResponse(
-        Long id,
+        String id,
         String name,
         String email,
         LocalDateTime createdAt

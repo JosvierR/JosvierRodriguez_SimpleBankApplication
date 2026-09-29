@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  */
 public class User {
 
-    private Long id;
+    private String id;
     private final String name;
     private final String email;
     private final LocalDateTime createdAt;
@@ -22,9 +22,9 @@ public class User {
     }
 
     /**
-     * Assigned by the repository when the user is stored for the first time.
+     * Assigned by MongoDB as an ObjectId hex string when the user is stored.
      */
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -39,7 +39,7 @@ public class User {
         return copy;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 

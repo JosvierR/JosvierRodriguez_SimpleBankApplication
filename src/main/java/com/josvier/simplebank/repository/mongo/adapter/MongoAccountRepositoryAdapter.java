@@ -1,0 +1,67 @@
+package com.josvier.simplebank.repository.mongo.adapter;
+
+import com.josvier.simplebank.model.Account;
+import com.josvier.simplebank.repository.AccountRepository;
+import com.josvier.simplebank.repository.mongo.document.AccountDocument;
+import com.josvier.simplebank.repository.mongo.springdata.SpringDataAccountMongoRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Persistence adapter for accounts.
+ *
+ * Converts between the domain account and the Mongo document. It does not
+ * decide whether a withdrawal is allowed or what the next balance should be.
+ */
+@Repository
+public class MongoAccountRepositoryAdapter implements AccountRepository {
+
+    private final SpringDataAccountMongoRepository accounts;
+
+    public MongoAccountRepositoryAdapter(SpringDataAccountMongoRepository accounts) {
+        this.accounts = accounts;
+    }
+
+    @Override
+    public Account save(Account account) {
+        return toDomain(accounts.save(toDocument(account)));
+    }
+
+    @Override
+    public Optional<Account> findById(String id) {
+        if (id == null) {
+            return Optional.empty();
+        }
+        return accounts.findById(id).map(this::toDomain);
+    }
+
+    @Override
+    public List<Account> findAll() {
+        return accounts.findAll().stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    private AccountDocument toDocument(Account account) {
+        AccountDocument document = new AccountDocument();
+        document.setId(account.getId());
+        document.setUserId(account.getUserId());
+        document.setBalance(account.getBalance());
+        document.setAccountType(account.getAccountType());
+        document.setCreatedAt(account.getCreatedAt());
+        return document;
+    }
+
+    private Account toDomain(AccountDocument document) {
+        Account account = new Account(
+                document.getUserId(),
+                document.getBalance(),
+                document.getAccountType(),
+                document.getCreatedAt()
+        );
+        account.setId(document.getId());
+        return account;
+    }
+}
