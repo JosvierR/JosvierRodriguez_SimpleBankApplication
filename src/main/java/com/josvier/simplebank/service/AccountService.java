@@ -30,6 +30,18 @@ public interface AccountService {
     AccountResponse getAccount(String accountId);
 
     /**
+     * Returns every account, including each owner's name.
+     */
+    List<AccountResponse> getAccounts();
+
+    /**
+     * Returns the accounts owned by one user. An existing user with no accounts gets an empty list.
+     *
+     * @throws com.josvier.simplebank.exception.ResourceNotFoundException if the user does not exist
+     */
+    List<AccountResponse> getAccountsByUser(String userId);
+
+    /**
      * Adds a positive amount to the account and records one DEPOSIT transaction.
      *
      * @throws com.josvier.simplebank.exception.ResourceNotFoundException if the account does not exist

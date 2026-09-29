@@ -55,6 +55,13 @@ public class AccountController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = "List all accounts")
+    @ApiResponse(responseCode = "200", description = "Every stored account. The list can be empty")
+    @GetMapping
+    public ResponseEntity<List<AccountResponse>> getAccounts() {
+        return ResponseEntity.ok(accountService.getAccounts());
+    }
+
     @Operation(summary = "View an account")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Account found"),

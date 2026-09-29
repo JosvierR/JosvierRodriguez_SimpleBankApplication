@@ -44,6 +44,16 @@ public class MongoAccountRepositoryAdapter implements AccountRepository {
                 .toList();
     }
 
+    @Override
+    public List<Account> findByUserId(String userId) {
+        if (userId == null) {
+            return List.of();
+        }
+        return accounts.findByUserId(userId).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
     private AccountDocument toDocument(Account account) {
         AccountDocument document = new AccountDocument();
         document.setId(account.getId());

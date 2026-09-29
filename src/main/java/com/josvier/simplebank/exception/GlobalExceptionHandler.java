@@ -43,6 +43,11 @@ public class GlobalExceptionHandler {
         return response(HttpStatus.CONFLICT, exception.getMessage(), request);
     }
 
+    @ExceptionHandler(ResourceConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(ResourceConflictException exception, HttpServletRequest request) {
+        return response(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException exception,
                                                           HttpServletRequest request) {

@@ -60,6 +60,13 @@ public class MongoUserRepositoryAdapter implements UserRepository {
                 .toList();
     }
 
+    @Override
+    public void deleteById(String id) {
+        if (id != null) {
+            users.deleteById(id);
+        }
+    }
+
     private UserDocument toDocument(User user) {
         UserDocument document = new UserDocument();
         document.setId(user.getId());

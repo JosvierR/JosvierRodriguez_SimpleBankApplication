@@ -7,12 +7,14 @@ import java.time.LocalDateTime;
  *
  * This is an internal domain object. The API returns {@code UserResponse}
  * instead, so callers cannot change a stored user through the HTTP contract.
+ * Profile changes go through {@link #updateProfile(String, String)} so the id
+ * and creation time stay the values MongoDB already stored.
  */
 public class User {
 
     private String id;
-    private final String name;
-    private final String email;
+    private String name;
+    private String email;
     private final LocalDateTime createdAt;
 
     public User(String name, String email, LocalDateTime createdAt) {
@@ -26,6 +28,15 @@ public class User {
      */
     public void setId(String id) {
         this.id = id;
+    }
+
+    /**
+     * Replaces the name and email only. The id and {@code createdAt} stay as they are
+     * so an update does not become a new customer.
+     */
+    public void updateProfile(String name, String email) {
+        this.name = name;
+        this.email = email;
     }
 
     /**

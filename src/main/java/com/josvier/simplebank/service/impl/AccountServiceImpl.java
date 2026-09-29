@@ -75,6 +75,21 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public List<AccountResponse> getAccounts() {
+        return accountRepository.findAll().stream()
+                .map(account -> toAccountResponse(account, ownerOrUnknown(account)))
+                .toList();
+    }
+
+    @Override
+    public List<AccountResponse> getAccountsByUser(String userId) {
+        User user = findUser(userId);
+        return accountRepository.findByUserId(userId).stream()
+                .map(account -> toAccountResponse(account, user))
+                .toList();
+    }
+
+    @Override
     @Transactional
     public AccountResponse deposit(String accountId, BigDecimal amount) {
         synchronized (lockFor(accountId)) {
@@ -136,6 +151,19 @@ public class AccountServiceImpl implements AccountService {
     private User findUser(String userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with id " + userId + " was not found"));
+    }
+
+    /**
+     * Listing every account must still succeed when one stored owner cannot be
+     * loaded. The account stays in the result and the name is Unknown.
+     * Opening, depositing, and fetching one account still require a real user.
+     */
+    private User ownerOrUnknown(Account account) {
+        return userRepository.findById(account.getUserId()).orElseGet(() -> {
+            User missing = new User("Unknown", "unknown@example.com", account.getCreatedAt());
+            missing.setId(account.getUserId());
+            return missing;
+        });
     }
 
     /**
