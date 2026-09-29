@@ -1,5 +1,6 @@
 package com.josvier.simplebank.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
@@ -17,6 +18,7 @@ public record AmountRequest(
         @NotNull(message = "Amount is required")
         @DecimalMin(value = "0.01", message = "Amount must be at least 0.01")
         @Digits(integer = 12, fraction = 2, message = "Amount must have at most 2 decimal places")
+        @Schema(description = "Amount with at most 2 decimal places. Minimum 0.01", example = "25.00")
         BigDecimal amount
 ) {
 }

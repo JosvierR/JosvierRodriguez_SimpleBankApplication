@@ -1,8 +1,15 @@
 package com.josvier.simplebank.controller;
 
 import com.josvier.simplebank.dto.request.CreateUserRequest;
+import com.josvier.simplebank.dto.response.ErrorResponse;
 import com.josvier.simplebank.dto.response.UserResponse;
 import com.josvier.simplebank.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
  * This class reads the request, asks {@link UserService} to do the work,
  * and chooses the HTTP status. It does not check email uniqueness or create ids.
  */
+@Tag(name = "Users", description = "Create and view customers")
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -29,12 +37,26 @@ public class UserController {
         this.userService = userService;
     }
 
+    @Operation(summary = "Create a user")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "User created"),
+            @ApiResponse(responseCode = "400", description = "Invalid name or email",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Email already registered",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
         UserResponse response = userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = "View a user")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User found"),
+            @ApiResponse(responseCode = "404", description = "User does not exist",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUser(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUser(id));

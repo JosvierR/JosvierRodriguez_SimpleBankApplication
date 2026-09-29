@@ -13,6 +13,7 @@ This branch builds the first version of the bank API. Customers, accounts, balan
 - Maven
 - Spring Web (MVC)
 - Spring Validation
+- Springdoc OpenAPI 3.0.3 (Swagger UI)
 - JUnit 5
 - Mockito
 - Spring Boot Test (MockMvc)
@@ -61,6 +62,7 @@ src/main/java/com/josvier/simplebank/
     service/
     service/impl/
     exception/
+    config/
 src/test/java/com/josvier/simplebank/
     service/
     controller/
@@ -85,6 +87,10 @@ macOS/Linux:
 ```
 
 The API listens on `http://localhost:8080/api`.
+
+Swagger UI is at [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html). The OpenAPI document is at `http://localhost:8080/v3/api-docs`. From the UI, use **Try it out** on each operation. Create a user first, copy the returned id into **Open an account**, then deposit, withdraw, and read history with that account id.
+
+`GET /api` by itself is not an operation. Use a path from the endpoint table, such as `POST /api/users` or `GET /api/accounts/1`. An unknown path returns 404.
 
 Data is wiped when the application stops.
 

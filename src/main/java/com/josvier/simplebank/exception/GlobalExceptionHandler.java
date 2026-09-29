@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
@@ -64,6 +65,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException exception,
                                                             HttpServletRequest request) {
         return response(HttpStatus.BAD_REQUEST, "Invalid value for parameter '" + exception.getName() + "'", request);
+    }
+
+    /**
+     * Spring raises this when the URL matches no controller method.
+     * It is a missing route, so the client receives 404. The catch-all
+     * handler below must not turn it into 500.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResource(NoResourceFoundException exception, HttpServletRequest request) {
+        return response(HttpStatus.NOT_FOUND, "No endpoint matches this path", request);
     }
 
     @ExceptionHandler(Exception.class)

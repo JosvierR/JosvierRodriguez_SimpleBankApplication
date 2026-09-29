@@ -190,6 +190,16 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$[1].amount").value(200.00));
     }
 
+    @Test
+    void unknownPath_returnsNotFound() throws Exception {
+        mockMvc.perform(get("/api"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.message").value("No endpoint matches this path"))
+                .andExpect(jsonPath("$.path").value("/api"));
+    }
+
     private AccountResponse account(BigDecimal balance) {
         return new AccountResponse(
                 1L,
