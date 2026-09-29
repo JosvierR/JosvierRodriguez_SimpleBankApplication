@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Simple Bank Backend API",
-    "description": "Phase 1 of the Simple Bank application. In-memory Spring Boot API. Run the folders from top to bottom on a freshly started server.",
+    "description": "Phase 2 of the Simple Bank application. MongoDB Atlas API. Run the folders from top to bottom. Create User generates a new email so a previous run does not collide.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -11,11 +11,11 @@
     },
     {
       "key": "userId",
-      "value": "1"
+      "value": ""
     },
     {
       "key": "accountId",
-      "value": "1"
+      "value": ""
     }
   ],
   "item": [
@@ -26,6 +26,16 @@
           "name": "Create User",
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = 'josvier+' + Date.now() + '@example.com';",
+                  "pm.collectionVariables.set('email', email);"
+                ]
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
@@ -34,10 +44,10 @@
                   "    pm.response.to.have.status(201);",
                   "});",
                   "const body = pm.response.json();",
-                  "pm.collectionVariables.set('userId', body.id);",
+                  "pm.collectionVariables.set('userId', String(body.id));",
                   "pm.test('User id was returned', function () {",
-                  "    pm.expect(body.id).to.be.a('number');",
-                  "    pm.expect(body.email).to.eql('josvier@example.com');",
+                  "    pm.expect(body.id).to.be.a('string');",
+                  "    pm.expect(body.email).to.eql(pm.collectionVariables.get('email'));",
                   "});"
                 ]
               }
@@ -53,7 +63,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Josvier Rodriguez\",\n  \"email\": \"josvier@example.com\"\n}"
+              "raw": "{\n  \"name\": \"Josvier Rodriguez\",\n  \"email\": \"{{email}}\"\n}"
             },
             "url": "{{baseUrl}}/users"
           }
@@ -71,7 +81,7 @@
                   "});",
                   "pm.test('Returns the created user', function () {",
                   "    const body = pm.response.json();",
-                  "    pm.expect(body.id).to.eql(pm.collectionVariables.get('userId') * 1);",
+                  "    pm.expect(body.id).to.eql(pm.collectionVariables.get('userId'));",
                   "    pm.expect(body.name).to.eql('Josvier Rodriguez');",
                   "});"
                 ]
@@ -121,7 +131,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": {{userId}},\n  \"accountType\": \"SAVINGS\"\n}"
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"accountType\": \"SAVINGS\"\n}"
             },
             "url": "{{baseUrl}}/accounts"
           }
@@ -467,7 +477,7 @@
                   "    pm.response.to.have.status(404);",
                   "});",
                   "pm.test('Message names the missing account', function () {",
-                  "    pm.expect(pm.response.json().message).to.eql('Account with id 999 was not found');",
+                  "    pm.expect(pm.response.json().message).to.eql('Account with id 68dc1234567890abcdef0999 was not found');",
                   "});"
                 ]
               }
@@ -476,7 +486,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/accounts/999"
+            "url": "{{baseUrl}}/accounts/68dc1234567890abcdef0999"
           }
         },
         {
@@ -504,7 +514,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Josvier Rodriguez\",\n  \"email\": \"josvier@example.com\"\n}"
+              "raw": "{\n  \"name\": \"Josvier Rodriguez\",\n  \"email\": \"{{email}}\"\n}"
             },
             "url": "{{baseUrl}}/users"
           }
@@ -534,7 +544,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": 999,\n  \"accountType\": \"CHECKING\"\n}"
+              "raw": "{\n  \"userId\": \"68dc1234567890abcdef0099\",\n  \"accountType\": \"CHECKING\"\n}"
             },
             "url": "{{baseUrl}}/accounts"
           }
@@ -587,7 +597,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/users/999"
+            "url": "{{baseUrl}}/users/68dc1234567890abcdef0099"
           }
         }
       ]
