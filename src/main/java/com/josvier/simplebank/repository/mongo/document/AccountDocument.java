@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @Document(collection = "accounts")
 public class AccountDocument {
 
-    @MongoId
+    @MongoId(FieldType.OBJECT_ID)
     private String id;
 
     @Indexed(name = "user_id_idx")

@@ -2,6 +2,7 @@ package com.josvier.simplebank.repository.mongo.document;
 
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.FieldType;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 
 import java.time.LocalDateTime;
@@ -10,14 +11,13 @@ import java.time.LocalDateTime;
  * MongoDB shape of a customer.
  *
  * Kept separate from the domain {@code User} so controllers and services never
- * depend on collection names or indexes. {@link MongoId} is Spring Data's
- * {@code @Id} marker that stores {@code _id} as an ObjectId and exposes it as
- * a hex string.
+ * depend on collection names or indexes. The id stays a {@code String} in Java.
+ * {@code FieldType.OBJECT_ID} stores {@code _id} as a BSON ObjectId.
  */
 @Document(collection = "users")
 public class UserDocument {
 
-    @MongoId
+    @MongoId(FieldType.OBJECT_ID)
     private String id;
 
     private String name;

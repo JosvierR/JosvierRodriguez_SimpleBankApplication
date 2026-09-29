@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.mapping.FieldType;
+import org.springframework.data.mongodb.core.mapping.MongoId;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Method;
@@ -35,6 +36,13 @@ class MongoDocumentMappingTest {
         CompoundIndex history = TransactionDocument.class.getAnnotation(CompoundIndex.class);
         assertEquals("account_created_at_idx", history.name());
         assertEquals("{'accountId': 1, 'createdAt': 1}", history.def());
+    }
+
+    @Test
+    void primaryIdsUseObjectId() throws Exception {
+        assertEquals(FieldType.OBJECT_ID, UserDocument.class.getDeclaredField("id").getAnnotation(MongoId.class).value());
+        assertEquals(FieldType.OBJECT_ID, AccountDocument.class.getDeclaredField("id").getAnnotation(MongoId.class).value());
+        assertEquals(FieldType.OBJECT_ID, TransactionDocument.class.getDeclaredField("id").getAnnotation(MongoId.class).value());
     }
 
     @Test

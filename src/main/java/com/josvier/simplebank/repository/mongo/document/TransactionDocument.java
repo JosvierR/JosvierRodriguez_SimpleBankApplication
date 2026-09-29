@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @CompoundIndex(name = "account_created_at_idx", def = "{'accountId': 1, 'createdAt': 1}")
 public class TransactionDocument {
 
-    @MongoId
+    @MongoId(FieldType.OBJECT_ID)
     private String id;
 
     private String accountId;
