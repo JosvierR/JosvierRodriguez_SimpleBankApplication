@@ -42,14 +42,14 @@ class UserServiceImplTest {
         when(userRepository.findByEmail("josvier@example.com")).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User user = invocation.getArgument(0);
-            user.setId(1L);
+            user.setId("68dc1234567890abcdef0001");
             return user;
         });
 
         UserResponse response = userService.createUser(
                 new CreateUserRequest(" Josvier Rodriguez ", " josvier@example.com "));
 
-        assertEquals(1L, response.id());
+        assertEquals("68dc1234567890abcdef0001", response.id());
         assertEquals("Josvier Rodriguez", response.name());
         assertEquals("josvier@example.com", response.email());
         assertNotNull(response.createdAt());
@@ -58,7 +58,7 @@ class UserServiceImplTest {
     @Test
     void createUser_duplicateEmail_fails() {
         User existing = new User("Josvier Rodriguez", "josvier@example.com", LocalDateTime.now());
-        existing.setId(1L);
+        existing.setId("68dc1234567890abcdef0001");
         when(userRepository.findByEmail("josvier@example.com")).thenReturn(Optional.of(existing));
 
         CreateUserRequest request = new CreateUserRequest("Another Person", "josvier@example.com");
@@ -74,12 +74,12 @@ class UserServiceImplTest {
     @Test
     void getUser_success() {
         User user = new User("Josvier Rodriguez", "josvier@example.com", LocalDateTime.of(2026, 9, 29, 10, 0));
-        user.setId(1L);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        user.setId("68dc1234567890abcdef0001");
+        when(userRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.of(user));
 
-        UserResponse response = userService.getUser(1L);
+        UserResponse response = userService.getUser("68dc1234567890abcdef0001");
 
-        assertEquals(1L, response.id());
+        assertEquals("68dc1234567890abcdef0001", response.id());
         assertEquals("Josvier Rodriguez", response.name());
         assertEquals("josvier@example.com", response.email());
         assertEquals(LocalDateTime.of(2026, 9, 29, 10, 0), response.createdAt());
@@ -87,12 +87,12 @@ class UserServiceImplTest {
 
     @Test
     void getUser_notFound_fails() {
-        when(userRepository.findById(5L)).thenReturn(Optional.empty());
+        when(userRepository.findById("68dc1234567890abcdef0005")).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
-                () -> userService.getUser(5L));
+                () -> userService.getUser("68dc1234567890abcdef0005"));
 
-        assertEquals("User with id 5 was not found", exception.getMessage());
+        assertEquals("User with id 68dc1234567890abcdef0005 was not found", exception.getMessage());
     }
 }

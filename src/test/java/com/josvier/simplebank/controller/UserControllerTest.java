@@ -34,7 +34,7 @@ class UserControllerTest {
     @Test
     void createUser_returnsCreated() throws Exception {
         when(userService.createUser(any())).thenReturn(
-                new UserResponse(1L, "Josvier Rodriguez", "josvier@example.com", LocalDateTime.of(2026, 9, 29, 10, 0)));
+                new UserResponse("68dc1234567890abcdef0001", "Josvier Rodriguez", "josvier@example.com", LocalDateTime.of(2026, 9, 29, 10, 0)));
 
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -42,19 +42,19 @@ class UserControllerTest {
                                 {"name":"Josvier Rodriguez","email":"josvier@example.com"}
                                 """))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.id").value("68dc1234567890abcdef0001"))
                 .andExpect(jsonPath("$.name").value("Josvier Rodriguez"))
                 .andExpect(jsonPath("$.email").value("josvier@example.com"));
     }
 
     @Test
     void getUser_returnsOk() throws Exception {
-        when(userService.getUser(1L)).thenReturn(
-                new UserResponse(1L, "Josvier Rodriguez", "josvier@example.com", LocalDateTime.of(2026, 9, 29, 10, 0)));
+        when(userService.getUser("68dc1234567890abcdef0001")).thenReturn(
+                new UserResponse("68dc1234567890abcdef0001", "Josvier Rodriguez", "josvier@example.com", LocalDateTime.of(2026, 9, 29, 10, 0)));
 
-        mockMvc.perform(get("/api/users/1"))
+        mockMvc.perform(get("/api/users/68dc1234567890abcdef0001"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.id").value("68dc1234567890abcdef0001"))
                 .andExpect(jsonPath("$.email").value("josvier@example.com"));
     }
 
