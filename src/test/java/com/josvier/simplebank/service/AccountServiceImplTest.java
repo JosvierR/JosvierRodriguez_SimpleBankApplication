@@ -322,6 +322,74 @@ class AccountServiceImplTest {
         assertMoney("5.00", savingsHistory.get(1).amount());
     }
 
+    @Test
+    void getAccounts_returnsAllAccounts() {
+        stubUser();
+        User second = new User("Customer Two", "customer2@example.com", LocalDateTime.of(2026, 9, 29, 9, 0));
+        second.setId("68dc1234567890abcdef0002");
+        when(userRepository.findById("68dc1234567890abcdef0002")).thenReturn(Optional.of(second));
+        Account secondAccount = new Account("68dc1234567890abcdef0002", new BigDecimal("15.00"), AccountType.CHECKING, LocalDateTime.of(2026, 9, 29, 11, 0));
+        secondAccount.setId("68dc1234567890abcdef0003");
+        when(accountRepository.findAll()).thenReturn(List.of(account(new BigDecimal("10.00")), secondAccount));
+
+        List<AccountResponse> accounts = accountService.getAccounts();
+
+        assertEquals(2, accounts.size());
+        assertEquals("68dc1234567890abcdef0001", accounts.get(0).accountId());
+        assertEquals("Josvier Rodriguez", accounts.get(0).userName());
+        assertEquals("68dc1234567890abcdef0003", accounts.get(1).accountId());
+        assertEquals("Customer Two", accounts.get(1).userName());
+    }
+
+    @Test
+    void getAccounts_includesAccountWhenOwnerIsMissing() {
+        when(userRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.empty());
+        when(accountRepository.findAll()).thenReturn(List.of(account(new BigDecimal("10.00"))));
+
+        List<AccountResponse> accounts = accountService.getAccounts();
+
+        assertEquals(1, accounts.size());
+        assertEquals("68dc1234567890abcdef0001", accounts.get(0).accountId());
+        assertEquals("Unknown", accounts.get(0).userName());
+    }
+
+    @Test
+    void getAccountsByUser_returnsOnlyThatUsersAccounts() {
+        stubUser();
+        Account savings = account(new BigDecimal("10.00"));
+        Account checking = accountWith("68dc1234567890abcdef0002", new BigDecimal("20.00"));
+        when(accountRepository.findByUserId("68dc1234567890abcdef0001")).thenReturn(List.of(savings, checking));
+
+        List<AccountResponse> accounts = accountService.getAccountsByUser("68dc1234567890abcdef0001");
+
+        assertEquals(2, accounts.size());
+        assertTrue(accounts.stream().allMatch(account -> "68dc1234567890abcdef0001".equals(account.userId())));
+        assertEquals("68dc1234567890abcdef0001", accounts.get(0).accountId());
+        assertEquals("68dc1234567890abcdef0002", accounts.get(1).accountId());
+    }
+
+    @Test
+    void getAccountsByUser_userMissing_returnsNotFound() {
+        when(userRepository.findById("68dc1234567890abcdef0099")).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> accountService.getAccountsByUser("68dc1234567890abcdef0099"));
+
+        assertEquals("User with id 68dc1234567890abcdef0099 was not found", exception.getMessage());
+        verify(accountRepository, never()).findByUserId(any());
+    }
+
+    @Test
+    void getAccountsByUser_noAccounts_returnsEmptyList() {
+        stubUser();
+        when(accountRepository.findByUserId("68dc1234567890abcdef0001")).thenReturn(List.of());
+
+        List<AccountResponse> accounts = accountService.getAccountsByUser("68dc1234567890abcdef0001");
+
+        assertTrue(accounts.isEmpty());
+    }
+
     private void stubUser() {
         User user = new User("Josvier Rodriguez", "josvier@example.com", LocalDateTime.of(2026, 9, 29, 9, 0));
         user.setId("68dc1234567890abcdef0001");

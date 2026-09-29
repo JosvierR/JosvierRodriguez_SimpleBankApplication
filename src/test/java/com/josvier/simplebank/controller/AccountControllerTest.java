@@ -191,6 +191,17 @@ class AccountControllerTest {
     }
 
     @Test
+    void getAccounts_returnsOk() throws Exception {
+        when(accountService.getAccounts()).thenReturn(List.of(account(new BigDecimal("550.00"))));
+
+        mockMvc.perform(get("/api/accounts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].accountId").value("68dc1234567890abcdef0001"))
+                .andExpect(jsonPath("$[0].balance").value(550.00));
+    }
+
+    @Test
     void unknownPath_returnsNotFound() throws Exception {
         mockMvc.perform(get("/api"))
                 .andExpect(status().isNotFound())

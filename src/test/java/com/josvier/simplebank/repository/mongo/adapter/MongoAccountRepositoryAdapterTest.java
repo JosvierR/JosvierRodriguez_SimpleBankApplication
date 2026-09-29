@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -65,6 +66,28 @@ class MongoAccountRepositoryAdapterTest {
         assertEquals(USER_ID, account.getUserId());
         assertEquals(AccountType.CHECKING, account.getAccountType());
         assertEquals(0, new BigDecimal("0.00").compareTo(account.getBalance()));
+    }
+
+    @Test
+    void findAll_delegatesToSpringData() {
+        when(accounts.findAll()).thenReturn(List.of(document()));
+
+        List<Account> found = adapter.findAll();
+
+        assertEquals(1, found.size());
+        assertEquals(ACCOUNT_ID, found.get(0).getId());
+        verify(accounts).findAll();
+    }
+
+    @Test
+    void findByUserId_delegatesToSpringData() {
+        when(accounts.findByUserId(USER_ID)).thenReturn(List.of(document()));
+
+        List<Account> found = adapter.findByUserId(USER_ID);
+
+        assertEquals(1, found.size());
+        assertEquals(USER_ID, found.get(0).getUserId());
+        verify(accounts).findByUserId(USER_ID);
     }
 
     @Test

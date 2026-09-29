@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DuplicateKeyException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -82,6 +83,24 @@ class MongoUserRepositoryAdapterTest {
 
         assertTrue(adapter.findByEmail("josvier@example.com").isPresent());
         verify(users).findByEmail("josvier@example.com");
+    }
+
+    @Test
+    void findAll_delegatesToSpringData() {
+        when(users.findAll()).thenReturn(List.of(document()));
+
+        List<User> found = adapter.findAll();
+
+        assertEquals(1, found.size());
+        assertEquals(USER_ID, found.get(0).getId());
+        verify(users).findAll();
+    }
+
+    @Test
+    void deleteById_delegatesToSpringData() {
+        adapter.deleteById(USER_ID);
+
+        verify(users).deleteById(USER_ID);
     }
 
     @Test
