@@ -16,6 +16,38 @@
     {
       "key": "accountId",
       "value": ""
+    },
+    {
+      "key": "customer1Id",
+      "value": ""
+    },
+    {
+      "key": "customer2Id",
+      "value": ""
+    },
+    {
+      "key": "customer3Id",
+      "value": ""
+    },
+    {
+      "key": "customer1Email",
+      "value": ""
+    },
+    {
+      "key": "customer1UpdatedEmail",
+      "value": ""
+    },
+    {
+      "key": "customer1CreatedAt",
+      "value": ""
+    },
+    {
+      "key": "customer2Email",
+      "value": ""
+    },
+    {
+      "key": "customer2AccountId",
+      "value": ""
     }
   ],
   "item": [
@@ -599,6 +631,385 @@
             "header": [],
             "url": "{{baseUrl}}/users/68dc1234567890abcdef0099"
           }
+        }
+      ]
+    },
+    {
+      "name": "Customer CRUD Demo",
+      "item": [
+        {
+          "name": "Create Customer 1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = 'customer1+' + Date.now() + '@example.com';",
+                  "pm.collectionVariables.set('customer1Email', email);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Id is a string', function () { pm.expect(body.id).to.be.a('string').and.not.empty; });",
+                  "pm.collectionVariables.set('customer1Id', body.id);",
+                  "pm.collectionVariables.set('customer1CreatedAt', body.createdAt);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Customer One\",\n  \"email\": \"{{customer1Email}}\"\n}" },
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "Create Customer 2",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = 'customer2+' + Date.now() + '@example.com';",
+                  "pm.collectionVariables.set('customer2Email', email);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('customer2Id', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Customer Two\",\n  \"email\": \"{{customer2Email}}\"\n}" },
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "Create Customer 3",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = 'customer3+' + Date.now() + '@example.com';",
+                  "pm.collectionVariables.set('customer3Email', email);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('customer3Id', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Customer Three\",\n  \"email\": \"{{customer3Email}}\"\n}" },
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "List Users Contains The Three Customers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const ids = pm.response.json().map(user => user.id);",
+                  "pm.test('Contains customer 1', function () { pm.expect(ids).to.include(pm.collectionVariables.get('customer1Id')); });",
+                  "pm.test('Contains customer 2', function () { pm.expect(ids).to.include(pm.collectionVariables.get('customer2Id')); });",
+                  "pm.test('Contains customer 3', function () { pm.expect(ids).to.include(pm.collectionVariables.get('customer3Id')); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users" }
+        },
+        {
+          "name": "Get Customer 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Name and email match', function () {",
+                  "    pm.expect(body.name).to.eql('Customer One');",
+                  "    pm.expect(body.email).to.eql(pm.collectionVariables.get('customer1Email'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users/{{customer1Id}}" }
+        },
+        {
+          "name": "Update Customer 1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = 'customer1.updated+' + Date.now() + '@example.com';",
+                  "pm.collectionVariables.set('customer1UpdatedEmail', email);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Id and createdAt stay the same', function () {",
+                  "    pm.expect(body.id).to.eql(pm.collectionVariables.get('customer1Id'));",
+                  "    pm.expect(body.createdAt).to.eql(pm.collectionVariables.get('customer1CreatedAt'));",
+                  "    pm.expect(body.name).to.eql('Customer One Updated');",
+                  "    pm.expect(body.email).to.eql(pm.collectionVariables.get('customer1UpdatedEmail'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Customer One Updated\",\n  \"email\": \"{{customer1UpdatedEmail}}\"\n}" },
+            "url": "{{baseUrl}}/users/{{customer1Id}}"
+          }
+        },
+        {
+          "name": "Get Customer 1 After Update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Profile changed and identity stayed', function () {",
+                  "    pm.expect(body.id).to.eql(pm.collectionVariables.get('customer1Id'));",
+                  "    pm.expect(body.name).to.eql('Customer One Updated');",
+                  "    pm.expect(body.email).to.eql(pm.collectionVariables.get('customer1UpdatedEmail'));",
+                  "    pm.expect(body.createdAt).to.eql(pm.collectionVariables.get('customer1CreatedAt'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users/{{customer1Id}}" }
+        },
+        {
+          "name": "Update Customer 1 To Customer 2 Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Customer One Updated\",\n  \"email\": \"{{customer2Email}}\"\n}" },
+            "url": "{{baseUrl}}/users/{{customer1Id}}"
+          }
+        },
+        {
+          "name": "Customer 1 Unchanged After Duplicate Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Email is still the updated address', function () {",
+                  "    pm.expect(body.email).to.eql(pm.collectionVariables.get('customer1UpdatedEmail'));",
+                  "    pm.expect(body.name).to.eql('Customer One Updated');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users/{{customer1Id}}" }
+        },
+        {
+          "name": "Delete Customer 3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/users/{{customer3Id}}" }
+        },
+        {
+          "name": "Get Deleted Customer 3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users/{{customer3Id}}" }
+        },
+        {
+          "name": "Create Account For Customer 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('customer2AccountId', pm.response.json().accountId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{customer2Id}}\",\n  \"accountType\": \"SAVINGS\"\n}" },
+            "url": "{{baseUrl}}/accounts"
+          }
+        },
+        {
+          "name": "Delete Customer 2 With Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Conflict message', function () {",
+                  "    pm.expect(pm.response.json().message).to.eql('User cannot be deleted while accounts still exist');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/users/{{customer2Id}}" }
+        },
+        {
+          "name": "Customer 2 Still Exists",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Same customer', function () { pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('customer2Id')); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users/{{customer2Id}}" }
+        },
+        {
+          "name": "Customer 2 Account Still Exists",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Same account', function () { pm.expect(pm.response.json().accountId).to.eql(pm.collectionVariables.get('customer2AccountId')); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/accounts/{{customer2AccountId}}" }
+        },
+        {
+          "name": "List All Accounts Contains Customer 2 Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const ids = pm.response.json().map(account => account.accountId);",
+                  "pm.test('Contains the new account', function () { pm.expect(ids).to.include(pm.collectionVariables.get('customer2AccountId')); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/accounts" }
+        },
+        {
+          "name": "List Accounts For Customer 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const accounts = pm.response.json();",
+                  "const owner = pm.collectionVariables.get('customer2Id');",
+                  "pm.test('Every account belongs to customer 2', function () {",
+                  "    pm.expect(accounts.length).to.be.above(0);",
+                  "    accounts.forEach(account => pm.expect(account.userId).to.eql(owner));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users/{{customer2Id}}/accounts" }
         }
       ]
     }

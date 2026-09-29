@@ -205,14 +205,21 @@ The automated tests mock the repositories and the Spring Data interfaces. They d
 | Method | Path | Success | Purpose |
 | --- | --- | --- | --- |
 | POST | /api/users | 201 | Create a user |
+| GET | /api/users | 200 | List every user |
 | GET | /api/users/{id} | 200 | View a user |
+| PUT | /api/users/{id} | 200 | Update a user's name and email. The id and createdAt stay the same |
+| DELETE | /api/users/{id} | 204 | Delete a user who owns no accounts |
 | POST | /api/accounts | 201 | Open an account with balance 0.00 |
+| GET | /api/accounts | 200 | List every account |
 | GET | /api/accounts/{id} | 200 | View an account |
+| GET | /api/users/{userId}/accounts | 200 | List accounts owned by one user. An existing user with none returns `[]` |
 | POST | /api/accounts/{id}/deposit | 200 | Deposit a positive amount |
 | POST | /api/accounts/{id}/withdraw | 200 | Withdraw a positive amount that the balance can cover |
 | GET | /api/accounts/{id}/transactions | 200 | View transaction history, oldest first |
 
-`{id}` is a string ObjectId, not a number.
+`{id}` and `{userId}` are string ObjectId values, not numbers.
+
+A user who still owns one or more accounts cannot be deleted. `DELETE /api/users/{id}` then returns 409 with the message `User cannot be deleted while accounts still exist`. The user and those accounts stay in the database. This keeps `Account.userId` from pointing at a customer who is gone.
 
 Common error responses:
 
@@ -220,7 +227,7 @@ Common error responses:
 | --- | --- |
 | Invalid body, non-positive amount, more than 2 decimal places, or insufficient funds | 400 |
 | Unknown user, unknown account, or unknown route | 404 |
-| Email already registered | 409 |
+| Email already registered, or deleting a user who still owns accounts | 409 |
 
 Error bodies use `ErrorResponse` and do not include a stack trace, a host name, or the connection URI.
 
@@ -237,6 +244,21 @@ A failed withdrawal, such as asking for more money than the balance, returns 400
 Deposit and withdrawal each run inside one MongoDB transaction: the balance update and the history insert commit together or roll back together. The service also keeps a per-account lock in this process so two threads in the same JVM do not apply the same balance at once. That lock does not coordinate a second running instance. The database transaction is the durable boundary.
 
 The Postman collection in `postman/` follows this flow. Import it and run the folders from top to bottom. Requests use the `baseUrl` variable (`http://localhost:8080/api`). Create User generates a new email on each run and saves `userId`. Create Account sends that id as a JSON string and saves `accountId`. A later request reuses the same email and expects 409.
+
+The **Customer CRUD Demo** folder creates three customers with unique emails, lists them, updates one, rejects a duplicate email, deletes a customer who has no accounts, and refuses to delete a customer who owns an account. List checks look for those new ids inside the response. They do not require the database to contain only those three records.
+
+## Class CRUD Requirements
+
+| Class requirement | Endpoint |
+| --- | --- |
+| Create customer | POST /api/users |
+| GetAll / findAll | GET /api/users |
+| GetById / findById | GET /api/users/{id} |
+| Post | POST /api/users |
+| Update | PUT /api/users/{id} |
+| Delete | DELETE /api/users/{id} |
+| Fetch accounts | GET /api/accounts |
+| User's accounts | GET /api/users/{userId}/accounts |
 
 ## Banking rules that did not change
 
