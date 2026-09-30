@@ -197,10 +197,10 @@ Open [http://localhost:5173](http://localhost:5173). The Vite `/api` proxy forwa
 
 ## Verification
 
-Backend:
+Backend, using the project wrapper:
 
 ```powershell
-mvn clean test
+.\mvnw.cmd clean test
 ```
 
 Frontend:
@@ -220,6 +220,22 @@ docker compose build
 ```
 
 The automated frontend suite mocks API modules and never connects to Atlas. The backend tests mock persistence boundaries and also do not connect to Atlas. A live end-to-end and restart-persistence check requires valid local Atlas and JWT environment values.
+
+## UI Screenshots
+
+These were captured from the React application at `http://localhost:3000` while it was talking to the Dockerized API and Atlas. No tokens or credentials are shown.
+
+| Login | Dashboard | Open account |
+| --- | --- | --- |
+| ![Login](docs/screenshots/01-login.png) | ![Dashboard](docs/screenshots/02-dashboard.png) | ![Open account](docs/screenshots/03-create-account.png) |
+
+| Account | Deposit | Withdrawal |
+| --- | --- | --- |
+| ![Account details](docs/screenshots/04-account-details.png) | ![Deposit](docs/screenshots/05-deposit.png) | ![Withdrawal](docs/screenshots/06-withdraw.png) |
+
+| History | Transfer | Audits | Phone |
+| --- | --- | --- | --- |
+| ![Transaction history](docs/screenshots/07-transaction-history.png) | ![Transfer](docs/screenshots/08-transfer.png) | ![Audits](docs/screenshots/09-audits.png) | ![Mobile dashboard](docs/screenshots/10-mobile-dashboard.png) |
 
 ## API Summary
 
