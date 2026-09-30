@@ -1,6 +1,7 @@
 package com.josvier.simplebank.security;
 
 import com.josvier.simplebank.auth.controller.AuthController;
+import com.josvier.simplebank.auth.dto.request.RegisterRequest;
 import com.josvier.simplebank.auth.dto.response.AuthResponse;
 import com.josvier.simplebank.auth.exception.InvalidCredentialsException;
 import com.josvier.simplebank.auth.model.AuthRole;
@@ -22,6 +23,7 @@ import com.josvier.simplebank.service.AccountService;
 import com.josvier.simplebank.service.AuditService;
 import com.josvier.simplebank.service.UserService;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.TestPropertySource;
@@ -30,6 +32,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+import org.mockito.ArgumentCaptor;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -42,6 +46,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -112,6 +117,24 @@ class ApiSecurityTest {
                 .andExpect(jsonPath("$.roles[0]").value("USER"))
                 .andExpect(jsonPath("$.password").doesNotExist())
                 .andExpect(jsonPath("$.passwordHash").doesNotExist());
+    }
+
+    @Test
+    void registration_acceptsSpacedIdentityBeforeNormalization() throws Exception {
+        when(authService.register(any())).thenReturn(
+                new AuthResponse("issued-token", "Bearer", 3600, "josvier", List.of("USER")));
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"username":"  Josvier  ","email":"Josvier@Example.COM ","password":"password123"}
+                                """))
+                .andExpect(status().isCreated());
+
+        ArgumentCaptor<RegisterRequest> captor = ArgumentCaptor.forClass(RegisterRequest.class);
+        verify(authService).register(captor.capture());
+        assertEquals("Josvier", captor.getValue().username());
+        assertEquals("Josvier@Example.COM", captor.getValue().email());
     }
 
     @Test

@@ -15,4 +15,9 @@ public record LoginRequest(
         @Schema(example = "choose-a-long-password")
         String password
 ) {
+    public LoginRequest {
+        if (username != null) {
+            username = username.trim();
+        }
+    }
 }

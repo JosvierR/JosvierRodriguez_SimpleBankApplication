@@ -27,4 +27,12 @@ public record RegisterRequest(
         @Schema(example = "choose-a-long-password")
         String password
 ) {
+    public RegisterRequest {
+        if (username != null) {
+            username = username.trim();
+        }
+        if (email != null) {
+            email = email.trim();
+        }
+    }
 }
