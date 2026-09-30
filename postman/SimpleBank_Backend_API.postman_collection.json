@@ -1385,6 +1385,44 @@
             "header": [],
             "url": "{{baseUrl}}/accounts"
           }
+        },
+        {
+          "name": "Invalid Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Body does not describe the JWT parser', function () {",
+                  "    pm.expect(pm.response.text()).to.not.include('JWT');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer not-a-token" }],
+            "url": "{{baseUrl}}/accounts"
+          }
+        },
+        {
+          "name": "User Token Cannot Call Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/admin/whoami" }
         }
       ]
     },
@@ -1576,7 +1614,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Audits is an array', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                  "const body = pm.response.json();",
+                  "pm.test('Audits include the authenticated actor', function () {",
+                  "    pm.expect(body).to.be.an('array');",
+                  "    const mine = body.find(item => item.actorUsername === pm.collectionVariables.get('jwtDemoUsername'));",
+                  "    pm.expect(mine, 'audit for this login').to.be.an('object');",
+                  "    pm.expect(mine.actorAuthUserId).to.be.a('string').and.not.empty;",
+                  "    pm.expect(mine.userId).to.be.a('string').and.not.empty;",
+                  "});"
                 ]
               }
             }

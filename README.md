@@ -8,6 +8,42 @@ Phase 1 stored customers, accounts, balances, and transactions in `ConcurrentHas
 
 Bank customers and API logins are different records. A customer in `users` still owns accounts. A login in `auth_users` only proves that the caller may use the API. Registering does not create a customer, and the two ids are not required to match. There is no frontend in this phase.
 
+## Authentication
+
+`POST /api/auth/register` creates a login in `auth_users` and returns a bearer token. The username and email are trimmed and lowercased, so `Ada` and `ada` are the same login. The password is stored only as a BCrypt hash. It must be at least 8 characters and at most 72 UTF-8 bytes. Public registration always receives role `USER`.
+
+`POST /api/auth/login` checks that same normalized username and returns a new token. A missing user, a wrong password, and a disabled login all return `401` with `Invalid username or password`.
+
+Send the token as:
+
+```http
+Authorization: Bearer <token>
+```
+
+`JWT_EXPIRATION_MS` defaults to `3600000` (one hour). Register and login responses use `Cache-Control: no-store`.
+
+## Security Guarantees
+
+- Access tokens are signed with HMAC SHA-256. Unsigned tokens are rejected.
+- `JWT_SECRET` must be Base64 and decode to at least 256 bits. There is no default.
+- `JWT_EXPIRATION_MS` must be greater than zero.
+- Sessions are stateless.
+- Every bearer request reloads the current `auth_users` record. Role claims in the token are not trusted by themselves.
+- A disabled auth user cannot keep using an older token.
+- Passwords are BCrypt hashes. They are not logged and not returned.
+- Security errors are JSON. A `401` includes `WWW-Authenticate: Bearer` and does not include JWT parser details.
+- Unique indexes `auth_username_unique_idx` and `auth_email_unique_idx` reject a duplicate identity even if two requests pass the first check together.
+
+## Authorization Scope
+
+This phase authenticates access to the banking API with JWT. Auth users and bank customers are intentionally separate. Any authenticated caller can use the normal banking endpoints. `GET /api/admin/whoami` is the only route that requires `ADMIN`, and this application does not create an admin account for you.
+
+Per-customer account ownership authorization is outside this training phase. A valid token answers "is this caller authenticated?" It does not answer "does this caller own this bank account?"
+
+## Audit Actor
+
+`userId` and `userName` are the bank customer whose money moved. `actorAuthUserId` and `actorUsername` are the API login that called deposit, withdraw, or transfer. Those actor fields are written on the same audit document, inside the same MongoDB transaction. Audits stored before this change have no actor fields. Reading them returns null for both actor values and does not rewrite the old document.
+
 ## Tech Stack
 
 - Java 17
