@@ -89,10 +89,13 @@ if (-not (Test-Path -Path $MAVEN_M2_PATH)) {
 }
 
 $MAVEN_WRAPPER_DISTS = $null
-if ((Get-Item $MAVEN_M2_PATH).Target[0] -eq $null) {
-  $MAVEN_WRAPPER_DISTS = "$MAVEN_M2_PATH/wrapper/dists"
+# Get-Item.Target is $null for some Windows paths (hidden folders, WOW64 system
+# profile). Indexing that $null throws before Maven starts. Only follow a real link.
+$m2Item = Get-Item -Path $MAVEN_M2_PATH -Force
+if ($m2Item.PSObject.Properties["Target"] -ne $null -and $m2Item.Target -ne $null) {
+  $MAVEN_WRAPPER_DISTS = $m2Item.Target[0] + "/wrapper/dists"
 } else {
-  $MAVEN_WRAPPER_DISTS = (Get-Item $MAVEN_M2_PATH).Target[0] + "/wrapper/dists"
+  $MAVEN_WRAPPER_DISTS = "$MAVEN_M2_PATH/wrapper/dists"
 }
 
 $MAVEN_HOME_PARENT = "$MAVEN_WRAPPER_DISTS/$distributionUrlNameMain"
