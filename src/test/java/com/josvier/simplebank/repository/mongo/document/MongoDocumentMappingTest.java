@@ -1,5 +1,6 @@
 package com.josvier.simplebank.repository.mongo.document;
 
+import com.josvier.simplebank.auth.repository.mongo.document.AuthUserDocument;
 import com.josvier.simplebank.service.impl.AccountServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
@@ -26,6 +27,14 @@ class MongoDocumentMappingTest {
         assertEquals("accounts", AccountDocument.class.getAnnotation(Document.class).collection());
         assertEquals("transactions", TransactionDocument.class.getAnnotation(Document.class).collection());
         assertEquals("audits", AuditDocument.class.getAnnotation(Document.class).collection());
+        assertEquals("auth_users", AuthUserDocument.class.getAnnotation(Document.class).collection());
+
+        Indexed username = AuthUserDocument.class.getDeclaredField("username").getAnnotation(Indexed.class);
+        assertTrue(username.unique());
+        assertEquals("auth_username_unique_idx", username.name());
+        Indexed authEmail = AuthUserDocument.class.getDeclaredField("email").getAnnotation(Indexed.class);
+        assertTrue(authEmail.unique());
+        assertEquals("auth_email_unique_idx", authEmail.name());
 
         Indexed email = UserDocument.class.getDeclaredField("email").getAnnotation(Indexed.class);
         assertTrue(email.unique());
@@ -45,6 +54,7 @@ class MongoDocumentMappingTest {
         assertEquals(FieldType.OBJECT_ID, AccountDocument.class.getDeclaredField("id").getAnnotation(MongoId.class).value());
         assertEquals(FieldType.OBJECT_ID, TransactionDocument.class.getDeclaredField("id").getAnnotation(MongoId.class).value());
         assertEquals(FieldType.OBJECT_ID, AuditDocument.class.getDeclaredField("id").getAnnotation(MongoId.class).value());
+        assertEquals(FieldType.OBJECT_ID, AuthUserDocument.class.getDeclaredField("id").getAnnotation(MongoId.class).value());
     }
 
     @Test

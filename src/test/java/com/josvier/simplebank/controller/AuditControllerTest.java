@@ -7,6 +7,7 @@ import com.josvier.simplebank.model.AuditAction;
 import com.josvier.simplebank.service.AuditService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -24,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuditController.class)
 @Import(GlobalExceptionHandler.class)
+@WithMockUser
 class AuditControllerTest {
 
     @Autowired

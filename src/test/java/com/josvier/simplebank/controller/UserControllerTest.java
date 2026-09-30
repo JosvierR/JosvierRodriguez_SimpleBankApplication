@@ -11,6 +11,7 @@ import com.josvier.simplebank.service.AccountService;
 import com.josvier.simplebank.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -33,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(UserController.class)
 @Import(GlobalExceptionHandler.class)
+@WithMockUser
 class UserControllerTest {
 
     @Autowired
