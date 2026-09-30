@@ -1,5 +1,6 @@
 package com.josvier.simplebank.exception;
 
+import com.josvier.simplebank.auth.exception.InvalidCredentialsException;
 import com.josvier.simplebank.dto.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -26,6 +27,12 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException exception,
+                                                                  HttpServletRequest request) {
+        return response(HttpStatus.UNAUTHORIZED, "Invalid username or password", request);
+    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException exception, HttpServletRequest request) {
