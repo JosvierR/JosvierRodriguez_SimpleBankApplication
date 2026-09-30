@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.List;
 
 /**
  * Maps an {@link AuthUser} to {@code auth_users} and back.
@@ -53,6 +54,21 @@ public class MongoAuthUserRepositoryAdapter implements AuthUserRepository {
     }
 
     @Override
+    public Optional<AuthUser> findById(String id) {
+        return id == null ? Optional.empty() : authUsers.findById(id).map(this::toDomain);
+    }
+
+    @Override
+    public Optional<AuthUser> findByBankUserId(String bankUserId) {
+        return bankUserId == null ? Optional.empty() : authUsers.findByBankUserId(bankUserId).map(this::toDomain);
+    }
+
+    @Override
+    public List<AuthUser> findAll() {
+        return authUsers.findAll().stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public boolean existsByUsername(String username) {
         return username != null && authUsers.existsByUsername(username);
     }
@@ -60,6 +76,16 @@ public class MongoAuthUserRepositoryAdapter implements AuthUserRepository {
     @Override
     public boolean existsByEmail(String email) {
         return email != null && authUsers.existsByEmail(email);
+    }
+
+    @Override
+    public boolean existsByBankUserId(String bankUserId) {
+        return bankUserId != null && authUsers.existsByBankUserId(bankUserId);
+    }
+
+    @Override
+    public long countEnabledByRole(AuthRole role) {
+        return authUsers.countByRolesContainingAndEnabledTrue(role);
     }
 
     private AuthUserDocument toDocument(AuthUser user) {
@@ -70,6 +96,7 @@ public class MongoAuthUserRepositoryAdapter implements AuthUserRepository {
         document.setPasswordHash(user.getPasswordHash());
         document.setRoles(user.getRoles() == null ? Set.of() : Set.copyOf(user.getRoles()));
         document.setEnabled(user.isEnabled());
+        document.setBankUserId(user.getBankUserId());
         document.setCreatedAt(user.getCreatedAt());
         return document;
     }
@@ -82,7 +109,8 @@ public class MongoAuthUserRepositoryAdapter implements AuthUserRepository {
                 document.getPasswordHash(),
                 roles,
                 document.isEnabled(),
-                document.getCreatedAt()
+                document.getCreatedAt(),
+                document.getBankUserId()
         );
         user.setId(document.getId());
         return user;

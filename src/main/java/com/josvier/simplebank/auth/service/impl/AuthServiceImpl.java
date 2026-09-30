@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 /**
- * Creates {@code USER} logins and asks Spring Security to check passwords.
+ * Creates unlinked {@code CUSTOMER} logins and asks Spring Security to check passwords.
  *
  * The plaintext password is hashed before save and is not written to the log.
  * Bank customer records are not created here.
@@ -69,7 +69,7 @@ public class AuthServiceImpl implements AuthService {
                 username,
                 email,
                 passwordEncoder.encode(request.password()),
-                Set.of(AuthRole.USER),
+                Set.of(AuthRole.CUSTOMER),
                 true,
                 LocalDateTime.now(clock)
         );

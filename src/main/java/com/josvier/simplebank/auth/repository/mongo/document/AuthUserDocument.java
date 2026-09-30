@@ -5,6 +5,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.FieldType;
 import org.springframework.data.mongodb.core.mapping.MongoId;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -32,6 +33,11 @@ public class AuthUserDocument {
     private Set<AuthRole> roles;
 
     private boolean enabled;
+
+    @Indexed(unique = true, name = "auth_bank_user_unique_idx",
+            partialFilter = "{'bankUserId': {'$type': 'objectId'}}")
+    @Field(targetType = FieldType.OBJECT_ID)
+    private String bankUserId;
 
     private LocalDateTime createdAt;
 
@@ -81,6 +87,14 @@ public class AuthUserDocument {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public String getBankUserId() {
+        return bankUserId;
+    }
+
+    public void setBankUserId(String bankUserId) {
+        this.bankUserId = bankUserId;
     }
 
     public LocalDateTime getCreatedAt() {

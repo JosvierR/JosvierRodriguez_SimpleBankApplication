@@ -66,9 +66,8 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/**").authenticated()
-                        .anyRequest().permitAll())
+                        .anyRequest().denyAll())
                 .addFilterAfter(jwtAuthenticationFilter, SecurityContextHolderFilter.class);
         return http.build();
     }

@@ -18,6 +18,8 @@ public interface AccountRepository {
 
     Optional<Account> findById(String id);
 
+    Optional<Account> findByIdAndUserId(String id, String userId);
+
     List<Account> findAll();
 
     List<Account> findByUserId(String userId);

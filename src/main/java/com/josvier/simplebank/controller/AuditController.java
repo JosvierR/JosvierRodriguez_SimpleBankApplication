@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,6 +38,7 @@ public class AuditController {
     @Operation(summary = "List audit traces, oldest first")
     @ApiResponse(responseCode = "200", description = "Every stored trace. The list can be empty")
     @GetMapping
+    @PreAuthorize("hasAnyRole('MANAGER','AUDITOR','ADMIN')")
     public ResponseEntity<List<AuditResponse>> getAudits() {
         return ResponseEntity.ok(auditService.getAudits());
     }
@@ -48,6 +50,7 @@ public class AuditController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER','AUDITOR','ADMIN')")
     public ResponseEntity<AuditResponse> getAudit(@PathVariable String id) {
         return ResponseEntity.ok(auditService.getAudit(id));
     }

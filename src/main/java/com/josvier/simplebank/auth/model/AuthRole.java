@@ -7,6 +7,11 @@ package com.josvier.simplebank.auth.model;
  * with a {@code ROLE_} prefix, so a public registration cannot invent an admin grant.
  */
 public enum AuthRole {
+    /** Deprecated compatibility value. It receives CUSTOMER permissions. */
     USER,
+    CUSTOMER,
+    TELLER,
+    MANAGER,
+    AUDITOR,
     ADMIN
 }

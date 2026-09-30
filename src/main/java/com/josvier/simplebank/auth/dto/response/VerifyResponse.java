@@ -7,6 +7,8 @@ import java.util.List;
  */
 public record VerifyResponse(
         String username,
+        String primaryRole,
+        boolean bankUserLinked,
         List<String> roles
 ) {
 }

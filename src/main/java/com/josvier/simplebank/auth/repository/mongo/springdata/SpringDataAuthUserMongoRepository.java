@@ -1,6 +1,7 @@
 package com.josvier.simplebank.auth.repository.mongo.springdata;
 
 import com.josvier.simplebank.auth.repository.mongo.document.AuthUserDocument;
+import com.josvier.simplebank.auth.model.AuthRole;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;
@@ -14,7 +15,13 @@ public interface SpringDataAuthUserMongoRepository extends MongoRepository<AuthU
 
     Optional<AuthUserDocument> findByEmail(String email);
 
+    Optional<AuthUserDocument> findByBankUserId(String bankUserId);
+
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
+
+    boolean existsByBankUserId(String bankUserId);
+
+    long countByRolesContainingAndEnabledTrue(AuthRole role);
 }

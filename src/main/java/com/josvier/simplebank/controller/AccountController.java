@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -57,6 +58,7 @@ public class AccountController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
+    @PreAuthorize("hasAnyRole('TELLER','MANAGER','ADMIN')")
     public ResponseEntity<AccountResponse> createAccount(@Valid @RequestBody CreateAccountRequest request) {
         AccountResponse response = accountService.createAccount(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -65,6 +67,7 @@ public class AccountController {
     @Operation(summary = "List all accounts")
     @ApiResponse(responseCode = "200", description = "Every stored account. The list can be empty")
     @GetMapping
+    @PreAuthorize("hasAnyRole('TELLER','MANAGER','AUDITOR','ADMIN')")
     public ResponseEntity<List<AccountResponse>> getAccounts() {
         return ResponseEntity.ok(accountService.getAccounts());
     }
@@ -76,6 +79,7 @@ public class AccountController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/premium")
+    @PreAuthorize("hasAnyRole('MANAGER','AUDITOR','ADMIN')")
     public ResponseEntity<List<AccountResponse>> getPremiumAccounts(@RequestParam BigDecimal threshold) {
         return ResponseEntity.ok(accountService.getPremiumAccounts(threshold));
     }
@@ -89,6 +93,7 @@ public class AccountController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/transfer")
+    @PreAuthorize("hasAnyRole('CUSTOMER','MANAGER','ADMIN')")
     public ResponseEntity<TransferResponse> transfer(@Valid @RequestBody TransferRequest request) {
         return ResponseEntity.ok(accountService.transfer(request));
     }
@@ -100,6 +105,7 @@ public class AccountController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('CUSTOMER','TELLER','MANAGER','AUDITOR','ADMIN')")
     public ResponseEntity<AccountResponse> getAccount(@PathVariable String id) {
         return ResponseEntity.ok(accountService.getAccount(id));
     }
@@ -113,6 +119,7 @@ public class AccountController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     public ResponseEntity<AccountResponse> updateAccount(@PathVariable String id,
                                                          @Valid @RequestBody UpdateAccountRequest request) {
         return ResponseEntity.ok(accountService.updateAccount(id, request));
@@ -127,6 +134,7 @@ public class AccountController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     public ResponseEntity<Void> deleteAccount(@PathVariable String id) {
         accountService.deleteAccount(id);
         return ResponseEntity.noContent().build();
@@ -141,6 +149,7 @@ public class AccountController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/{id}/deposit")
+    @PreAuthorize("hasAnyRole('TELLER','MANAGER','ADMIN')")
     public ResponseEntity<AccountResponse> deposit(@PathVariable String id, @Valid @RequestBody AmountRequest request) {
         return ResponseEntity.ok(accountService.deposit(id, request.amount()));
     }
@@ -154,6 +163,7 @@ public class AccountController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/{id}/withdraw")
+    @PreAuthorize("hasAnyRole('TELLER','MANAGER','ADMIN')")
     public ResponseEntity<AccountResponse> withdraw(@PathVariable String id, @Valid @RequestBody AmountRequest request) {
         return ResponseEntity.ok(accountService.withdraw(id, request.amount()));
     }
@@ -165,6 +175,7 @@ public class AccountController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}/transactions")
+    @PreAuthorize("hasAnyRole('CUSTOMER','TELLER','MANAGER','AUDITOR','ADMIN')")
     public ResponseEntity<List<TransactionResponse>> getTransactions(@PathVariable String id) {
         return ResponseEntity.ok(accountService.getTransactions(id));
     }

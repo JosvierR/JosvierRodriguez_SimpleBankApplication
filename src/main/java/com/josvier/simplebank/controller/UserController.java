@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -55,6 +56,7 @@ public class UserController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
+    @PreAuthorize("hasAnyRole('TELLER','MANAGER','ADMIN')")
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
         UserResponse response = userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -63,6 +65,7 @@ public class UserController {
     @Operation(summary = "List all users")
     @ApiResponse(responseCode = "200", description = "Every stored customer. The list can be empty")
     @GetMapping
+    @PreAuthorize("hasAnyRole('TELLER','MANAGER','AUDITOR','ADMIN')")
     public ResponseEntity<List<UserResponse>> getUsers() {
         return ResponseEntity.ok(userService.getUsers());
     }
@@ -74,6 +77,7 @@ public class UserController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('CUSTOMER','TELLER','MANAGER','AUDITOR','ADMIN')")
     public ResponseEntity<UserResponse> getUser(@PathVariable String id) {
         return ResponseEntity.ok(userService.getUser(id));
     }
@@ -89,6 +93,7 @@ public class UserController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     public ResponseEntity<UserResponse> updateUser(@PathVariable String id, @Valid @RequestBody UpdateUserRequest request) {
         return ResponseEntity.ok(userService.updateUser(id, request));
     }
@@ -102,6 +107,7 @@ public class UserController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
@@ -114,6 +120,7 @@ public class UserController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}/accounts")
+    @PreAuthorize("hasAnyRole('CUSTOMER','TELLER','MANAGER','AUDITOR','ADMIN')")
     public ResponseEntity<List<AccountResponse>> getAccountsByUser(@PathVariable String id) {
         return ResponseEntity.ok(accountService.getAccountsByUser(id));
     }

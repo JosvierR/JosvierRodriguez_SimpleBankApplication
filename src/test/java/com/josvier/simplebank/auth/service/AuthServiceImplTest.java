@@ -87,7 +87,7 @@ class AuthServiceImplTest {
         assertEquals("ada", response.username());
         assertEquals("Bearer", response.tokenType());
         assertEquals(3600, response.expiresIn());
-        assertEquals(List.of("USER"), response.roles());
+        assertEquals(List.of("CUSTOMER"), response.roles());
         assertEquals("ada", jwtService.extractUsername(response.token()));
     }
 
@@ -104,13 +104,13 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void register_defaultsToUserRole() {
+    void register_defaultsToCustomerRole() {
         when(authUsers.save(any(AuthUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         service.register(new RegisterRequest("ada", "ada@example.com", "password123"));
 
         AuthUser saved = savedUser();
-        assertEquals(Set.of(AuthRole.USER), saved.getRoles());
+        assertEquals(Set.of(AuthRole.CUSTOMER), saved.getRoles());
         assertTrue(saved.isEnabled());
         assertTrue(Arrays.stream(RegisterRequest.class.getRecordComponents())
                 .map(RecordComponent::getName)
@@ -151,9 +151,9 @@ class AuthServiceImplTest {
         AuthResponse response = service.login(new LoginRequest("ada", "password123"));
 
         assertEquals("Bearer", response.tokenType());
-        assertEquals(List.of("USER"), response.roles());
+        assertEquals(List.of("CUSTOMER"), response.roles());
         assertEquals("ada", jwtService.extractUsername(response.token()));
-        assertTrue(jwtService.extractRoles(response.token()).contains("ROLE_USER"));
+        assertTrue(jwtService.extractRoles(response.token()).contains("ROLE_CUSTOMER"));
         assertTrue(jwtService.validateToken(response.token(), new CustomUserDetailsService(authUsers).toUserDetails(stored)));
     }
 

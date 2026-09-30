@@ -30,6 +30,6 @@ public class SecurityContextCurrentActorProvider implements CurrentActorProvider
         String username = authentication.getName();
         AuthUser user = authUsers.findByUsername(username)
                 .orElseThrow(() -> new IllegalStateException("Authenticated API user was not found"));
-        return new CurrentActor(user.getId(), user.getUsername());
+        return new CurrentActor(user.getId(), user.getUsername(), user.getPrimaryRole(), user.getBankUserId());
     }
 }

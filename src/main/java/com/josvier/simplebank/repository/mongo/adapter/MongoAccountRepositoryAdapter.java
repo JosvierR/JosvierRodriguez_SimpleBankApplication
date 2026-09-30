@@ -39,6 +39,14 @@ public class MongoAccountRepositoryAdapter implements AccountRepository {
     }
 
     @Override
+    public Optional<Account> findByIdAndUserId(String id, String userId) {
+        if (id == null || userId == null) {
+            return Optional.empty();
+        }
+        return accounts.findByIdAndUserId(id, userId).map(this::toDomain);
+    }
+
+    @Override
     public List<Account> findAll() {
         return accounts.findAll().stream()
                 .map(this::toDomain)

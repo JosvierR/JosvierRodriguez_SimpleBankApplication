@@ -7,6 +7,9 @@ import com.josvier.simplebank.auth.dto.response.VerifyResponse;
 import com.josvier.simplebank.auth.service.AuthService;
 import com.josvier.simplebank.dto.response.ErrorResponse;
 import com.josvier.simplebank.security.service.CustomUserDetailsService;
+import com.josvier.simplebank.security.actor.CurrentActor;
+import com.josvier.simplebank.security.actor.CurrentActorProvider;
+import com.josvier.simplebank.security.authorization.RolePermissions;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -36,13 +39,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final CurrentActorProvider currentActorProvider;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, CurrentActorProvider currentActorProvider) {
         this.authService = authService;
+        this.currentActorProvider = currentActorProvider;
     }
 
     @Operation(summary = "Register an API user",
-            description = "Public. The new login is always USER. This does not create a customer in users.")
+            description = "Public. The new login is an unlinked CUSTOMER. This does not create a bank customer.")
     @SecurityRequirements
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Registered and token issued"),
@@ -85,8 +90,12 @@ public class AuthController {
     })
     @GetMapping("/verify")
     public ResponseEntity<VerifyResponse> verify(@AuthenticationPrincipal UserDetails principal) {
+        CurrentActor actor = currentActorProvider.current();
+        String primaryRole = RolePermissions.effectiveRole(actor.primaryRole()).name();
         return ResponseEntity.ok(new VerifyResponse(
                 principal.getUsername(),
+                primaryRole,
+                actor.bankUserId() != null,
                 CustomUserDetailsService.roleNames(principal)
         ));
     }

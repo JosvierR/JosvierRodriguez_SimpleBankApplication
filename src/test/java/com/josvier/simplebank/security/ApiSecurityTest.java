@@ -19,6 +19,9 @@ import com.josvier.simplebank.security.filter.JwtAuthenticationFilter;
 import com.josvier.simplebank.security.filter.SecurityErrorWriter;
 import com.josvier.simplebank.security.jwt.JwtService;
 import com.josvier.simplebank.security.service.CustomUserDetailsService;
+import com.josvier.simplebank.security.actor.CurrentActor;
+import com.josvier.simplebank.security.actor.CurrentActorProvider;
+import org.junit.jupiter.api.BeforeEach;
 import com.josvier.simplebank.service.AccountService;
 import com.josvier.simplebank.service.AuditService;
 import com.josvier.simplebank.service.UserService;
@@ -92,6 +95,9 @@ class ApiSecurityTest {
     private AuthUserRepository authUsers;
 
     @MockitoBean
+    private CurrentActorProvider currentActorProvider;
+
+    @MockitoBean
     private UserService userService;
 
     @MockitoBean
@@ -100,10 +106,16 @@ class ApiSecurityTest {
     @MockitoBean
     private AuditService auditService;
 
+    @BeforeEach
+    void currentActor() {
+        when(currentActorProvider.current()).thenReturn(
+                new CurrentActor("68dc1234567890abcdef0101", "ada", AuthRole.USER, null));
+    }
+
     @Test
     void register_isPublic() throws Exception {
         when(authService.register(any())).thenReturn(
-                new AuthResponse("issued-token", "Bearer", 3600, "ada", List.of("USER")));
+                new AuthResponse("issued-token", "Bearer", 3600, "ada", List.of("CUSTOMER")));
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -114,7 +126,7 @@ class ApiSecurityTest {
                 .andExpect(header().string("Cache-Control", "no-store"))
                 .andExpect(header().string("Pragma", "no-cache"))
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
-                .andExpect(jsonPath("$.roles[0]").value("USER"))
+                .andExpect(jsonPath("$.roles[0]").value("CUSTOMER"))
                 .andExpect(jsonPath("$.password").doesNotExist())
                 .andExpect(jsonPath("$.passwordHash").doesNotExist());
     }
@@ -122,7 +134,7 @@ class ApiSecurityTest {
     @Test
     void registration_acceptsSpacedIdentityBeforeNormalization() throws Exception {
         when(authService.register(any())).thenReturn(
-                new AuthResponse("issued-token", "Bearer", 3600, "josvier", List.of("USER")));
+                new AuthResponse("issued-token", "Bearer", 3600, "josvier", List.of("CUSTOMER")));
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -140,7 +152,7 @@ class ApiSecurityTest {
     @Test
     void login_isPublic() throws Exception {
         when(authService.login(any())).thenReturn(
-                new AuthResponse("issued-token", "Bearer", 3600, "ada", List.of("USER")));
+                new AuthResponse("issued-token", "Bearer", 3600, "ada", List.of("CUSTOMER")));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -223,13 +235,12 @@ class ApiSecurityTest {
     }
 
     @Test
-    void getUsers_withToken_reachesController() throws Exception {
+    void customerCallingGlobalUsers_isForbidden() throws Exception {
         when(authUsers.findByUsername("ada")).thenReturn(Optional.of(ada()));
         when(userService.getUsers()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/users").header("Authorization", "Bearer " + tokenForAda()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -239,7 +250,9 @@ class ApiSecurityTest {
         mockMvc.perform(get("/api/auth/verify").header("Authorization", "Bearer " + tokenForAda()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("ada"))
-                .andExpect(jsonPath("$.roles[0]").value("USER"));
+                .andExpect(jsonPath("$.primaryRole").value("CUSTOMER"))
+                .andExpect(jsonPath("$.bankUserLinked").value(false))
+                .andExpect(jsonPath("$.roles[0]").value("CUSTOMER"));
     }
 
     @Test

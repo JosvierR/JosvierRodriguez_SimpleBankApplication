@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuditController.class)
 @Import(GlobalExceptionHandler.class)
-@WithMockUser
+@WithMockUser(roles = "ADMIN")
 class AuditControllerTest {
 
     @Autowired

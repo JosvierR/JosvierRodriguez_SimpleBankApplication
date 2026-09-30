@@ -16,18 +16,25 @@ public class AuthUser {
     private String username;
     private String email;
     private String passwordHash;
-    private final Set<AuthRole> roles;
-    private final boolean enabled;
+    private Set<AuthRole> roles;
+    private boolean enabled;
+    private String bankUserId;
     private final LocalDateTime createdAt;
 
     public AuthUser(String username, String email, String passwordHash, Set<AuthRole> roles,
                     boolean enabled, LocalDateTime createdAt) {
+        this(username, email, passwordHash, roles, enabled, createdAt, null);
+    }
+
+    public AuthUser(String username, String email, String passwordHash, Set<AuthRole> roles,
+                    boolean enabled, LocalDateTime createdAt, String bankUserId) {
         this.username = username;
         this.email = email;
         this.passwordHash = passwordHash;
         this.roles = Set.copyOf(roles);
         this.enabled = enabled;
         this.createdAt = createdAt;
+        this.bankUserId = bankUserId;
     }
 
     public void setId(String id) {
@@ -54,8 +61,41 @@ public class AuthUser {
         return roles;
     }
 
+    public AuthRole getPrimaryRole() {
+        if (roles.contains(AuthRole.ADMIN)) {
+            return AuthRole.ADMIN;
+        }
+        return roles.stream()
+                .filter(role -> role != AuthRole.USER)
+                .findFirst()
+                .orElse(AuthRole.CUSTOMER);
+    }
+
+    public void changePrimaryRole(AuthRole role) {
+        if (role == null || role == AuthRole.USER) {
+            throw new IllegalArgumentException("A current primary role is required");
+        }
+        this.roles = Set.of(role);
+    }
+
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public String getBankUserId() {
+        return bankUserId;
+    }
+
+    public void linkBankUser(String bankUserId) {
+        this.bankUserId = bankUserId;
+    }
+
+    public void clearBankUserLink() {
+        this.bankUserId = null;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -68,6 +108,7 @@ public class AuthUser {
     @Override
     public String toString() {
         return "AuthUser{id='" + id + "', username='" + username + "', email='" + email
-                + "', roles=" + roles + ", enabled=" + enabled + "}";
+                + "', roles=" + roles + ", enabled=" + enabled + ", bankUserLinked="
+                + (bankUserId != null) + "}";
     }
 }

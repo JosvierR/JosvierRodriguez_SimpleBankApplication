@@ -5,6 +5,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Spring Data infrastructure for the {@code accounts} collection.
@@ -15,6 +16,8 @@ import java.util.List;
 public interface SpringDataAccountMongoRepository extends MongoRepository<AccountDocument, String> {
 
     List<AccountDocument> findByUserId(String userId);
+
+    Optional<AccountDocument> findByIdAndUserId(String id, String userId);
 
     List<AccountDocument> findByBalanceGreaterThanEqual(BigDecimal balance);
 }

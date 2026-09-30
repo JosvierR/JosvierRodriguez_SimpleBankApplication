@@ -2,6 +2,7 @@ package com.josvier.simplebank.security.service;
 
 import com.josvier.simplebank.auth.model.AuthUser;
 import com.josvier.simplebank.auth.repository.AuthUserRepository;
+import com.josvier.simplebank.security.authorization.RolePermissions;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -37,6 +38,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     public UserDetails toUserDetails(AuthUser user) {
         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
+                .map(RolePermissions::effectiveRole)
+                .distinct()
                 .map(role -> new SimpleGrantedAuthority(ROLE_PREFIX + role.name()))
                 .toList();
         return User.withUsername(user.getUsername())
@@ -48,7 +51,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     public static String roleName(String authority) {
         if (authority != null && authority.startsWith(ROLE_PREFIX)) {
-            return authority.substring(ROLE_PREFIX.length());
+            String name = authority.substring(ROLE_PREFIX.length());
+            return "USER".equals(name) ? "CUSTOMER" : name;
         }
         return authority;
     }

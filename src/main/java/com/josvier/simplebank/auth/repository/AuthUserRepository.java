@@ -3,6 +3,8 @@ package com.josvier.simplebank.auth.repository;
 import com.josvier.simplebank.auth.model.AuthUser;
 
 import java.util.Optional;
+import java.util.List;
+import com.josvier.simplebank.auth.model.AuthRole;
 
 /**
  * Storage port for API logins. Authentication services depend on this interface,
@@ -16,7 +18,17 @@ public interface AuthUserRepository {
 
     Optional<AuthUser> findByEmail(String email);
 
+    Optional<AuthUser> findById(String id);
+
+    Optional<AuthUser> findByBankUserId(String bankUserId);
+
+    List<AuthUser> findAll();
+
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
+
+    boolean existsByBankUserId(String bankUserId);
+
+    long countEnabledByRole(AuthRole role);
 }

@@ -21,9 +21,12 @@ import com.josvier.simplebank.repository.TransactionRepository;
 import com.josvier.simplebank.repository.UserRepository;
 import com.josvier.simplebank.security.actor.CurrentActor;
 import com.josvier.simplebank.security.actor.CurrentActorProvider;
+import com.josvier.simplebank.security.authorization.BankAuthorizationService;
+import com.josvier.simplebank.security.authorization.BankPermission;
 import com.josvier.simplebank.service.AccountService;
 import com.josvier.simplebank.service.AuditService;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -59,23 +62,38 @@ public class AccountServiceImpl implements AccountService {
     private final TransactionRepository transactionRepository;
     private final AuditService auditService;
     private final CurrentActorProvider currentActorProvider;
+    private final BankAuthorizationService authorization;
 
     private final ConcurrentHashMap<String, Object> accountLocks = new ConcurrentHashMap<>();
+
+    @Autowired
+    public AccountServiceImpl(AccountRepository accountRepository,
+                              UserRepository userRepository,
+                              TransactionRepository transactionRepository,
+                              AuditService auditService,
+                              CurrentActorProvider currentActorProvider,
+                              BankAuthorizationService authorization) {
+        this.accountRepository = accountRepository;
+        this.userRepository = userRepository;
+        this.transactionRepository = transactionRepository;
+        this.auditService = auditService;
+        this.currentActorProvider = currentActorProvider;
+        this.authorization = authorization;
+    }
 
     public AccountServiceImpl(AccountRepository accountRepository,
                               UserRepository userRepository,
                               TransactionRepository transactionRepository,
                               AuditService auditService,
                               CurrentActorProvider currentActorProvider) {
-        this.accountRepository = accountRepository;
-        this.userRepository = userRepository;
-        this.transactionRepository = transactionRepository;
-        this.auditService = auditService;
-        this.currentActorProvider = currentActorProvider;
+        this(accountRepository, userRepository, transactionRepository, auditService,
+                currentActorProvider, new BankAuthorizationService(currentActorProvider));
     }
 
     @Override
     public AccountResponse createAccount(CreateAccountRequest request) {
+        CurrentActor actor = authorization.currentActor();
+        authorization.require(actor, BankPermission.ACCOUNT_CREATE);
         User user = findUser(request.userId());
         Account account = new Account(user.getId(), zeroMoney(), request.accountType(), LocalDateTime.now());
         Account saved = accountRepository.save(account);
@@ -85,7 +103,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountResponse getAccount(String accountId) {
         synchronized (lockFor(accountId)) {
-            Account account = findAccount(accountId);
+            CurrentActor actor = authorization.currentActor();
+            Account account = findReadableAccount(actor, accountId);
             User user = findUser(account.getUserId());
             return toAccountResponse(account, user);
         }
@@ -93,6 +112,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<AccountResponse> getAccounts() {
+        CurrentActor actor = authorization.currentActor();
+        authorization.require(actor, BankPermission.ACCOUNT_ANY_READ);
         return accountRepository.findAll().stream()
                 .map(account -> toAccountResponse(account, findUser(account.getUserId())))
                 .toList();
@@ -100,6 +121,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<AccountResponse> getAccountsByUser(String userId) {
+        CurrentActor actor = authorization.currentActor();
+        authorization.requireReadCustomer(actor, userId);
         User user = findUser(userId);
         return accountRepository.findByUserId(userId).stream()
                 .map(account -> toAccountResponse(account, user))
@@ -108,6 +131,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<AccountResponse> getPremiumAccounts(BigDecimal threshold) {
+        CurrentActor actor = authorization.currentActor();
+        authorization.require(actor, BankPermission.PREMIUM_ACCOUNT_READ);
         BigDecimal minimum = requireThreshold(threshold);
         return accountRepository.findByBalanceGreaterThanEqual(minimum).stream()
                 .map(account -> toAccountResponse(account, findUser(account.getUserId())))
@@ -116,6 +141,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public AccountResponse updateAccount(String accountId, UpdateAccountRequest request) {
+        CurrentActor actor = authorization.currentActor();
+        authorization.require(actor, BankPermission.ACCOUNT_UPDATE);
         synchronized (lockFor(accountId)) {
             Account account = findAccount(accountId);
             User user = findUser(account.getUserId());
@@ -126,6 +153,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public void deleteAccount(String accountId) {
+        CurrentActor actor = authorization.currentActor();
+        authorization.require(actor, BankPermission.ACCOUNT_DELETE);
         synchronized (lockFor(accountId)) {
             findAccount(accountId);
             if (!transactionRepository.findByAccountId(accountId).isEmpty()) {
@@ -138,6 +167,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public AccountResponse deposit(String accountId, BigDecimal amount) {
+        CurrentActor actor = authorization.currentActor();
+        authorization.require(actor, BankPermission.DEPOSIT_EXECUTE);
         synchronized (lockFor(accountId)) {
             Account account = findAccount(accountId);
             BigDecimal normalizedAmount = requirePositiveAmount(amount);
@@ -155,6 +186,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public AccountResponse withdraw(String accountId, BigDecimal amount) {
+        CurrentActor actor = authorization.currentActor();
+        authorization.require(actor, BankPermission.WITHDRAW_EXECUTE);
         synchronized (lockFor(accountId)) {
             Account account = findAccount(accountId);
             BigDecimal normalizedAmount = requirePositiveAmount(amount);
@@ -188,10 +221,16 @@ public class AccountServiceImpl implements AccountService {
                 ? request.toAccountId()
                 : request.fromAccountId();
 
+        CurrentActor actor = authorization.currentActor();
+        if (!authorization.has(actor, BankPermission.TRANSFER_ANY)
+                && !authorization.has(actor, BankPermission.TRANSFER_SELF)) {
+            authorization.require(actor, BankPermission.TRANSFER_ANY);
+        }
         synchronized (lockFor(firstLock)) {
             synchronized (lockFor(secondLock)) {
-                Account from = findAccount(request.fromAccountId());
-                Account to = findAccount(request.toAccountId());
+                Account from = findTransferAccount(actor, request.fromAccountId());
+                Account to = findTransferAccount(actor, request.toAccountId());
+                authorization.requireTransfer(actor, from, to);
                 User fromUser = findUser(from.getUserId());
                 User toUser = findUser(to.getUserId());
                 BigDecimal normalizedAmount = requirePositiveAmount(request.amount());
@@ -234,7 +273,9 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public List<TransactionResponse> getTransactions(String accountId) {
         synchronized (lockFor(accountId)) {
-            findAccount(accountId);
+            CurrentActor actor = authorization.currentActor();
+            Account account = findReadableAccount(actor, accountId);
+            authorization.requireReadTransactions(actor, account);
             return transactionRepository.findByAccountId(accountId).stream()
                     .map(this::toTransactionResponse)
                     .toList();
@@ -301,6 +342,26 @@ public class AccountServiceImpl implements AccountService {
     private Account findAccount(String accountId) {
         return accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account with id " + accountId + " was not found"));
+    }
+
+    private Account findReadableAccount(CurrentActor actor, String accountId) {
+        if (authorization.isCustomer(actor)) {
+            String bankUserId = authorization.requireCustomerLink(actor);
+            return accountRepository.findByIdAndUserId(accountId, bankUserId)
+                    .orElseThrow(authorization::hiddenResource);
+        }
+        Account account = findAccount(accountId);
+        authorization.requireReadAccount(actor, account);
+        return account;
+    }
+
+    private Account findTransferAccount(CurrentActor actor, String accountId) {
+        if (authorization.isCustomer(actor)) {
+            String bankUserId = authorization.requireCustomerLink(actor);
+            return accountRepository.findByIdAndUserId(accountId, bankUserId)
+                    .orElseThrow(authorization::hiddenResource);
+        }
+        return findAccount(accountId);
     }
 
     private User findUser(String userId) {
