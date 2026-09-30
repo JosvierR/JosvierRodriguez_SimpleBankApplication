@@ -8,6 +8,7 @@ import com.josvier.simplebank.auth.model.AuthUser;
 import com.josvier.simplebank.auth.repository.AuthUserRepository;
 import com.josvier.simplebank.auth.service.AuthService;
 import com.josvier.simplebank.controller.AccountController;
+import com.josvier.simplebank.controller.AdminController;
 import com.josvier.simplebank.controller.AuditController;
 import com.josvier.simplebank.controller.UserController;
 import com.josvier.simplebank.exception.DuplicateResourceException;
@@ -45,6 +46,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -53,7 +55,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         AuthController.class,
         UserController.class,
         AccountController.class,
-        AuditController.class
+        AuditController.class,
+        AdminController.class
 })
 @Import({
         SecurityConfiguration.class,
@@ -103,6 +106,8 @@ class ApiSecurityTest {
                                 {"username":"ada","email":"ada@example.com","password":"password123"}
                                 """))
                 .andExpect(status().isCreated())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(header().string("Pragma", "no-cache"))
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.roles[0]").value("USER"))
                 .andExpect(jsonPath("$.password").doesNotExist())
@@ -120,17 +125,31 @@ class ApiSecurityTest {
                                 {"username":"ada","password":"password123"}
                                 """))
                 .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "no-store"))
                 .andExpect(jsonPath("$.tokenType").value("Bearer"));
     }
 
     @Test
-    void register_invalidPassword_returnsBadRequest() throws Exception {
+    void password_shorterThan8_returns400() throws Exception {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"username":"ada","email":"ada@example.com","password":"short"}
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void password_over72Utf8Bytes_returns400() throws Exception {
+        String tooLong = "a".repeat(73);
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"username":"ada","email":"ada@example.com","password":"%s"}
+                                """.formatted(tooLong)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString(
+                        "Password must not exceed 72 UTF-8 bytes")));
     }
 
     @Test
@@ -163,6 +182,7 @@ class ApiSecurityTest {
     void getUsers_withoutToken_returnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isUnauthorized())
+                .andExpect(header().string("WWW-Authenticate", "Bearer"))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.message").value("Authentication is required"));
     }
@@ -204,6 +224,7 @@ class ApiSecurityTest {
         mockMvc.perform(get("/api/users").header("Authorization", "Bearer not-a-token"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Invalid or expired token"))
+                .andExpect(header().string("WWW-Authenticate", "Bearer"))
                 .andExpect(jsonPath("$.trace").doesNotExist());
     }
 
@@ -219,13 +240,72 @@ class ApiSecurityTest {
     }
 
     @Test
-    void swagger_isPublic() throws Exception {
-        mockMvc.perform(get("/swagger-ui/index.html")).andExpect(status().isNotFound());
-        mockMvc.perform(get("/v3/api-docs")).andExpect(status().isNotFound());
+    void emptyBearerToken_returnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/users").header("Authorization", "Bearer"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invalid or expired token"));
+    }
+
+    @Test
+    void blankBearerToken_returnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/users").header("Authorization", "Bearer     "))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invalid or expired token"));
+    }
+
+    @Test
+    void basicAuthorization_onProtectedRoute_requiresAuthentication() throws Exception {
+        mockMvc.perform(get("/api/users").header("Authorization", "Basic abc"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Authentication is required"));
+    }
+
+    @Test
+    void disabledUser_withPreviouslyValidJwt_returnsUnauthorized() throws Exception {
+        when(authUsers.findByUsername("ada")).thenReturn(Optional.of(ada()));
+        String token = tokenForAda();
+        when(authUsers.findByUsername("ada")).thenReturn(Optional.of(disabledAda()));
+
+        mockMvc.perform(get("/api/users").header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string("WWW-Authenticate", "Bearer"))
+                .andExpect(jsonPath("$.message").value("Invalid or expired token"));
+    }
+
+    @Test
+    void user_callingAdminWhoami_returnsForbiddenJson() throws Exception {
+        when(authUsers.findByUsername("ada")).thenReturn(Optional.of(ada()));
+
+        mockMvc.perform(get("/api/admin/whoami").header("Authorization", "Bearer " + tokenForAda()))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.message").value("Access is denied"));
+    }
+
+    @Test
+    void admin_callingWhoami_returnsOk() throws Exception {
+        when(authUsers.findByUsername("ada")).thenReturn(Optional.of(adminAda()));
+
+        mockMvc.perform(get("/api/admin/whoami").header("Authorization", "Bearer " + tokenFor("ada")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("ada"))
+                .andExpect(jsonPath("$.roles[0]").value("ADMIN"));
+    }
+
+    @Test
+    void swaggerPaths_areNotRejectedBySecurityInMvcSlice() throws Exception {
+        mockMvc.perform(get("/swagger-ui/index.html"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isNotFound());
     }
 
     private String tokenForAda() {
-        return jwtService.generateToken(userDetailsService.loadUserByUsername("ada"));
+        return tokenFor("ada");
+    }
+
+    private String tokenFor(String username) {
+        return jwtService.generateToken(userDetailsService.loadUserByUsername(username));
     }
 
     private static AuthUser ada() {
@@ -234,6 +314,28 @@ class ApiSecurityTest {
                 "ada@example.com",
                 "stored-hash",
                 Set.of(AuthRole.USER),
+                true,
+                LocalDateTime.of(2026, 9, 30, 15, 0)
+        );
+    }
+
+    private static AuthUser disabledAda() {
+        return new AuthUser(
+                "ada",
+                "ada@example.com",
+                "stored-hash",
+                Set.of(AuthRole.USER),
+                false,
+                LocalDateTime.of(2026, 9, 30, 15, 0)
+        );
+    }
+
+    private static AuthUser adminAda() {
+        return new AuthUser(
+                "ada",
+                "ada@example.com",
+                "stored-hash",
+                Set.of(AuthRole.ADMIN),
                 true,
                 LocalDateTime.of(2026, 9, 30, 15, 0)
         );

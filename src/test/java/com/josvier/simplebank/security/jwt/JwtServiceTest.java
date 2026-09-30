@@ -11,6 +11,7 @@ import java.time.ZoneOffset;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JwtServiceTest {
@@ -64,6 +65,38 @@ class JwtServiceTest {
         String token = jwtService.generateToken(user("ada"));
 
         assertFalse(jwtService.validateToken(token, user("grace")));
+    }
+
+    @Test
+    void generatedToken_containsJti() {
+        String token = jwtService.generateToken(user("ada"));
+
+        assertFalse(jwtService.extractJti(token).isBlank());
+    }
+
+    @Test
+    void invalidBase64Secret_failsFast() {
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> new JwtService("not-valid-base64!!!", 3_600_000, ISSUED_AT));
+
+        assertEquals("JWT_SECRET must be Base64", exception.getMessage());
+    }
+
+    @Test
+    void secretShorterThan256Bits_failsFast() {
+        String shortSecret = java.util.Base64.getEncoder().encodeToString(
+                "0123456789abcdef".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> new JwtService(shortSecret, 3_600_000, ISSUED_AT));
+
+        assertEquals("JWT_SECRET must decode to at least 256 bits", exception.getMessage());
+    }
+
+    @Test
+    void nonPositiveExpiration_failsFast() {
+        assertThrows(IllegalStateException.class, () -> new JwtService(TEST_SECRET, 0, ISSUED_AT));
+        assertThrows(IllegalStateException.class, () -> new JwtService(TEST_SECRET, -1, ISSUED_AT));
     }
 
     private static UserDetails user(String username) {

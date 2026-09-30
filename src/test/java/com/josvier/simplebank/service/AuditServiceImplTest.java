@@ -86,7 +86,9 @@ class AuditServiceImplTest {
                 List.of("68dc1234567890abcdef0001", "68dc1234567890abcdef0004"),
                 new BigDecimal("40.00"),
                 List.of("68dc1234567890abcdef0011", "68dc1234567890abcdef0012"),
-                LocalDateTime.of(2026, 9, 29, 12, 0));
+                LocalDateTime.of(2026, 9, 29, 12, 0),
+                null,
+                null);
         record.setId(id);
         return record;
     }

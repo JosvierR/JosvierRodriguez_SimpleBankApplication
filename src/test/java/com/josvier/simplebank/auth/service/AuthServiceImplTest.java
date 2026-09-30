@@ -4,6 +4,7 @@ import com.josvier.simplebank.auth.dto.request.LoginRequest;
 import com.josvier.simplebank.auth.dto.request.RegisterRequest;
 import com.josvier.simplebank.auth.dto.response.AuthResponse;
 import com.josvier.simplebank.auth.exception.InvalidCredentialsException;
+import com.josvier.simplebank.auth.exception.PasswordTooLongException;
 import com.josvier.simplebank.auth.model.AuthRole;
 import com.josvier.simplebank.auth.model.AuthUser;
 import com.josvier.simplebank.auth.repository.AuthUserRepository;
@@ -19,7 +20,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -160,6 +163,112 @@ class AuthServiceImplTest {
 
         assertThrows(InvalidCredentialsException.class,
                 () -> service.login(new LoginRequest("ada", "wrong-password")));
+    }
+
+    @Test
+    void registration_normalizesUsername() {
+        when(authUsers.save(any(AuthUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.register(new RegisterRequest("  Josvier  ", "josvier@example.com", "password123"));
+
+        assertEquals("josvier", savedUser().getUsername());
+    }
+
+    @Test
+    void registration_normalizesEmail() {
+        when(authUsers.save(any(AuthUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.register(new RegisterRequest("josvier", "Josvier@Example.COM ", "password123"));
+
+        assertEquals("josvier@example.com", savedUser().getEmail());
+    }
+
+    @Test
+    void login_normalizesUsername() {
+        AuthUser stored = new AuthUser(
+                "josvier",
+                "josvier@example.com",
+                passwordEncoder.encode("password123"),
+                Set.of(AuthRole.USER),
+                true,
+                LocalDateTime.now(CLOCK)
+        );
+        stored.setId("68dc1234567890abcdef0101");
+        when(authenticationManager.authenticate(any())).thenReturn(
+                new UsernamePasswordAuthenticationToken("josvier", "password123"));
+        when(authUsers.findByUsername("josvier")).thenReturn(Optional.of(stored));
+
+        AuthResponse response = service.login(new LoginRequest("  Josvier  ", "password123"));
+
+        ArgumentCaptor<UsernamePasswordAuthenticationToken> captor =
+                ArgumentCaptor.forClass(UsernamePasswordAuthenticationToken.class);
+        verify(authenticationManager).authenticate(captor.capture());
+        assertEquals("josvier", captor.getValue().getName());
+        assertEquals("josvier", response.username());
+    }
+
+    @Test
+    void register_duplicateUsername_isCaseInsensitive() {
+        when(authUsers.existsByUsername("ada")).thenReturn(true);
+
+        assertThrows(DuplicateResourceException.class,
+                () -> service.register(new RegisterRequest("Ada", "ada@example.com", "password123")));
+        verify(authUsers, never()).save(any());
+    }
+
+    @Test
+    void register_duplicateEmail_isCaseInsensitive() {
+        when(authUsers.existsByEmail("ada@example.com")).thenReturn(true);
+
+        assertThrows(DuplicateResourceException.class,
+                () -> service.register(new RegisterRequest("ada", "ADA@EXAMPLE.COM", "password123")));
+        verify(authUsers, never()).save(any());
+    }
+
+    @Test
+    void password_8Chars_isAccepted() {
+        when(authUsers.save(any(AuthUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.register(new RegisterRequest("ada", "ada@example.com", "12345678"));
+
+        assertTrue(passwordEncoder.matches("12345678", savedUser().getPasswordHash()));
+    }
+
+    @Test
+    void password_over72Utf8Bytes_isRejected() {
+        String tooLong = "a".repeat(73);
+
+        PasswordTooLongException exception = assertThrows(PasswordTooLongException.class,
+                () -> service.register(new RegisterRequest("ada", "ada@example.com", tooLong)));
+
+        assertEquals("Password must not exceed 72 UTF-8 bytes", exception.getMessage());
+        verify(authUsers, never()).save(any());
+    }
+
+    @Test
+    void login_unknownUsername_returnsSameUnauthorizedMessage() {
+        when(authenticationManager.authenticate(any())).thenThrow(new UsernameNotFoundException("missing"));
+
+        assertSameLoginFailure(() -> service.login(new LoginRequest("missing", "password123")));
+    }
+
+    @Test
+    void login_wrongPassword_returnsSameUnauthorizedMessage() {
+        when(authenticationManager.authenticate(any())).thenThrow(new BadCredentialsException("bad"));
+
+        assertSameLoginFailure(() -> service.login(new LoginRequest("ada", "wrong-password")));
+    }
+
+    @Test
+    void login_disabledUser_returnsSameUnauthorizedMessage() {
+        when(authenticationManager.authenticate(any())).thenThrow(new DisabledException("disabled"));
+
+        assertSameLoginFailure(() -> service.login(new LoginRequest("ada", "password123")));
+    }
+
+    private void assertSameLoginFailure(org.junit.jupiter.api.function.Executable login) {
+        InvalidCredentialsException exception = assertThrows(InvalidCredentialsException.class, login);
+        assertEquals("Invalid username or password", exception.getMessage());
     }
 
     private AuthUser savedUser() {

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,14 +49,19 @@ class MongoAuditRepositoryAdapterTest {
                 List.of("68dc1234567890abcdef0001"),
                 new BigDecimal("25.00"),
                 List.of("68dc1234567890abcdef0011"),
-                createdAt));
+                createdAt,
+                "68dc1234567890abcdef0101",
+                "josvier"));
 
         ArgumentCaptor<AuditDocument> captor = ArgumentCaptor.forClass(AuditDocument.class);
         verify(audits).save(captor.capture());
         assertEquals(AuditAction.TRANSFER, captor.getValue().getAction());
         assertEquals(List.of("68dc1234567890abcdef0002", "68dc1234567890abcdef0003"), captor.getValue().getAccountIds());
         assertEquals(0, new BigDecimal("25.00").compareTo(captor.getValue().getAmount()));
+        assertEquals("68dc1234567890abcdef0101", captor.getValue().getActorAuthUserId());
+        assertEquals("josvier", captor.getValue().getActorUsername());
         assertEquals(AUDIT_ID, saved.getId());
+        assertEquals("josvier", saved.getActorUsername());
     }
 
     @Test
@@ -67,6 +73,17 @@ class MongoAuditRepositoryAdapterTest {
         assertEquals(1, found.size());
         assertEquals(AUDIT_ID, found.get(0).getId());
         verify(audits).findAllByOrderByCreatedAtAsc();
+    }
+
+    @Test
+    void legacyAuditWithoutActorStillReads() {
+        when(audits.findById(AUDIT_ID)).thenReturn(Optional.of(document()));
+
+        AuditRecord audit = adapter.findById(AUDIT_ID).orElseThrow();
+
+        assertNull(audit.getActorAuthUserId());
+        assertNull(audit.getActorUsername());
+        assertEquals("68dc1234567890abcdef0001", audit.getUserId());
     }
 
     @Test

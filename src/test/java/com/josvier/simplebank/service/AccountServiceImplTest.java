@@ -20,6 +20,8 @@ import com.josvier.simplebank.model.User;
 import com.josvier.simplebank.repository.AccountRepository;
 import com.josvier.simplebank.repository.TransactionRepository;
 import com.josvier.simplebank.repository.UserRepository;
+import com.josvier.simplebank.security.actor.CurrentActor;
+import com.josvier.simplebank.security.actor.CurrentActorProvider;
 import com.josvier.simplebank.service.AuditService;
 import com.josvier.simplebank.service.impl.AccountServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -58,11 +61,17 @@ class AccountServiceImplTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private CurrentActorProvider currentActorProvider;
+
     private AccountService accountService;
 
     @BeforeEach
     void setUp() {
-        accountService = new AccountServiceImpl(accountRepository, userRepository, transactionRepository, auditService);
+        accountService = new AccountServiceImpl(
+                accountRepository, userRepository, transactionRepository, auditService, currentActorProvider);
+        lenient().when(currentActorProvider.current())
+                .thenReturn(new CurrentActor("68dc1234567890abcdef0101", "josvier"));
     }
 
     @Test
@@ -496,7 +505,9 @@ class AccountServiceImplTest {
                     record.getInvolvedUserIds(),
                     record.getAmount(),
                     record.getTransactionIds(),
-                    record.getCreatedAt());
+                    record.getCreatedAt(),
+                    record.getActorAuthUserId(),
+                    record.getActorUsername());
         });
 
         TransferResponse response = accountService.transfer(new TransferRequest(
@@ -553,6 +564,119 @@ class AccountServiceImplTest {
 
         verify(accountRepository, never()).save(any());
         verify(auditService, never()).record(any());
+    }
+
+    @Test
+    void deposit_auditContainsAuthenticatedActor() {
+        stubUser();
+        when(accountRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.of(account(new BigDecimal("0.00"))));
+        stubSaves();
+
+        accountService.deposit("68dc1234567890abcdef0001", new BigDecimal("500.00"));
+
+        AuditRecord audit = capturedAudit();
+        assertEquals(AuditAction.DEPOSIT, audit.getAction());
+        assertEquals("68dc1234567890abcdef0001", audit.getUserId());
+        assertEquals("68dc1234567890abcdef0101", audit.getActorAuthUserId());
+        assertEquals("josvier", audit.getActorUsername());
+    }
+
+    @Test
+    void withdraw_auditContainsAuthenticatedActor() {
+        stubUser();
+        when(accountRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.of(account(new BigDecimal("500.00"))));
+        stubSaves();
+
+        accountService.withdraw("68dc1234567890abcdef0001", new BigDecimal("200.00"));
+
+        AuditRecord audit = capturedAudit();
+        assertEquals(AuditAction.WITHDRAW, audit.getAction());
+        assertEquals("68dc1234567890abcdef0001", audit.getUserId());
+        assertEquals("josvier", audit.getActorUsername());
+    }
+
+    @Test
+    void transfer_auditContainsAuthenticatedActor() {
+        stubUser();
+        when(accountRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.of(account(new BigDecimal("500.00"))));
+        when(accountRepository.findById("68dc1234567890abcdef0002"))
+                .thenReturn(Optional.of(accountWith("68dc1234567890abcdef0002", new BigDecimal("20.00"))));
+        when(accountRepository.save(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> {
+            Transaction saved = invocation.getArgument(0);
+            if (saved.getId() == null) {
+                saved.setId(saved.getType() == TransactionType.WITHDRAW
+                        ? "68dc1234567890abcdef0011"
+                        : "68dc1234567890abcdef0012");
+            }
+            return saved;
+        });
+        when(auditService.record(any(AuditRecord.class))).thenAnswer(invocation -> {
+            AuditRecord record = invocation.getArgument(0);
+            record.setId("68dc1234567890abcdef0088");
+            return new AuditResponse(
+                    record.getId(),
+                    record.getAction(),
+                    record.getUserId(),
+                    "Customer Two",
+                    record.getAccountIds(),
+                    record.getInvolvedUserIds(),
+                    record.getAmount(),
+                    record.getTransactionIds(),
+                    record.getCreatedAt(),
+                    record.getActorAuthUserId(),
+                    record.getActorUsername());
+        });
+
+        accountService.transfer(new TransferRequest(
+                "68dc1234567890abcdef0001", "68dc1234567890abcdef0002", new BigDecimal("100.00")));
+
+        AuditRecord audit = capturedAudit();
+        assertEquals(AuditAction.TRANSFER, audit.getAction());
+        assertEquals(List.of("68dc1234567890abcdef0001", "68dc1234567890abcdef0002"), audit.getAccountIds());
+        assertEquals(2, audit.getTransactionIds().size());
+        assertEquals("68dc1234567890abcdef0101", audit.getActorAuthUserId());
+        assertEquals("josvier", audit.getActorUsername());
+    }
+
+    @Test
+    void rejectedDeposit_createsNoAudit() {
+        when(accountRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.of(account(new BigDecimal("100.00"))));
+
+        assertThrows(InvalidTransactionException.class,
+                () -> accountService.deposit("68dc1234567890abcdef0001", new BigDecimal("0")));
+
+        verify(auditService, never()).record(any());
+    }
+
+    @Test
+    void rejectedWithdrawal_createsNoAudit() {
+        when(accountRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.of(account(new BigDecimal("10.00"))));
+
+        assertThrows(InvalidTransactionException.class,
+                () -> accountService.withdraw("68dc1234567890abcdef0001", new BigDecimal("50.00")));
+
+        verify(auditService, never()).record(any());
+    }
+
+    @Test
+    void rejectedTransfer_createsNoAudit() {
+        stubUser();
+        when(accountRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.of(account(new BigDecimal("10.00"))));
+        when(accountRepository.findById("68dc1234567890abcdef0002"))
+                .thenReturn(Optional.of(accountWith("68dc1234567890abcdef0002", new BigDecimal("0.00"))));
+
+        assertThrows(InvalidTransactionException.class,
+                () -> accountService.transfer(new TransferRequest(
+                        "68dc1234567890abcdef0001", "68dc1234567890abcdef0002", new BigDecimal("50.00"))));
+
+        verify(auditService, never()).record(any());
+    }
+
+    private AuditRecord capturedAudit() {
+        ArgumentCaptor<AuditRecord> audit = ArgumentCaptor.forClass(AuditRecord.class);
+        verify(auditService).record(audit.capture());
+        return audit.getValue();
     }
 
     private void stubUser() {
