@@ -1,0 +1,21 @@
+{
+  "product": "Producto",
+  "security": "Seguridad",
+  "demo": "Demostración",
+  "headline": "Operaciones bancarias, claramente organizadas.",
+  "body": "Un entorno enfocado para cuentas de clientes, operaciones del personal, control de acceso y auditoría.",
+  "openDemo": "Abrir demostración",
+  "customerTitle": "Acceso del cliente",
+  "customerBody": "Cada cliente ve solo sus cuentas, saldos y transferencias.",
+  "staffTitle": "Operaciones por rol",
+  "staffBody": "Cajeros, gerentes y auditores trabajan dentro de permisos definidos.",
+  "auditTitle": "Auditable por diseño",
+  "auditBody": "Los movimientos de dinero y los cambios de acceso dejan un historial trazable.",
+  "securityTitle": "El acceso sigue al rol",
+  "securityBody": "El aislamiento del cliente, los permisos del personal y el control del administrador los aplica la API.",
+  "demoTitle": "Pruebe la demostración educativa",
+  "demoBody": "Las cuentas de prueba públicas están documentadas en el repositorio. Solo valen en el conjunto de datos aislado.",
+  "viewCredentials": "Ver credenciales de demostración",
+  "footer": "Demostración educativa. No es un banco en producción.",
+  "previewLabel": "Vista de la interfaz"
+}

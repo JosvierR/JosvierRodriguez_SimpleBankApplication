@@ -1,0 +1,14 @@
+{
+  "title": "Gestion des accès",
+  "securityTitle": "Audit de sécurité",
+  "search": "Rechercher des identités",
+  "role": "Rôle",
+  "status": "État",
+  "enabled": "Activé",
+  "disabled": "Désactivé",
+  "allRoles": "Tous les rôles",
+  "allStatuses": "Tous les états",
+  "noLinked": "Aucun client lié",
+  "username": "Nom d’utilisateur",
+  "linkedCustomer": "Client lié"
+}

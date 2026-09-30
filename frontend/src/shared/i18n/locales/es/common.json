@@ -1,0 +1,53 @@
+{
+  "skip": "Saltar al contenido",
+  "loading": "Cargando",
+  "close": "Cerrar",
+  "cancel": "Cancelar",
+  "delete": "Eliminar",
+  "save": "Guardar cambios",
+  "working": "Trabajando…",
+  "retry": "Reintentar",
+  "search": "Buscar",
+  "apply": "Aplicar",
+  "clear": "Limpiar",
+  "actions": "Acciones",
+  "signOut": "Cerrar sesión",
+  "openApp": "Abrir aplicación",
+  "demoBadge": "Entorno de demostración",
+  "demoNote": "Use las cuentas de prueba públicas documentadas en el repositorio.",
+  "language": "Idioma",
+  "languages": {
+    "en": "English",
+    "es": "Español",
+    "fr": "Français"
+  },
+  "roles": {
+    "CUSTOMER": "Cliente",
+    "TELLER": "Cajero",
+    "MANAGER": "Gerente",
+    "AUDITOR": "Auditor",
+    "ADMIN": "Administrador"
+  },
+  "nav": {
+    "primary": "Navegación principal",
+    "open": "Abrir navegación",
+    "close": "Cerrar navegación",
+    "menu": "Navegación",
+    "overview": "Resumen",
+    "myAccounts": "Mis cuentas",
+    "transfer": "Transferencia",
+    "transfers": "Transferencias",
+    "profile": "Perfil",
+    "customers": "Clientes",
+    "accounts": "Cuentas",
+    "audit": "Auditoría",
+    "access": "Gestión de acceso",
+    "securityAudit": "Auditoría de seguridad"
+  },
+  "records_one": "{{count}} registro",
+  "records_other": "{{count}} registros",
+  "customers_one": "{{count}} cliente",
+  "customers_other": "{{count}} clientes",
+  "accounts_one": "{{count}} cuenta",
+  "accounts_other": "{{count}} cuentas"
+}

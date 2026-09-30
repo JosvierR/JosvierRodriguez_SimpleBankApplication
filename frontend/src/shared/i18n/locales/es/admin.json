@@ -1,0 +1,14 @@
+{
+  "title": "Gestión de acceso",
+  "securityTitle": "Auditoría de seguridad",
+  "search": "Buscar identidades",
+  "role": "Rol",
+  "status": "Estado",
+  "enabled": "Activa",
+  "disabled": "Desactivada",
+  "allRoles": "Todos los roles",
+  "allStatuses": "Todos los estados",
+  "noLinked": "Sin cliente vinculado",
+  "username": "Usuario",
+  "linkedCustomer": "Cliente vinculado"
+}

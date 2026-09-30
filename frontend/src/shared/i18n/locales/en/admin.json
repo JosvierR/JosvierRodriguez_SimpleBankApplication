@@ -1,0 +1,14 @@
+{
+  "title": "Access management",
+  "securityTitle": "Security audit",
+  "search": "Search identities",
+  "role": "Role",
+  "status": "Status",
+  "enabled": "Enabled",
+  "disabled": "Disabled",
+  "allRoles": "All roles",
+  "allStatuses": "All statuses",
+  "noLinked": "No linked customer",
+  "username": "Username",
+  "linkedCustomer": "Linked customer"
+}

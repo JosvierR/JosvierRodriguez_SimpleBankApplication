@@ -1,0 +1,21 @@
+{
+  "product": "Produit",
+  "security": "Sécurité",
+  "demo": "Démo",
+  "headline": "Des opérations bancaires, clairement organisées.",
+  "body": "Un espace conçu pour les comptes clients, les opérations du personnel, le contrôle des accès et l’audit.",
+  "openDemo": "Ouvrir la démo",
+  "customerTitle": "Accès client",
+  "customerBody": "Chaque client ne voit que ses comptes, ses soldes et ses virements.",
+  "staffTitle": "Opérations selon le rôle",
+  "staffBody": "Guichetiers, gestionnaires et auditeurs travaillent dans un périmètre de droits défini.",
+  "auditTitle": "Auditable par conception",
+  "auditBody": "Les mouvements d’argent et les changements d’accès conservent un historique traçable.",
+  "securityTitle": "L’accès suit le rôle",
+  "securityBody": "L’isolation des clients, les droits du personnel et le contrôle administrateur sont appliqués par l’API.",
+  "demoTitle": "Essayer la démonstration éducative",
+  "demoBody": "Les comptes de test publics sont documentés dans le dépôt. Ils ne valent que pour le jeu de données isolé.",
+  "viewCredentials": "Voir les identifiants de démonstration",
+  "footer": "Démonstration éducative. Ce n’est pas une banque de production.",
+  "previewLabel": "Aperçu de l’interface"
+}

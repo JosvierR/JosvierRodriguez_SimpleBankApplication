@@ -1,0 +1,53 @@
+{
+  "skip": "Skip to content",
+  "loading": "Loading",
+  "close": "Close",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "save": "Save changes",
+  "working": "Working…",
+  "retry": "Try again",
+  "search": "Search",
+  "apply": "Apply",
+  "clear": "Clear",
+  "actions": "Actions",
+  "signOut": "Log out",
+  "openApp": "Open app",
+  "demoBadge": "Demo environment",
+  "demoNote": "Use the public test accounts documented in the repository.",
+  "language": "Language",
+  "languages": {
+    "en": "English",
+    "es": "Español",
+    "fr": "Français"
+  },
+  "roles": {
+    "CUSTOMER": "Customer",
+    "TELLER": "Teller",
+    "MANAGER": "Manager",
+    "AUDITOR": "Auditor",
+    "ADMIN": "Administrator"
+  },
+  "nav": {
+    "primary": "Primary navigation",
+    "open": "Open navigation",
+    "close": "Close navigation",
+    "menu": "Navigation",
+    "overview": "Overview",
+    "myAccounts": "My Accounts",
+    "transfer": "Transfer",
+    "transfers": "Transfers",
+    "profile": "Profile",
+    "customers": "Customers",
+    "accounts": "Accounts",
+    "audit": "Audit",
+    "access": "Access Management",
+    "securityAudit": "Security Audit"
+  },
+  "records_one": "{{count}} record",
+  "records_other": "{{count}} records",
+  "customers_one": "{{count}} customer",
+  "customers_other": "{{count}} customers",
+  "accounts_one": "{{count}} account",
+  "accounts_other": "{{count}} accounts"
+}

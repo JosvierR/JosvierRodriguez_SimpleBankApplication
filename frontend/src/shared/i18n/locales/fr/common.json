@@ -1,0 +1,53 @@
+{
+  "skip": "Aller au contenu",
+  "loading": "Chargement",
+  "close": "Fermer",
+  "cancel": "Annuler",
+  "delete": "Supprimer",
+  "save": "Enregistrer",
+  "working": "Traitement…",
+  "retry": "Réessayer",
+  "search": "Rechercher",
+  "apply": "Appliquer",
+  "clear": "Effacer",
+  "actions": "Actions",
+  "signOut": "Se déconnecter",
+  "openApp": "Ouvrir l’application",
+  "demoBadge": "Environnement de démonstration",
+  "demoNote": "Utilisez les comptes de test publics documentés dans le dépôt.",
+  "language": "Langue",
+  "languages": {
+    "en": "English",
+    "es": "Español",
+    "fr": "Français"
+  },
+  "roles": {
+    "CUSTOMER": "Client",
+    "TELLER": "Guichetier",
+    "MANAGER": "Gestionnaire",
+    "AUDITOR": "Auditeur",
+    "ADMIN": "Administrateur"
+  },
+  "nav": {
+    "primary": "Navigation principale",
+    "open": "Ouvrir la navigation",
+    "close": "Fermer la navigation",
+    "menu": "Navigation",
+    "overview": "Aperçu",
+    "myAccounts": "Mes comptes",
+    "transfer": "Virement",
+    "transfers": "Virements",
+    "profile": "Profil",
+    "customers": "Clients",
+    "accounts": "Comptes",
+    "audit": "Audit",
+    "access": "Gestion des accès",
+    "securityAudit": "Audit de sécurité"
+  },
+  "records_one": "{{count}} enregistrement",
+  "records_other": "{{count}} enregistrements",
+  "customers_one": "{{count}} client",
+  "customers_other": "{{count}} clients",
+  "accounts_one": "{{count}} compte",
+  "accounts_other": "{{count}} comptes"
+}

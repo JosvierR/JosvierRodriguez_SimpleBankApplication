@@ -1,0 +1,17 @@
+{
+  "AUTH_REQUIRED": "Une authentification est requise.",
+  "ACCESS_DENIED": "Vous n’avez pas accès à cette action.",
+  "RESOURCE_NOT_FOUND": "Ressource introuvable.",
+  "VALIDATION_ERROR": "Vérifiez les informations saisies et réessayez.",
+  "CONFLICT": "Cette modification entre en conflit avec l’enregistrement actuel.",
+  "INSUFFICIENT_FUNDS": "Fonds insuffisants",
+  "INVALID_CREDENTIALS": "Nom d’utilisateur ou mot de passe invalide.",
+  "DUPLICATE_RESOURCE": "Cet enregistrement existe déjà.",
+  "ACCOUNT_HAS_TRANSACTIONS": "Un compte avec un historique de mouvements ne peut pas être supprimé.",
+  "CUSTOMER_HAS_ACCOUNTS": "Ce client ne peut pas être supprimé tant que des comptes existent.",
+  "LAST_ADMIN_PROTECTED": "Au moins un administrateur actif est requis.",
+  "CUSTOMER_LINK_CONFLICT": "Ce client de la banque a déjà un accès lié.",
+  "UNEXPECTED": "Une erreur s’est produite. Veuillez réessayer.",
+  "fallback": "Une erreur s’est produite. Veuillez réessayer.",
+  "unavailable": "Le service bancaire est indisponible. Vérifiez la connexion et réessayez."
+}

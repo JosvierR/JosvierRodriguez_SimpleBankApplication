@@ -1,0 +1,17 @@
+{
+  "AUTH_REQUIRED": "Se requiere autenticación.",
+  "ACCESS_DENIED": "No tiene acceso a esta acción.",
+  "RESOURCE_NOT_FOUND": "Recurso no encontrado.",
+  "VALIDATION_ERROR": "Revise la información e inténtelo de nuevo.",
+  "CONFLICT": "Este cambio entra en conflicto con el registro actual.",
+  "INSUFFICIENT_FUNDS": "Fondos insuficientes",
+  "INVALID_CREDENTIALS": "Usuario o contraseña no válidos.",
+  "DUPLICATE_RESOURCE": "Ese registro ya existe.",
+  "ACCOUNT_HAS_TRANSACTIONS": "No se puede eliminar una cuenta con historial de movimientos.",
+  "CUSTOMER_HAS_ACCOUNTS": "Este cliente no se puede eliminar mientras tenga cuentas.",
+  "LAST_ADMIN_PROTECTED": "Se requiere al menos un administrador activo.",
+  "CUSTOMER_LINK_CONFLICT": "Este cliente del banco ya tiene un acceso vinculado.",
+  "UNEXPECTED": "Algo salió mal. Inténtelo de nuevo.",
+  "fallback": "Algo salió mal. Inténtelo de nuevo.",
+  "unavailable": "El servicio bancario no está disponible. Compruebe la conexión e inténtelo de nuevo."
+}

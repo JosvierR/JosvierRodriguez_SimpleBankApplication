@@ -1,8 +1,8 @@
-import type { ReactNode } from 'react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { render } from '@testing-library/react'
-import { AuthContext, type AuthContextValue } from '../auth/AuthContext'
-import { ToastProvider } from '../components/ui/Toast'
+import type { ReactNode } from 'react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { render } from '@testing-library/react';
+import { AuthContext, type AuthContextValue } from '@/shared/auth/AuthContext';
+import { ToastProvider } from '@/shared/components/Toast';
 
 export const managerAuth: AuthContextValue = {
   token: 'test-token',
@@ -16,18 +16,33 @@ export const managerAuth: AuthContextValue = {
   register: async () => undefined,
   logout: () => undefined,
   verify: async () => undefined,
-}
+};
 
 export function renderRoute(element: ReactNode, path = '/', pattern = '*', auth: AuthContextValue = managerAuth) {
-  return render(<AuthContext.Provider value={auth}><MemoryRouter initialEntries={[path]}><ToastProvider><Routes><Route path={pattern} element={element} /></Routes></ToastProvider></MemoryRouter></AuthContext.Provider>)
+  return render(
+    <AuthContext.Provider value={auth}>
+      <MemoryRouter initialEntries={[path]}>
+        <ToastProvider>
+          <Routes>
+            <Route path={pattern} element={element} />
+          </Routes>
+        </ToastProvider>
+      </MemoryRouter>
+    </AuthContext.Provider>,
+  );
 }
 
 export function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
+  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
 
 export const account = {
-  accountId: 'acc-101', userId: 'user-1', userName: 'Ada Lovelace', accountType: 'CHECKING' as const, balance: 550, createdAt: '2026-09-30T12:00:00Z',
-}
+  accountId: 'acc-101',
+  userId: 'user-1',
+  userName: 'Ada Lovelace',
+  accountType: 'CHECKING' as const,
+  balance: 550,
+  createdAt: '2026-09-30T12:00:00Z',
+};
 
-export const customer = { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com', createdAt: '2026-09-29T12:00:00Z' }
+export const customer = { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.com', createdAt: '2026-09-29T12:00:00Z' };

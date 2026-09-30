@@ -1,0 +1,21 @@
+{
+  "product": "Product",
+  "security": "Security",
+  "demo": "Demo",
+  "headline": "Banking operations, clearly organized.",
+  "body": "A focused environment for customer accounts, staff operations, access control, and audit history.",
+  "openDemo": "Open demo",
+  "customerTitle": "Customer access",
+  "customerBody": "Customers see only their own accounts, balances, and transfers.",
+  "staffTitle": "Role-based operations",
+  "staffBody": "Tellers, managers, and auditors each work inside a defined set of permissions.",
+  "auditTitle": "Auditable by design",
+  "auditBody": "Money movements and access changes keep a separate, traceable history.",
+  "securityTitle": "Access stays with the role",
+  "securityBody": "Customer isolation, staff permissions, and administrator controls are enforced by the API.",
+  "demoTitle": "Try the educational demo",
+  "demoBody": "Public test accounts are documented in the repository. They belong only to the isolated demo dataset.",
+  "viewCredentials": "View demo credentials",
+  "footer": "Educational demonstration. Not a production bank.",
+  "previewLabel": "Interface preview"
+}

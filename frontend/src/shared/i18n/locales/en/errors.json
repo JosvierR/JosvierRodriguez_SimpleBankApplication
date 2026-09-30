@@ -1,0 +1,17 @@
+{
+  "AUTH_REQUIRED": "Authentication is required.",
+  "ACCESS_DENIED": "You don't have access to this action.",
+  "RESOURCE_NOT_FOUND": "Resource not found.",
+  "VALIDATION_ERROR": "Check the entered information and try again.",
+  "CONFLICT": "This change conflicts with the current record.",
+  "INSUFFICIENT_FUNDS": "Insufficient funds",
+  "INVALID_CREDENTIALS": "Invalid username or password.",
+  "DUPLICATE_RESOURCE": "That record already exists.",
+  "ACCOUNT_HAS_TRANSACTIONS": "Accounts with transaction history cannot be deleted.",
+  "CUSTOMER_HAS_ACCOUNTS": "This customer cannot be deleted while accounts still exist.",
+  "LAST_ADMIN_PROTECTED": "At least one enabled administrator is required.",
+  "CUSTOMER_LINK_CONFLICT": "This bank customer already has a linked login.",
+  "UNEXPECTED": "Something went wrong. Please try again.",
+  "fallback": "Something went wrong. Please try again.",
+  "unavailable": "The bank service is unavailable. Check your connection and try again."
+}
