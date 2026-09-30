@@ -1,399 +1,250 @@
 # Simple Bank Application
 
+Simple Bank is an educational full-stack banking operations application. The current phase combines a React dashboard, a secured Spring Boot API, MongoDB Atlas persistence, JWT authentication, and Docker packaging.
+
 ## Current Phase
 
-Backend REST API with MongoDB Cloud Atlas and JWT authentication
+**Full-stack React + Spring Boot + MongoDB Atlas + JWT**
 
-Phase 1 stored customers, accounts, balances, and transactions in `ConcurrentHashMap` while the process was running. The MongoDB branch keeps that API and stores it in Atlas. This branch adds stateless JWT authentication in front of the same banking API.
+The project evolved in four focused phases:
 
-Bank customers and API logins are different records. A customer in `users` still owns accounts. A login in `auth_users` only proves that the caller may use the API. Registering does not create a customer, and the two ids are not required to match. There is no frontend in this phase.
+1. Phase 1 — in-memory customers, accounts, balances, and transactions.
+2. Phase 2 — MongoDB Atlas persistence with ObjectId identifiers, Decimal128 money, indexes, and transactional money movement.
+3. Phase 3 — stateless JWT authentication, BCrypt credentials, roles, and authenticated audit actors.
+4. Phase 4 — React operations UI, real API integration, responsive UX, automated frontend tests, and full-stack Docker support.
 
-## Authentication
-
-`POST /api/auth/register` creates a login in `auth_users` and returns a bearer token. The username and email are trimmed and lowercased, so `Ada` and `ada` are the same login. The password is stored only as a BCrypt hash. It must be at least 8 characters and at most 72 UTF-8 bytes. Public registration always receives role `USER`.
-
-`POST /api/auth/login` checks that same normalized username and returns a new token. A missing user, a wrong password, and a disabled login all return `401` with `Invalid username or password`.
-
-Send the token as:
-
-```http
-Authorization: Bearer <token>
-```
-
-`JWT_EXPIRATION_MS` defaults to `3600000` (one hour). Register and login responses use `Cache-Control: no-store`.
-
-## Security Guarantees
-
-- Access tokens are signed with HMAC SHA-256. Unsigned tokens are rejected.
-- `JWT_SECRET` must be Base64 and decode to at least 256 bits. There is no default.
-- `JWT_EXPIRATION_MS` must be greater than zero.
-- Sessions are stateless.
-- Every bearer request reloads the current `auth_users` record. Role claims in the token are not trusted by themselves.
-- A disabled auth user cannot keep using an older token.
-- Passwords are BCrypt hashes. They are not logged and not returned.
-- Security errors are JSON. A `401` includes `WWW-Authenticate: Bearer` and does not include JWT parser details.
-- Unique indexes `auth_username_unique_idx` and `auth_email_unique_idx` reject a duplicate identity even if two requests pass the first check together.
-
-## Authorization Scope
-
-This phase authenticates access to the banking API with JWT. Auth users and bank customers are intentionally separate. Any authenticated caller can use the normal banking endpoints. `GET /api/admin/whoami` is the only route that requires `ADMIN`, and this application does not create an admin account for you.
-
-Per-customer account ownership authorization is outside this training phase. A valid token answers "is this caller authenticated?" It does not answer "does this caller own this bank account?"
-
-## Audit Actor
-
-`userId` and `userName` are the bank customer whose money moved. `actorAuthUserId` and `actorUsername` are the API login that called deposit, withdraw, or transfer. Those actor fields are written on the same audit document, inside the same MongoDB transaction. Audits stored before this change have no actor fields. Reading them returns null for both actor values and does not rewrite the old document.
-
-## Tech Stack
-
-- Java 17
-- Spring Boot 4.0.8
-- Maven
-- Spring Web (MVC)
-- Spring Validation
-- Spring Data MongoDB
-- MongoDB Atlas
-- Spring Security
-- JWT (JJWT, HMAC SHA-256)
-- BCrypt password hashing
-- Springdoc OpenAPI 3.0.3 (Swagger UI)
-- JUnit 5
-- Mockito
-- Spring Boot Test (MockMvc)
-
-Spring Boot 4 renamed the classic web starter to `spring-boot-starter-webmvc`. It is still the Spring MVC stack used by this API. MongoDB settings use `spring.mongodb.uri`, not the older `spring.data.mongodb.uri`.
+Bank customers and API logins remain intentionally separate. A record in `users` owns bank accounts. A record in `auth_users` proves that a person may access the API. Registration creates an API login; it does not create a bank customer.
 
 ## Architecture
 
 ```text
-Controller
-    ↓
-Service
-    ↓
-Repository Interface
-    ↓
-Mongo Repository Adapter
-    ↓
-Spring Data MongoRepository
-    ↓
+Browser
+  ↓
+React 19 + React Router
+  ↓
+Nginx (Docker) / Vite proxy (local development)
+  ↓
+Spring Security JWT
+  ↓
+Controllers
+  ↓
+Services and banking rules
+  ↓
+Repository adapters
+  ↓
 MongoDB Atlas
 ```
 
-- **Controller** receives the HTTP request, validates the body, calls a service, and returns a status code plus a response DTO. It does not know about MongoDB.
-- **Service** owns the banking rules: unique email, existing user, positive amount, sufficient balance, and recording a transaction only after the balance update is accepted.
-- **Repository interface** is the storage port. Banking services depend on `UserRepository`, `AccountRepository`, `TransactionRepository`, and `AuditRepository`. Authentication depends on `AuthUserRepository`.
-- **Mongo adapter** implements that port. It maps domain objects to documents and back. It does not calculate balances.
-- **Spring Data MongoRepository** is the infrastructure that talks to a collection.
-- **MongoDB Atlas** is the database. Phase 1's in-memory classes are not on this branch.
+The React application calls relative `/api` URLs. Vite proxies those calls to `localhost:8080` during development; Nginx proxies them to the `backend` service over Docker's internal network in containers. No permissive Spring CORS configuration is required.
 
-Identifiers are MongoDB ObjectId values exposed as strings, for example `68dc1234567890abcdef1234`. Phase 1 used `Long` values from `AtomicLong`. That sequence is gone. MongoDB generates the id.
+## Technology
 
-## Features
+Frontend:
 
-- Create users
-- List all users
-- View one user
-- Update users
-- Delete users who own no accounts
-- Create bank accounts
-- List all accounts
-- View one account
-- Update an account type
-- Delete an account that has no transactions
-- List accounts by user
-- List premium accounts at or above a balance threshold
-- Deposit money
-- Withdraw money
-- Transfer money between two accounts
-- View transaction history
-- Audit who moved money, when, which accounts, and how much
-- Validation
-- Exception handling
-- MongoDB Atlas persistence
-- Data persistence across restarts
-- BSON ObjectId identifiers exposed as strings
-- Decimal128 money storage
-- Unique email index
-- MongoDB transactions for deposit, withdraw, and transfer
-- Swagger/OpenAPI with a Bearer authorize button
-- Postman CRUD, banking, transfer, audit, and JWT flows
-- Stateless JWT authentication for `/api/**`
-- BCrypt password hashes in a separate `auth_users` collection
+- React 19, TypeScript, Vite, and React Router
+- Handcrafted CSS design system and a small Lucide icon set
+- Vitest, React Testing Library, user-event, and jsdom
+- Nginx static runtime and reverse proxy
 
-## Collections
+Backend:
 
-Database: `simple_bank`
+- Java 17, Spring Boot 4, Spring MVC, Validation, and Spring Security
+- JJWT with HMAC SHA-256 and BCrypt password hashes
+- Spring Data MongoDB and MongoDB Atlas
+- Maven, JUnit 5, Mockito, and MockMvc
+- Springdoc OpenAPI / Swagger UI
 
-USERS
+## Frontend Experience
 
-```text
-{
-  "_id": ObjectId,
-  "name": String,
-  "email": String,
-  "createdAt": Date
-}
-```
+The authenticated operations shell provides:
 
-ACCOUNTS
+- A dashboard calculated from real customers, accounts, balances, and audits
+- Searchable customer management with update and guarded deletion
+- Customer details with all owned accounts
+- One account-opening workflow for either a new or existing customer
+- Explicit recovery when a customer succeeds but account creation fails
+- Account search, type filters, and a backend-powered premium threshold
+- Account details, account-type updates, and guarded deletion
+- Deposit, withdrawal, transaction history, and account-to-account transfer
+- Compliance audits distinguishing the bank customer from the authenticated actor
+- An ADMIN-only identity verification page, with both frontend and backend enforcement
+- Loading skeletons, empty states, calm errors, accessible notifications, and confirmation dialogs
+- Desktop operations shell, tablet layouts, and a mobile navigation drawer
 
-```text
-{
-  "_id": ObjectId,
-  "userId": String,
-  "balance": Decimal128,
-  "accountType": "SAVINGS" | "CHECKING",
-  "createdAt": Date
-}
-```
+All balances, customers, accounts, transactions, and audits come from the Spring API. Production components contain no demo financial data.
 
-TRANSACTIONS
+## Authentication and Authorization
 
-```text
-{
-  "_id": ObjectId,
-  "accountId": String,
-  "type": "DEPOSIT" | "WITHDRAW",
-  "amount": Decimal128,
-  "createdAt": Date
-}
-```
+Public routes:
 
-AUDITS
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `/login`
+- `/register`
 
-```text
-{
-  "_id": ObjectId,
-  "action": "DEPOSIT" | "WITHDRAW" | "TRANSFER",
-  "userId": String,
-  "accountIds": [String],
-  "involvedUserIds": [String],
-  "amount": Decimal128,
-  "transactionIds": [String],
-  "createdAt": Date
-}
-```
+The browser stores only the returned token in `sessionStorage`. It never uses `localStorage`, displays the token, or decodes JWT claims as its authorization source. On reload, `GET /api/auth/verify` restores the username and roles from the backend. Any authenticated request that returns `401` clears the token and returns the user to login.
 
-An account stores `userId` instead of embedding the user. A transaction stores `accountId` instead of living inside the account document. The service checks that the referenced user or account exists. Transactions stay in their own collection so one account's history does not grow the account document without a limit. This project does not use DBRef.
+Public registration always receives `USER`; there is no role selector and no built-in admin password. `/admin` is shown only for a verified `ADMIN` role, and `GET /api/admin/whoami` enforces that role again on the backend.
 
-AUTH_USERS
+Passwords must contain at least 8 characters and no more than 72 UTF-8 bytes. Register and login responses use `Cache-Control: no-store`. `JWT_SECRET` must decode from Base64 to at least 256 bits and has no application default.
 
-```text
-{
-  "_id": ObjectId,
-  "username": String,
-  "email": String,
-  "passwordHash": BCrypt String,
-  "roles": ["USER"],
-  "enabled": true,
-  "createdAt": Date
-}
-```
+## UI Workflows
 
-`auth_users` is the login collection. `users` is still the bank customer collection. A public registration always stores `USER`. There is no request field that can grant `ADMIN`. The password the client sent is not stored. `passwordHash` is a BCrypt hash.
+- **Login / Register** — authenticate or create a standard API access account.
+- **Dashboard** — view the real customer count, account count, total balance, recent-operation count, quick actions, and latest audits.
+- **Create account** — choose New Customer to create `users` then `accounts`, or Existing Customer to add another account. A partial failure preserves the newly created customer and offers recovery.
+- **Customer details** — inspect the profile and every account owned by that customer.
+- **Account details** — view the current balance and protected metadata, change only the account type, or navigate to money operations.
+- **Deposit / Withdraw** — validate a positive two-decimal amount, submit it to the backend, and show the returned new balance.
+- **Transaction history** — display transaction ID, type, amount, and date; deposit/withdrawal text accompanies the visual treatment.
+- **Transfer** — select different source and destination accounts, submit an amount, and show both returned balances plus the audit ID.
+- **Audits** — view the customer affected, API actor, accounts, amount, action, and timestamp; older null actors appear as `Legacy / unavailable`.
 
-Indexes, created because `spring.data.mongodb.auto-index-creation=true`:
+## React Frontend Requirement Mapping
 
-| Collection | Index | Purpose |
-| --- | --- | --- |
-| users | `email_unique_idx` unique | One email per customer, including a race between two creates |
-| accounts | `user_id_idx` | Lookup by owner |
-| transactions | `account_created_at_idx` on `accountId`, `createdAt` | History for one account, oldest first |
-| audits | `audit_created_at_idx` on `createdAt` | Traces in the order the movements happened |
-| auth_users | `auth_username_unique_idx` unique | One login per username |
-| auth_users | `auth_email_unique_idx` unique | One login per email |
+| Class UI requirement | React implementation |
+| --- | --- |
+| Home Page | Dashboard at `/` |
+| Create Account | `CreateAccountPage` at `/accounts/new` |
+| Account Details | `AccountDetailsPage` at `/accounts/:accountId` |
+| Deposit | `DepositPage` at `/accounts/:accountId/deposit` |
+| Withdraw | `WithdrawPage` at `/accounts/:accountId/withdraw` |
+| Transaction History | `TransactionHistoryPage` at `/accounts/:accountId/transactions` |
 
-Money stays `BigDecimal` in Java. `spring.data.mongodb.representation.big-decimal=decimal128` and the document fields store it as BSON Decimal128. `double` is not used for balances or amounts.
+Additional routes are `/customers`, `/customers/:userId`, `/accounts`, `/transfer`, `/audits`, and role-protected `/admin`.
 
 ## Project Structure
 
 ```text
+frontend/
+  public/
+  src/
+    api/           centralized typed request client and endpoint modules
+    auth/          session state, verify, login, register, and logout
+    components/    application shell, states, dialogs, and notifications
+    pages/         route-level banking workflows
+    routes/        protected and admin guards
+    styles/        tokens, global rules, and responsive components
+    types/         backend API contracts
+    utils/         currency, date, amount, and error helpers
+  Dockerfile
+  nginx.conf
 src/main/java/com/josvier/simplebank/
-    SimpleBankApplication.java
-    controller/
-    dto/request/
-    dto/response/
-    model/
-    repository/
-    repository/mongo/document/
-    repository/mongo/springdata/
-    repository/mongo/adapter/
-    service/
-    service/impl/
-    exception/
-    config/
-    auth/
-    security/
+  auth/
+  security/
+  controller/
+  service/
+  repository/
+  dto/
+  model/
 src/test/java/com/josvier/simplebank/
-    service/
-    controller/
-    repository/mongo/
-    config/
-docs/
-    MONGODB_ATLAS_SETUP.md
-postman/
-    SimpleBank_Backend_API.postman_collection.json
+Dockerfile
+docker-compose.yml
 ```
 
-## MongoDB Atlas Security
+## Environment
 
-`MONGODB_URI` is a secret. It contains the database username and password. Do not commit it, paste it into the README, or put it in `application.properties`.
+Copy the variable names from `.env.example` into your shell or a local ignored `.env` file. Never commit real values.
 
-`JWT_SECRET` is also a secret. It signs access tokens with HMAC SHA-256, so it must be a Base64-encoded random value of at least 256 bits. It has no default in `application.properties`. Do not commit a real secret, paste one into this README, or put one in Postman or Swagger. `JWT_EXPIRATION_MS` defaults to `3600000` (one hour) when it is omitted.
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `MONGODB_URI` | Yes | Atlas connection string |
+| `MONGODB_DATABASE` | No | Database name; defaults to `simple_bank` |
+| `JWT_SECRET` | Yes | Base64-encoded HMAC secret of at least 256 bits |
+| `JWT_EXPIRATION_MS` | No | Token lifetime; defaults to `3600000` |
+| `FRONTEND_PORT` | No | Docker host port; defaults to `3000` |
+| `BACKEND_PORT` | No | Docker host port; defaults to `8080` |
 
-`.env.example` lists the variable names with placeholders. Spring Boot does not load `.env` or `.env.example`. Export the variables in the shell that runs the application.
+Vite exposes only `VITE_API_BASE_URL=/api`. MongoDB and JWT secrets are runtime backend variables and are never frontend build arguments.
 
-The database user is separate from the Atlas website login. Give that user `readWrite` on `simple_bank` only. Add your current IP in the Atlas Network Access list. `0.0.0.0/0` lets any address try the password, so use it only as a short-lived development workaround.
+## Run with Docker
 
-If the password contains `@`, `:`, `/`, `?`, `#`, or `%`, percent-encode those characters in the URI. The Atlas `mongodb+srv` connection uses TLS.
-
-Setup steps are in [docs/MONGODB_ATLAS_SETUP.md](docs/MONGODB_ATLAS_SETUP.md).
-
-## Running the Application
-
-From the project root, with the Atlas variables set.
-
-Windows PowerShell:
+PowerShell:
 
 ```powershell
-$env:MONGODB_URI="mongodb+srv://<username>:<url-encoded-password>@<cluster-host>/?retryWrites=true&w=majority&appName=SimpleBank"
+$env:MONGODB_URI="<your Atlas connection string>"
 $env:MONGODB_DATABASE="simple_bank"
-$env:JWT_SECRET="<base64-encoded-256-bit-secret>"
+$env:JWT_SECRET="<your Base64 secret>"
 $env:JWT_EXPIRATION_MS="3600000"
+docker compose up --build
+```
+
+Open:
+
+- React application: [http://localhost:3000](http://localhost:3000)
+- Spring API: [http://localhost:8080](http://localhost:8080)
+- Swagger UI: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+
+The backend container receives secrets only at runtime. The frontend container contains the built static assets and Nginx configuration, not source, tests, `node_modules`, `MONGODB_URI`, or `JWT_SECRET`. MongoDB is not included in Compose; Atlas remains the persistent store, so data survives container replacement and `docker compose down` / `up` cycles.
+
+## Local Development
+
+Terminal 1, with the backend environment variables already set:
+
+```powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-macOS/Linux:
+Terminal 2:
 
-```text
-export MONGODB_URI="mongodb+srv://<username>:<url-encoded-password>@<cluster-host>/?retryWrites=true&w=majority&appName=SimpleBank"
-export MONGODB_DATABASE="simple_bank"
-export JWT_SECRET="<base64-encoded-256-bit-secret>"
-export JWT_EXPIRATION_MS="3600000"
-./mvnw spring-boot:run
+```powershell
+cd frontend
+npm install
+npm run dev
 ```
 
-`MONGODB_DATABASE` defaults to `simple_bank` when it is omitted. `MONGODB_URI` and `JWT_SECRET` have no default. The application does not start without them.
+Open [http://localhost:5173](http://localhost:5173). The Vite `/api` proxy forwards to Spring Boot at port 8080.
 
-The API listens on `http://localhost:8080/api`.
+## Verification
 
-Swagger UI is at [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html). The OpenAPI document is at `http://localhost:8080/v3/api-docs`. Swagger itself is public. Use **Authorize** and paste the access token from login. Swagger sends `Authorization: Bearer <token>` on the protected operations. Register and login stay public in the document.
+Backend:
 
-From the UI, register or log in, authorize, create a bank customer, copy the returned string id into **Open an account**, then deposit, withdraw, and read history with that account id.
-
-`GET /api` by itself is not an operation. An unknown path returns 404.
-
-Data remains in Atlas when the application stops.
-
-## Running Tests
-
-Windows:
-
-```text
-mvnw.cmd test
+```powershell
+mvn clean test
 ```
 
-macOS/Linux:
+Frontend:
 
-```text
-./mvnw test
+```powershell
+cd frontend
+npm run lint
+npm run test
+npm run build
 ```
 
-The automated tests mock the repositories and the Spring Data interfaces. They do not connect to Atlas and they do not prove that a failed second write rolls back. Rollback requires a real Atlas replica-set transaction.
+Container definitions:
 
-## API Endpoints
-
-| Method | Path | Success | Purpose |
-| --- | --- | --- | --- |
-| POST | /api/auth/register | 201 | Public. Create an API login with role USER and return a bearer token |
-| POST | /api/auth/login | 200 | Public. Check the password and return a bearer token |
-| GET | /api/auth/verify | 200 | Confirm the bearer token and return the username and roles |
-| POST | /api/users | 201 | Create a user |
-| GET | /api/users | 200 | List every user |
-| GET | /api/users/{id} | 200 | View a user |
-| PUT | /api/users/{id} | 200 | Update a user's name and email. The id and createdAt stay the same |
-| DELETE | /api/users/{id} | 204 | Delete a user who owns no accounts |
-| POST | /api/accounts | 201 | Open an account with balance 0.00 |
-| GET | /api/accounts | 200 | List every account |
-| GET | /api/accounts/{id} | 200 | View an account |
-| PUT | /api/accounts/{id} | 200 | Update the account type. The id, owner, balance, and createdAt stay the same |
-| DELETE | /api/accounts/{id} | 204 | Delete an account that has no transactions |
-| GET | /api/accounts/premium?threshold= | 200 | Accounts whose balance is greater than or equal to the threshold |
-| GET | /api/users/{userId}/accounts | 200 | List accounts owned by one user. An existing user with none returns `[]` |
-| POST | /api/accounts/{id}/deposit | 200 | Deposit a positive amount |
-| POST | /api/accounts/{id}/withdraw | 200 | Withdraw a positive amount that the balance can cover |
-| POST | /api/accounts/transfer | 200 | Move money from one account to another |
-| GET | /api/accounts/{id}/transactions | 200 | View transaction history, oldest first |
-| GET | /api/audits | 200 | List compliance traces, oldest first |
-| GET | /api/audits/{id} | 200 | View who, when, which accounts, and how much |
-
-`{id}` and `{userId}` are string ObjectId values, not numbers.
-
-`POST /api/auth/register` and `POST /api/auth/login` are public. Swagger UI and `/v3/api-docs` are public. Every other `/api/**` route requires a bearer token:
-
-```text
-Authorization: Bearer <token>
+```powershell
+docker compose config
+docker compose build
 ```
 
-The token expires after `JWT_EXPIRATION_MS` milliseconds. The login response field `expiresIn` is that duration in seconds. A missing token, a bad signature, or an expired token returns 401 JSON. It does not return HTML or the JWT library's exception text. Normal banking does not require `ADMIN`. Registration cannot ask for `ADMIN`.
+The automated frontend suite mocks API modules and never connects to Atlas. The backend tests mock persistence boundaries and also do not connect to Atlas. A live end-to-end and restart-persistence check requires valid local Atlas and JWT environment values.
 
-A duplicate username or email on register returns 409. A wrong password returns 401 with `Invalid username or password`. A password shorter than 8 characters returns 400.
+## API Summary
 
-A user who still owns one or more accounts cannot be deleted. `DELETE /api/users/{id}` then returns 409 with the message `User cannot be deleted while accounts still exist`. The user and those accounts stay in the database. This keeps `Account.userId` from pointing at a customer who is gone.
-
-An account that already has transactions cannot be deleted. `DELETE /api/accounts/{id}` then returns 409 with the message `Account cannot be deleted while transactions still exist`. The audit trace for that history stays as well.
-
-A transfer debits the source account, credits the destination account, writes one withdrawal and one deposit in the ledger, and writes one audit row that names both accounts. The source and destination must be different accounts, and the source balance must cover the amount.
-
-Common error responses:
-
-| Situation | Status |
+| Area | Endpoints |
 | --- | --- |
-| Invalid body, non-positive amount, more than 2 decimal places, or insufficient funds | 400 |
-| Missing, invalid, or expired bearer token, or wrong login password | 401 |
-| Unknown user, unknown account, or unknown route | 404 |
-| Email already registered, deleting a user who still owns accounts, or deleting an account that still has transactions | 409 |
+| Auth | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/verify` |
+| Customers | `POST/GET /api/users`, `GET/PUT/DELETE /api/users/{id}`, `GET /api/users/{id}/accounts` |
+| Accounts | `POST/GET /api/accounts`, `GET/PUT/DELETE /api/accounts/{id}`, `GET /api/accounts/premium` |
+| Money | `POST /api/accounts/{id}/deposit`, `POST /api/accounts/{id}/withdraw`, `POST /api/accounts/transfer` |
+| History | `GET /api/accounts/{id}/transactions` |
+| Audits | `GET /api/audits`, `GET /api/audits/{id}` |
+| Admin | `GET /api/admin/whoami` |
 
-Error bodies use `ErrorResponse` and do not include a stack trace, a host name, or the connection URI.
+All protected requests use `Authorization: Bearer <token>`. IDs are strings. Amounts must be at least `0.01` with no more than two decimal places. Customer deletion conflicts while accounts exist; account deletion conflicts while transactions exist. Handled failures return a structured `ErrorResponse` without stack traces.
 
-## Example Workflow
+## Screenshot Checklist
 
-1. Register with `POST /api/auth/register`, or log in with `POST /api/auth/login`.
-2. Send `Authorization: Bearer <token>` on the banking calls below.
-3. Create a bank customer with `POST /api/users`.
-4. Create an account for that string `userId` with `POST /api/accounts`. The balance starts at `0.00`.
-5. Deposit with `POST /api/accounts/{id}/deposit`.
-6. Withdraw with `POST /api/accounts/{id}/withdraw`.
-7. Read history with `GET /api/accounts/{id}/transactions`.
+For assignment evidence, capture these screens with real Atlas data after completing the live flow:
 
-A failed withdrawal, such as asking for more money than the balance, returns 400. The balance stays the same and no transaction is added.
+- Login
+- Dashboard
+- Create Account
+- Account Details with a nonzero balance
+- Deposit
+- Withdraw
+- Transaction History
 
-Deposit and withdrawal each run inside one MongoDB transaction: the balance update and the history insert commit together or roll back together. The service also keeps a per-account lock in this process so two threads in the same JVM do not apply the same balance at once. That lock does not coordinate a second running instance. The database transaction is the durable boundary.
-
-The Postman collection in `postman/` follows this flow. Import it and run the **JWT Authentication** folder first so `jwtToken` is saved. Banking requests then send `Authorization: Bearer {{jwtToken}}`. Register and login do not send that header. Create User generates a new email on each run and saves `userId`. Create Account sends that id as a JSON string and saves `accountId`. A later request reuses the same email and expects 409. The **JWT Banking Demo** folder registers, logs in, creates a customer and an account, deposits 500, withdraws 200, and reads history and audits. One request calls `GET /api/accounts` with no token and expects 401.
-
-The **Customer CRUD Demo** folder creates three customers with unique emails, lists them, updates one, rejects a duplicate email, deletes a customer who has no accounts, and refuses to delete a customer who owns an account. List checks look for those new ids inside the response. They do not require the database to contain only those three records.
-
-## Class CRUD Requirements
-
-| Class requirement | Endpoint |
-| --- | --- |
-| Create customer | POST /api/users |
-| GetAll / findAll | GET /api/users |
-| GetById / findById | GET /api/users/{id} |
-| Post | POST /api/users |
-| Update | PUT /api/users/{id} |
-| Delete | DELETE /api/users/{id} |
-| Fetch accounts | GET /api/accounts |
-| User's accounts | GET /api/users/{userId}/accounts |
-| Update account | PUT /api/accounts/{id} |
-| Delete account | DELETE /api/accounts/{id} |
-| Premium accounts | GET /api/accounts/premium?threshold= |
-| Transfer | POST /api/accounts/transfer |
-| Audit trace | GET /api/audits and GET /api/audits/{id} |
-
-## Banking rules that did not change
-
-Deposit and withdrawal amounts must be at least `0.01` and may have at most two decimal places. `10.12`, `10`, and `0.01` are accepted. `10.126`, `0`, and `-10` return `400`. The API rejects extra precision instead of rounding it.
-
-The service still rejects a duplicate email with HTTP 409 before it saves. The unique index on `users.email` is the extra guarantee when two requests pass that check at the same time.
+No screenshots or application claims should imply a production bank, PCI compliance, SOC 2 compliance, or regulatory certification. This remains an educational banking application.
