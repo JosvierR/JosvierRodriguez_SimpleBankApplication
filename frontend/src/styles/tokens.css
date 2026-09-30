@@ -1,15 +1,15 @@
 :root {
   --bg: #f5f5f7;
   --surface: #ffffff;
-  --surface-secondary: #f9f9fb;
+  --surface-secondary: #f2f2f4;
   --surface-selected: #f0f6ff;
   --text-primary: #1d1d1f;
   --text-secondary: #6e6e73;
   --text-tertiary: #86868b;
-  --border: #e5e5e7;
-  --border-strong: #d2d2d7;
-  --accent: #0a6cff;
-  --accent-hover: #005bd8;
+  --border: rgba(60, 60, 67, .16);
+  --border-strong: rgba(60, 60, 67, .28);
+  --accent: #007aff;
+  --accent-hover: #0066d6;
   --accent-soft: #eaf2ff;
   --success: #16803b;
   --success-soft: #edf8f0;
@@ -17,11 +17,11 @@
   --danger-soft: #fff1f0;
   --warning: #9a6700;
   --warning-soft: #fff8e6;
-  --sidebar: #17181a;
+  --sidebar: #f2f2f4;
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .025), 0 5px 18px rgba(0, 0, 0, .025);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .025);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
   color: var(--text-primary);
   background: var(--bg);

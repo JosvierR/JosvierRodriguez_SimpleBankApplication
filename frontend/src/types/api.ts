@@ -1,4 +1,4 @@
-export type Role = 'USER' | 'ADMIN' | string
+export type Role = 'CUSTOMER' | 'TELLER' | 'MANAGER' | 'AUDITOR' | 'ADMIN'
 export type AccountType = 'CHECKING' | 'SAVINGS'
 export type TransactionType = 'DEPOSIT' | 'WITHDRAW'
 
@@ -12,6 +12,8 @@ export interface AuthResponse {
 
 export interface VerifyResponse {
   username: string
+  primaryRole: Role
+  bankUserLinked: boolean
   roles: Role[]
 }
 
@@ -87,3 +89,63 @@ export interface ErrorResponse {
 }
 
 export interface WhoAmIResponse { username: string; roles: Role[] }
+
+export interface CustomerProfileResponse {
+  name: string
+  email: string
+  createdAt: string
+}
+
+export interface CustomerMeResponse {
+  username: string
+  role: 'CUSTOMER'
+  bankUserLinked: boolean
+  profile: CustomerProfileResponse | null
+}
+
+export interface CustomerAccountResponse {
+  accountId: string
+  accountType: AccountType
+  balance: number
+  createdAt: string
+}
+
+export interface CustomerTransactionResponse {
+  transactionId: string
+  accountId: string
+  type: TransactionType
+  amount: number
+  createdAt: string
+}
+
+export interface CustomerTransferResponse {
+  fromAccountId: string
+  toAccountId: string
+  amount: number
+  fromBalance: number
+  toBalance: number
+  createdAt: string
+}
+
+export interface AdminAuthUserResponse {
+  id: string
+  username: string
+  email: string
+  role: Role
+  bankUserId: string | null
+  bankUserName: string | null
+  enabled: boolean
+  createdAt: string
+}
+
+export type SecurityAuditAction = 'ROLE_CHANGED' | 'AUTH_USER_ENABLED' | 'AUTH_USER_DISABLED' | 'CUSTOMER_LINKED' | 'CUSTOMER_UNLINKED' | 'ADMIN_BOOTSTRAPPED'
+
+export interface SecurityAuditResponse {
+  id: string
+  actorUsername: string
+  targetAuthUserId: string
+  action: SecurityAuditAction
+  previousValue: string | null
+  newValue: string | null
+  createdAt: string
+}

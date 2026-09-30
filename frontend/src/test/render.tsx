@@ -1,10 +1,25 @@
 import type { ReactNode } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { render } from '@testing-library/react'
+import { AuthContext, type AuthContextValue } from '../auth/AuthContext'
 import { ToastProvider } from '../components/ui/Toast'
 
-export function renderRoute(element: ReactNode, path = '/', pattern = '*') {
-  return render(<MemoryRouter initialEntries={[path]}><ToastProvider><Routes><Route path={pattern} element={element} /></Routes></ToastProvider></MemoryRouter>)
+export const managerAuth: AuthContextValue = {
+  token: 'test-token',
+  username: 'manager',
+  roles: ['MANAGER'],
+  primaryRole: 'MANAGER',
+  bankUserLinked: false,
+  isAuthenticated: true,
+  isLoading: false,
+  login: async () => undefined,
+  register: async () => undefined,
+  logout: () => undefined,
+  verify: async () => undefined,
+}
+
+export function renderRoute(element: ReactNode, path = '/', pattern = '*', auth: AuthContextValue = managerAuth) {
+  return render(<AuthContext.Provider value={auth}><MemoryRouter initialEntries={[path]}><ToastProvider><Routes><Route path={pattern} element={element} /></Routes></ToastProvider></MemoryRouter></AuthContext.Provider>)
 }
 
 export function jsonResponse(body: unknown, status = 200) {

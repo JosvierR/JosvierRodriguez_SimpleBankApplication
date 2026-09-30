@@ -8,6 +8,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => sessionStorage.getItem(TOKEN_KEY))
   const [username, setUsername] = useState<string | null>(null)
   const [roles, setRoles] = useState<Role[]>([])
+  const [primaryRole, setPrimaryRole] = useState<Role | null>(null)
+  const [bankUserLinked, setBankUserLinked] = useState(false)
   const [isLoading, setIsLoading] = useState(() => Boolean(sessionStorage.getItem(TOKEN_KEY)))
 
   const clearSession = useCallback(() => {
@@ -15,6 +17,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null)
     setUsername(null)
     setRoles([])
+    setPrimaryRole(null)
+    setBankUserLinked(false)
     setIsLoading(false)
   }, [])
 
@@ -29,6 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(sessionStorage.getItem(TOKEN_KEY))
       setUsername(identity.username)
       setRoles(identity.roles)
+      setPrimaryRole(identity.primaryRole)
+      setBankUserLinked(identity.bankUserLinked)
     } catch {
       clearSession()
     } finally {
@@ -49,21 +55,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await action()
     sessionStorage.setItem(TOKEN_KEY, response.token)
     setToken(response.token)
-    setUsername(response.username)
-    setRoles(response.roles)
+    const identity = await authApi.verify()
+    setUsername(identity.username)
+    setRoles(identity.roles)
+    setPrimaryRole(identity.primaryRole)
+    setBankUserLinked(identity.bankUserLinked)
   }
 
   const value = useMemo(() => ({
     token,
     username,
     roles,
+    primaryRole,
+    bankUserLinked,
     isAuthenticated: Boolean(token && username),
     isLoading,
     login: (credentials: LoginRequest) => authenticate(() => authApi.login(credentials)),
     register: (details: RegisterRequest) => authenticate(() => authApi.register(details)),
     logout: clearSession,
     verify,
-  }), [token, username, roles, isLoading, clearSession, verify])
+  }), [token, username, roles, primaryRole, bankUserLinked, isLoading, clearSession, verify])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

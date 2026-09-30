@@ -10,6 +10,6 @@ describe('DashboardPage', () => {
   it('calculates metrics from fetched backend values without invented trends', async () => {
     vi.spyOn(usersApi, 'list').mockResolvedValue([customer]); vi.spyOn(accountsApi, 'list').mockResolvedValue([account, { ...account, accountId: 'acc-2', balance: 100 }]); vi.spyOn(auditsApi, 'list').mockResolvedValue([{ id: 'audit-1', action: 'DEPOSIT', userId: customer.id, userName: customer.name, accountIds: [account.accountId], involvedUserIds: [customer.id], amount: 550, transactionIds: ['tx-1'], createdAt: account.createdAt, actorAuthUserId: 'auth-1', actorUsername: 'operator' }])
     renderRoute(<DashboardPage />)
-    expect(await screen.findByText('$650.00')).toBeInTheDocument(); expect(screen.getByText('Ada Lovelace · by operator')).toBeInTheDocument(); expect(screen.queryByText(/%/)).not.toBeInTheDocument()
+    expect(await screen.findByText('$650.00')).toBeInTheDocument(); expect(screen.getByText('Ada Lovelace · operator')).toBeInTheDocument(); expect(screen.queryByText(/%/)).not.toBeInTheDocument()
   })
 })

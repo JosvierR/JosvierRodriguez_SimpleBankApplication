@@ -5,6 +5,8 @@ export interface AuthContextValue {
   token: string | null
   username: string | null
   roles: Role[]
+  primaryRole: Role | null
+  bankUserLinked: boolean
   isAuthenticated: boolean
   isLoading: boolean
   login: (credentials: LoginRequest) => Promise<void>

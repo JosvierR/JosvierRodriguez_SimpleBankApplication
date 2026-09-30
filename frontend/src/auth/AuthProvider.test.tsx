@@ -14,10 +14,11 @@ function Harness() {
 
 describe('AuthProvider', () => {
   it('logs in, stores only the token, and logs out', async () => {
-    vi.spyOn(authApi, 'login').mockResolvedValue({ token: 'jwt', tokenType: 'Bearer', expiresIn: 3600, username: 'ada', roles: ['USER'] })
+    vi.spyOn(authApi, 'login').mockResolvedValue({ token: 'jwt', tokenType: 'Bearer', expiresIn: 3600, username: 'ada', roles: ['CUSTOMER'] })
+    vi.spyOn(authApi, 'verify').mockResolvedValue({ username: 'ada', primaryRole: 'CUSTOMER', bankUserLinked: true, roles: ['CUSTOMER'] })
     render(<AuthProvider><Harness /></AuthProvider>); const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: 'login' }))
-    expect(await screen.findByText('ada:USER')).toBeInTheDocument(); expect(sessionStorage.length).toBe(1); expect(sessionStorage.getItem(TOKEN_KEY)).toBe('jwt')
+    expect(await screen.findByText('ada:CUSTOMER')).toBeInTheDocument(); expect(sessionStorage.length).toBe(1); expect(sessionStorage.getItem(TOKEN_KEY)).toBe('jwt')
     await user.click(screen.getByRole('button', { name: 'logout' })); expect(screen.getByText('signed-out')).toBeInTheDocument()
   })
 
@@ -29,8 +30,8 @@ describe('AuthProvider', () => {
 
   it('restores a stored session through verify', async () => {
     sessionStorage.setItem(TOKEN_KEY, 'jwt')
-    vi.spyOn(authApi, 'verify').mockResolvedValue({ username: 'restored', roles: ['USER'] })
+    vi.spyOn(authApi, 'verify').mockResolvedValue({ username: 'restored', primaryRole: 'CUSTOMER', bankUserLinked: false, roles: ['CUSTOMER'] })
     await act(async () => render(<AuthProvider><Harness /></AuthProvider>))
-    expect(await screen.findByText('restored:USER')).toBeInTheDocument()
+    expect(await screen.findByText('restored:CUSTOMER')).toBeInTheDocument()
   })
 })

@@ -1,3 +1,4 @@
+import * as AlertDialog from '@radix-ui/react-alert-dialog'
 import { useEffect, useRef } from 'react'
 
 interface ConfirmDialogProps {
@@ -11,25 +12,29 @@ interface ConfirmDialogProps {
 }
 
 export function ConfirmDialog({ open, title, description, confirmLabel = 'Delete', busy, onConfirm, onCancel }: ConfirmDialogProps) {
-  const cancelRef = useRef<HTMLButtonElement>(null)
-  useEffect(() => { if (open) cancelRef.current?.focus() }, [open])
+  const returnFocus = useRef<HTMLElement | null>(null)
+
   useEffect(() => {
-    if (!open) return
-    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') onCancel() }
-    document.addEventListener('keydown', close)
-    return () => document.removeEventListener('keydown', close)
-  }, [open, onCancel])
-  if (!open) return null
+    if (open && document.activeElement instanceof HTMLElement) returnFocus.current = document.activeElement
+  }, [open])
+
   return (
-    <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onCancel() }}>
-      <div className="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-description">
-        <h2 id="dialog-title">{title}</h2>
-        <p id="dialog-description" className="text-secondary">{description}</p>
-        <div className="dialog__actions">
-          <button ref={cancelRef} className="button button--secondary" type="button" onClick={onCancel} disabled={busy}>Cancel</button>
-          <button className="button button--danger" type="button" onClick={onConfirm} disabled={busy}>{busy ? 'Working…' : confirmLabel}</button>
-        </div>
-      </div>
-    </div>
+    <AlertDialog.Root open={open} onOpenChange={(next) => { if (!next) onCancel() }}>
+      <AlertDialog.Portal>
+        <AlertDialog.Overlay className="dialog-backdrop" />
+        <AlertDialog.Content className="dialog" onCloseAutoFocus={(event) => {
+          if (!returnFocus.current) return
+          event.preventDefault()
+          returnFocus.current.focus()
+        }}>
+          <AlertDialog.Title>{title}</AlertDialog.Title>
+          <AlertDialog.Description className="text-secondary">{description}</AlertDialog.Description>
+          <div className="dialog__actions">
+            <AlertDialog.Cancel asChild><button className="button button--secondary" type="button" disabled={busy}>Cancel</button></AlertDialog.Cancel>
+            <AlertDialog.Action asChild><button className="button button--danger" type="button" onClick={onConfirm} disabled={busy}>{busy ? 'Working…' : confirmLabel}</button></AlertDialog.Action>
+          </div>
+        </AlertDialog.Content>
+      </AlertDialog.Portal>
+    </AlertDialog.Root>
   )
 }
