@@ -36,3 +36,11 @@ build/
 .env
 .env.local
 application-local.properties
+
+### React / Vite ###
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
