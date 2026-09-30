@@ -1,18 +1,41 @@
 # Simple Bank Application
 
-Simple Bank is an educational full-stack banking application. This phase adds role-based authorization, customer ownership isolation, role-specific React workspaces, a separate security audit, an Apple-like restrained interface, and a Docker full-stack demo.
+Simple Bank is an educational full-stack banking application. The product-experience spike adds a public landing page, a calmer interface, English, Spanish, and French, and an isolated twenty-user demo dataset. Role-based authorization and customer ownership stay in place.
 
 ## Current Phase
 
-**Role-based access, customer ownership, and a restrained React UI**
+**Product experience: public landing, responsive workspace, localization, and an isolated demo**
 
-The project evolved in five focused phases:
+The project evolved in six focused phases:
 
 1. Phase 1 — in-memory customers, accounts, balances, and transactions.
 2. Phase 2 — MongoDB Atlas persistence with ObjectId identifiers, Decimal128 money, indexes, and transactional money movement.
 3. Phase 3 — stateless JWT authentication, BCrypt credentials, and authenticated audit actors.
 4. Phase 4 — React operations UI, real API integration, and full-stack Docker support.
 5. Phase 5 — CUSTOMER, TELLER, MANAGER, AUDITOR, and ADMIN permissions, customer-owned data, security audit, and role-specific workspaces.
+6. Phase 6 — public landing at `/`, authenticated product under `/app`, adaptive tables, and en/es/fr.
+
+`docs/demo-credentials.txt` contains intentionally public synthetic credentials. Never reuse them. They are valid only in the isolated `simple_bank_demo` dataset. See `docs/demo-spike.md`.
+
+The interface follows Apple Human Interface Guidelines as design principles, not as a copy of Apple. Color uses Radix Colors through semantic tokens. Interaction uses Radix primitives. Dense operational tables use TanStack Table. Styling is custom CSS. This project is not affiliated with Apple.
+
+Language preference is stored in `localStorage` under `simple-bank-language`. The access token stays in `sessionStorage`. The selector offers English, Español, and Français. The browser language is used when no preference is saved, and English is the fallback. Logout does not clear the language.
+
+Desktop uses a light split view. Narrower widths replace the sidebar with an accessible sheet. Data tables become stacked records on small screens.
+
+Normal startup uses `simple_bank` and does not seed demo users:
+
+```powershell
+docker compose up --build
+```
+
+Demo startup uses `simple_bank_demo`:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.demo.yml up --build
+```
+
+Old bookmarks such as `/customers` and `/accounts` redirect to `/app/customers` and `/app/accounts`. Routes stay in English when the language changes.
 
 Bank customers and API logins stay separate. A record in `users` owns bank accounts. A record in `auth_users` proves that a person may call the API. Registration creates a Customer login. It does not create a bank customer, and it does not grant staff or admin authority.
 
