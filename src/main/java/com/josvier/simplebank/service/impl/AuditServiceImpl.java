@@ -57,7 +57,9 @@ public class AuditServiceImpl implements AuditService {
                 audit.getInvolvedUserIds(),
                 audit.getAmount(),
                 audit.getTransactionIds(),
-                audit.getCreatedAt()
+                audit.getCreatedAt(),
+                audit.getActorAuthUserId(),
+                audit.getActorUsername()
         );
     }
 

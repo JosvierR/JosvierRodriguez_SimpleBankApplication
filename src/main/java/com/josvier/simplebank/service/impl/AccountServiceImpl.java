@@ -19,6 +19,8 @@ import com.josvier.simplebank.model.User;
 import com.josvier.simplebank.repository.AccountRepository;
 import com.josvier.simplebank.repository.TransactionRepository;
 import com.josvier.simplebank.repository.UserRepository;
+import com.josvier.simplebank.security.actor.CurrentActor;
+import com.josvier.simplebank.security.actor.CurrentActorProvider;
 import com.josvier.simplebank.service.AccountService;
 import com.josvier.simplebank.service.AuditService;
 import org.springframework.stereotype.Service;
@@ -56,17 +58,20 @@ public class AccountServiceImpl implements AccountService {
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
     private final AuditService auditService;
+    private final CurrentActorProvider currentActorProvider;
 
     private final ConcurrentHashMap<String, Object> accountLocks = new ConcurrentHashMap<>();
 
     public AccountServiceImpl(AccountRepository accountRepository,
                               UserRepository userRepository,
                               TransactionRepository transactionRepository,
-                              AuditService auditService) {
+                              AuditService auditService,
+                              CurrentActorProvider currentActorProvider) {
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
         this.transactionRepository = transactionRepository;
         this.auditService = auditService;
+        this.currentActorProvider = currentActorProvider;
     }
 
     @Override
@@ -251,6 +256,7 @@ public class AccountServiceImpl implements AccountService {
                                       BigDecimal amount,
                                       List<Transaction> transactions) {
         LocalDateTime createdAt = transactions.get(0).getCreatedAt();
+        CurrentActor actor = currentActorProvider.current();
         return auditService.record(new AuditRecord(
                 action,
                 user.getId(),
@@ -258,7 +264,9 @@ public class AccountServiceImpl implements AccountService {
                 involvedUserIds,
                 amount,
                 transactionIds(transactions),
-                createdAt
+                createdAt,
+                actor.authUserId(),
+                actor.username()
         ));
     }
 

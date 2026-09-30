@@ -40,6 +40,10 @@ public class AuditDocument {
     @Indexed(name = "audit_created_at_idx")
     private LocalDateTime createdAt;
 
+    private String actorAuthUserId;
+
+    private String actorUsername;
+
     public String getId() {
         return id;
     }
@@ -102,5 +106,21 @@ public class AuditDocument {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getActorAuthUserId() {
+        return actorAuthUserId;
+    }
+
+    public void setActorAuthUserId(String actorAuthUserId) {
+        this.actorAuthUserId = actorAuthUserId;
+    }
+
+    public String getActorUsername() {
+        return actorUsername;
+    }
+
+    public void setActorUsername(String actorUsername) {
+        this.actorUsername = actorUsername;
     }
 }

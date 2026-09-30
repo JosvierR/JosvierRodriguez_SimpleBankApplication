@@ -30,6 +30,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     static final String BEARER_PREFIX = "Bearer ";
 
+    private static boolean isBearer(String header) {
+        return header.equals("Bearer") || header.startsWith(BEARER_PREFIX);
+    }
+
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final SecurityErrorWriter errors;
@@ -53,12 +57,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (header == null || !header.startsWith(BEARER_PREFIX)) {
+        if (header == null || header.isBlank() || !isBearer(header)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = header.substring(BEARER_PREFIX.length()).trim();
+        String token = header.length() <= BEARER_PREFIX.length()
+                ? ""
+                : header.substring(BEARER_PREFIX.length()).trim();
         if (token.isEmpty()) {
             errors.write(request, response, HttpStatus.UNAUTHORIZED, "Invalid or expired token");
             return;

@@ -13,6 +13,7 @@ import javax.crypto.SecretKey;
 import java.time.Clock;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Signs and checks HMAC SHA-256 access tokens.
@@ -32,6 +33,9 @@ public class JwtService {
     public JwtService(@Value("${security.jwt.secret}") String secret,
                       @Value("${security.jwt.expiration-ms:3600000}") long expirationMs,
                       Clock clock) {
+        if (expirationMs <= 0) {
+            throw new IllegalStateException("JWT_EXPIRATION_MS must be greater than 0");
+        }
         this.key = hmacKey(secret);
         this.expirationMs = expirationMs;
         this.clock = clock;
@@ -44,12 +48,17 @@ public class JwtService {
                 .map(authority -> authority.getAuthority())
                 .toList();
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(userDetails.getUsername())
                 .claim(ROLES_CLAIM, roles)
                 .issuedAt(issuedAt)
                 .expiration(expiration)
                 .signWith(key, Jwts.SIG.HS256)
                 .compact();
+    }
+
+    public String extractJti(String token) {
+        return parse(token).getId();
     }
 
     public String extractUsername(String token) {

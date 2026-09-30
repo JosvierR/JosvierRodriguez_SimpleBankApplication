@@ -23,7 +23,7 @@ import java.util.List;
  * Deposit, withdrawal, and transfer rules are not implemented here.
  * This class only asks {@link AuditService} for records that were already written.
  */
-@Tag(name = "Audits", description = "Trace who moved money, when, which accounts, and how much")
+@Tag(name = "Audits", description = "userId is the bank customer. actorUsername is the API login that ran the call.")
 @RestController
 @RequestMapping("/api/audits")
 public class AuditController {

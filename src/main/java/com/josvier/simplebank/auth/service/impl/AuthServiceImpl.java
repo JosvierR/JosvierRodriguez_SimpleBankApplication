@@ -1,5 +1,7 @@
 package com.josvier.simplebank.auth.service.impl;
 
+import com.josvier.simplebank.auth.AuthIdentityNormalizer;
+import com.josvier.simplebank.auth.PasswordPolicy;
 import com.josvier.simplebank.auth.dto.request.LoginRequest;
 import com.josvier.simplebank.auth.dto.request.RegisterRequest;
 import com.josvier.simplebank.auth.dto.response.AuthResponse;
@@ -54,8 +56,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse register(RegisterRequest request) {
-        String username = request.username().trim();
-        String email = request.email().trim();
+        String username = AuthIdentityNormalizer.username(request.username());
+        String email = AuthIdentityNormalizer.email(request.email());
+        PasswordPolicy.requireWithinLimit(request.password());
         if (authUsers.existsByUsername(username)) {
             throw new DuplicateResourceException("Username already exists");
         }
@@ -76,13 +79,17 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(LoginRequest request) {
+        String username = AuthIdentityNormalizer.username(request.username());
+        if (PasswordPolicy.exceedsUtf8Limit(request.password())) {
+            throw new InvalidCredentialsException();
+        }
         try {
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.username(), request.password()));
+                    new UsernamePasswordAuthenticationToken(username, request.password()));
         } catch (AuthenticationException exception) {
             throw new InvalidCredentialsException();
         }
-        UserDetails principal = userDetailsService.loadUserByUsername(request.username());
+        UserDetails principal = userDetailsService.loadUserByUsername(username);
         return tokenResponse(principal);
     }
 

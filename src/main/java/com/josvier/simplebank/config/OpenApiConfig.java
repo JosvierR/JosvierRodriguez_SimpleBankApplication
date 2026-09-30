@@ -32,8 +32,11 @@ public class OpenApiConfig {
                         .title("Simple Bank API")
                         .description("Bank API persisted in MongoDB Atlas. Identifiers are ObjectId strings. "
                                 + "Register and login issue a bearer token. Bank customers in users are separate "
-                                + "from API logins in auth_users. Create a customer, open an account, then deposit, "
-                                + "withdraw, and read history.")
+                                + "from API logins in auth_users. A bearer token proves the caller may use the API. "
+                                + "It does not mean that caller owns a particular bank account. "
+                                + "Audit userId is the bank customer. actorUsername is the API login. "
+                                + "GET /api/admin/whoami requires role ADMIN. "
+                                + "Create a customer, open an account, then deposit, withdraw, and read history.")
                         .version("0.0.1"))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_SCHEME))
                 .components(new Components().addSecuritySchemes(BEARER_SCHEME, bearer));

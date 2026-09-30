@@ -8,8 +8,9 @@ import java.util.List;
 /**
  * One compliance trace for a successful deposit, withdrawal, or transfer.
  *
- * It answers who started the movement, when it happened, which accounts were
- * involved, and how much money moved. The ledger rows stay in transactions.
+ * It records the bank customer whose money moved and, when the call was
+ * authenticated, the API login that executed the operation. Older documents
+ * may omit the actor fields. Those stay null when they are read.
  */
 public class AuditRecord {
 
@@ -21,6 +22,8 @@ public class AuditRecord {
     private final BigDecimal amount;
     private final List<String> transactionIds;
     private final LocalDateTime createdAt;
+    private final String actorAuthUserId;
+    private final String actorUsername;
 
     public AuditRecord(AuditAction action,
                        String userId,
@@ -28,7 +31,9 @@ public class AuditRecord {
                        List<String> involvedUserIds,
                        BigDecimal amount,
                        List<String> transactionIds,
-                       LocalDateTime createdAt) {
+                       LocalDateTime createdAt,
+                       String actorAuthUserId,
+                       String actorUsername) {
         this.action = action;
         this.userId = userId;
         this.accountIds = copy(accountIds);
@@ -36,6 +41,8 @@ public class AuditRecord {
         this.amount = amount;
         this.transactionIds = copy(transactionIds);
         this.createdAt = createdAt;
+        this.actorAuthUserId = actorAuthUserId;
+        this.actorUsername = actorUsername;
     }
 
     public void setId(String id) {
@@ -72,6 +79,14 @@ public class AuditRecord {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public String getActorAuthUserId() {
+        return actorAuthUserId;
+    }
+
+    public String getActorUsername() {
+        return actorUsername;
     }
 
     private static List<String> copy(List<String> values) {

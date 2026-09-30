@@ -55,6 +55,8 @@ public class MongoAuditRepositoryAdapter implements AuditRepository {
         document.setAmount(audit.getAmount());
         document.setTransactionIds(new ArrayList<>(audit.getTransactionIds()));
         document.setCreatedAt(audit.getCreatedAt());
+        document.setActorAuthUserId(audit.getActorAuthUserId());
+        document.setActorUsername(audit.getActorUsername());
         return document;
     }
 
@@ -66,7 +68,9 @@ public class MongoAuditRepositoryAdapter implements AuditRepository {
                 document.getInvolvedUserIds(),
                 document.getAmount(),
                 document.getTransactionIds(),
-                document.getCreatedAt()
+                document.getCreatedAt(),
+                document.getActorAuthUserId(),
+                document.getActorUsername()
         );
         audit.setId(document.getId());
         return audit;

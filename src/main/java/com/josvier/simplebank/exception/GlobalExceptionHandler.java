@@ -1,11 +1,13 @@
 package com.josvier.simplebank.exception;
 
 import com.josvier.simplebank.auth.exception.InvalidCredentialsException;
+import com.josvier.simplebank.auth.exception.PasswordTooLongException;
 import com.josvier.simplebank.dto.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -28,10 +30,22 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException exception,
+                                                            HttpServletRequest request) {
+        return response(HttpStatus.FORBIDDEN, "Access is denied", request);
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException exception,
                                                                   HttpServletRequest request) {
         return response(HttpStatus.UNAUTHORIZED, "Invalid username or password", request);
+    }
+
+    @ExceptionHandler(PasswordTooLongException.class)
+    public ResponseEntity<ErrorResponse> handlePasswordTooLong(PasswordTooLongException exception,
+                                                               HttpServletRequest request) {
+        return response(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)

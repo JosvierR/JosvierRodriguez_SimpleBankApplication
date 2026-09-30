@@ -1,5 +1,6 @@
 package com.josvier.simplebank.auth.dto.request;
 
+import com.josvier.simplebank.auth.validation.MaxUtf8Bytes;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -22,6 +23,7 @@ public record RegisterRequest(
 
         @NotBlank(message = "Password is required")
         @Size(min = 8, message = "Password must be at least 8 characters")
+        @MaxUtf8Bytes(72)
         @Schema(example = "choose-a-long-password")
         String password
 ) {
