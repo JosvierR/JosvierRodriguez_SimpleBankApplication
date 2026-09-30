@@ -1,0 +1,10 @@
+services:
+  backend:
+    environment:
+      SPRING_PROFILES_ACTIVE: demo
+      MONGODB_DATABASE: simple_bank_demo
+      DEMO_SEED_ENABLED: "true"
+      DEMO_SEED_RESET: "false"
+      DEMO_CREDENTIALS_FILE: /demo/demo-credentials.txt
+    volumes:
+      - ./docs/demo-credentials.txt:/demo/demo-credentials.txt:ro

@@ -3,6 +3,7 @@ package com.josvier.simplebank.exception;
 import com.josvier.simplebank.auth.exception.InvalidCredentialsException;
 import com.josvier.simplebank.auth.exception.PasswordTooLongException;
 import com.josvier.simplebank.dto.response.ErrorResponse;
+import com.josvier.simplebank.exception.ErrorCodes;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,7 +116,8 @@ public class GlobalExceptionHandler {
                 status.value(),
                 status.getReasonPhrase(),
                 message,
-                request.getRequestURI()
+                request.getRequestURI(),
+                ErrorCodes.from(status, message)
         );
         return ResponseEntity.status(status).body(body);
     }

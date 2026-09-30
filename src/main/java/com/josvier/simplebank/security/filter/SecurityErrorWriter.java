@@ -2,6 +2,7 @@ package com.josvier.simplebank.security.filter;
 
 import tools.jackson.databind.ObjectMapper;
 import com.josvier.simplebank.dto.response.ErrorResponse;
+import com.josvier.simplebank.exception.ErrorCodes;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
@@ -40,7 +41,8 @@ public class SecurityErrorWriter {
                 status.value(),
                 status.getReasonPhrase(),
                 message,
-                request.getRequestURI()
+                request.getRequestURI(),
+                ErrorCodes.from(status, message)
         );
         objectMapper.writeValue(response.getOutputStream(), body);
     }
