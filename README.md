@@ -2,11 +2,11 @@
 
 ## Current Phase
 
-Backend REST API with MongoDB Cloud Atlas
+Backend REST API with MongoDB Cloud Atlas and JWT authentication
 
-Phase 1 stored customers, accounts, balances, and transactions in `ConcurrentHashMap` while the process was running. This branch keeps that API and replaces the storage. Data now lives in MongoDB Atlas and is still there after the application stops and starts again.
+Phase 1 stored customers, accounts, balances, and transactions in `ConcurrentHashMap` while the process was running. The MongoDB branch keeps that API and stores it in Atlas. This branch adds stateless JWT authentication in front of the same banking API.
 
-There is no authentication and no frontend in this phase.
+Bank customers and API logins are different records. A customer in `users` still owns accounts. A login in `auth_users` only proves that the caller may use the API. Registering does not create a customer, and the two ids are not required to match. There is no frontend in this phase.
 
 ## Tech Stack
 
@@ -17,6 +17,9 @@ There is no authentication and no frontend in this phase.
 - Spring Validation
 - Spring Data MongoDB
 - MongoDB Atlas
+- Spring Security
+- JWT (JJWT, HMAC SHA-256)
+- BCrypt password hashing
 - Springdoc OpenAPI 3.0.3 (Swagger UI)
 - JUnit 5
 - Mockito
@@ -42,7 +45,7 @@ MongoDB Atlas
 
 - **Controller** receives the HTTP request, validates the body, calls a service, and returns a status code plus a response DTO. It does not know about MongoDB.
 - **Service** owns the banking rules: unique email, existing user, positive amount, sufficient balance, and recording a transaction only after the balance update is accepted.
-- **Repository interface** is the storage port. Services depend on `UserRepository`, `AccountRepository`, `TransactionRepository`, and `AuditRepository`.
+- **Repository interface** is the storage port. Banking services depend on `UserRepository`, `AccountRepository`, `TransactionRepository`, and `AuditRepository`. Authentication depends on `AuthUserRepository`.
 - **Mongo adapter** implements that port. It maps domain objects to documents and back. It does not calculate balances.
 - **Spring Data MongoRepository** is the infrastructure that talks to a collection.
 - **MongoDB Atlas** is the database. Phase 1's in-memory classes are not on this branch.
@@ -76,8 +79,10 @@ Identifiers are MongoDB ObjectId values exposed as strings, for example `68dc123
 - Decimal128 money storage
 - Unique email index
 - MongoDB transactions for deposit, withdraw, and transfer
-- Swagger/OpenAPI
-- Postman CRUD, banking, transfer, and audit flows
+- Swagger/OpenAPI with a Bearer authorize button
+- Postman CRUD, banking, transfer, audit, and JWT flows
+- Stateless JWT authentication for `/api/**`
+- BCrypt password hashes in a separate `auth_users` collection
 
 ## Collections
 
@@ -135,6 +140,22 @@ AUDITS
 
 An account stores `userId` instead of embedding the user. A transaction stores `accountId` instead of living inside the account document. The service checks that the referenced user or account exists. Transactions stay in their own collection so one account's history does not grow the account document without a limit. This project does not use DBRef.
 
+AUTH_USERS
+
+```text
+{
+  "_id": ObjectId,
+  "username": String,
+  "email": String,
+  "passwordHash": BCrypt String,
+  "roles": ["USER"],
+  "enabled": true,
+  "createdAt": Date
+}
+```
+
+`auth_users` is the login collection. `users` is still the bank customer collection. A public registration always stores `USER`. There is no request field that can grant `ADMIN`. The password the client sent is not stored. `passwordHash` is a BCrypt hash.
+
 Indexes, created because `spring.data.mongodb.auto-index-creation=true`:
 
 | Collection | Index | Purpose |
@@ -143,6 +164,8 @@ Indexes, created because `spring.data.mongodb.auto-index-creation=true`:
 | accounts | `user_id_idx` | Lookup by owner |
 | transactions | `account_created_at_idx` on `accountId`, `createdAt` | History for one account, oldest first |
 | audits | `audit_created_at_idx` on `createdAt` | Traces in the order the movements happened |
+| auth_users | `auth_username_unique_idx` unique | One login per username |
+| auth_users | `auth_email_unique_idx` unique | One login per email |
 
 Money stays `BigDecimal` in Java. `spring.data.mongodb.representation.big-decimal=decimal128` and the document fields store it as BSON Decimal128. `double` is not used for balances or amounts.
 
@@ -163,6 +186,8 @@ src/main/java/com/josvier/simplebank/
     service/impl/
     exception/
     config/
+    auth/
+    security/
 src/test/java/com/josvier/simplebank/
     service/
     controller/
@@ -177,6 +202,8 @@ postman/
 ## MongoDB Atlas Security
 
 `MONGODB_URI` is a secret. It contains the database username and password. Do not commit it, paste it into the README, or put it in `application.properties`.
+
+`JWT_SECRET` is also a secret. It signs access tokens with HMAC SHA-256, so it must be a Base64-encoded random value of at least 256 bits. It has no default in `application.properties`. Do not commit a real secret, paste one into this README, or put one in Postman or Swagger. `JWT_EXPIRATION_MS` defaults to `3600000` (one hour) when it is omitted.
 
 `.env.example` lists the variable names with placeholders. Spring Boot does not load `.env` or `.env.example`. Export the variables in the shell that runs the application.
 
@@ -195,6 +222,8 @@ Windows PowerShell:
 ```powershell
 $env:MONGODB_URI="mongodb+srv://<username>:<url-encoded-password>@<cluster-host>/?retryWrites=true&w=majority&appName=SimpleBank"
 $env:MONGODB_DATABASE="simple_bank"
+$env:JWT_SECRET="<base64-encoded-256-bit-secret>"
+$env:JWT_EXPIRATION_MS="3600000"
 .\mvnw.cmd spring-boot:run
 ```
 
@@ -203,14 +232,18 @@ macOS/Linux:
 ```text
 export MONGODB_URI="mongodb+srv://<username>:<url-encoded-password>@<cluster-host>/?retryWrites=true&w=majority&appName=SimpleBank"
 export MONGODB_DATABASE="simple_bank"
+export JWT_SECRET="<base64-encoded-256-bit-secret>"
+export JWT_EXPIRATION_MS="3600000"
 ./mvnw spring-boot:run
 ```
 
-`MONGODB_DATABASE` defaults to `simple_bank` when it is omitted. `MONGODB_URI` has no default.
+`MONGODB_DATABASE` defaults to `simple_bank` when it is omitted. `MONGODB_URI` and `JWT_SECRET` have no default. The application does not start without them.
 
 The API listens on `http://localhost:8080/api`.
 
-Swagger UI is at [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html). The OpenAPI document is at `http://localhost:8080/v3/api-docs`. From the UI, use **Try it out** on each operation. Create a user first, copy the returned string id into **Open an account**, then deposit, withdraw, and read history with that account id.
+Swagger UI is at [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html). The OpenAPI document is at `http://localhost:8080/v3/api-docs`. Swagger itself is public. Use **Authorize** and paste the access token from login. Swagger sends `Authorization: Bearer <token>` on the protected operations. Register and login stay public in the document.
+
+From the UI, register or log in, authorize, create a bank customer, copy the returned string id into **Open an account**, then deposit, withdraw, and read history with that account id.
 
 `GET /api` by itself is not an operation. An unknown path returns 404.
 
@@ -236,6 +269,9 @@ The automated tests mock the repositories and the Spring Data interfaces. They d
 
 | Method | Path | Success | Purpose |
 | --- | --- | --- | --- |
+| POST | /api/auth/register | 201 | Public. Create an API login with role USER and return a bearer token |
+| POST | /api/auth/login | 200 | Public. Check the password and return a bearer token |
+| GET | /api/auth/verify | 200 | Confirm the bearer token and return the username and roles |
 | POST | /api/users | 201 | Create a user |
 | GET | /api/users | 200 | List every user |
 | GET | /api/users/{id} | 200 | View a user |
@@ -257,6 +293,16 @@ The automated tests mock the repositories and the Spring Data interfaces. They d
 
 `{id}` and `{userId}` are string ObjectId values, not numbers.
 
+`POST /api/auth/register` and `POST /api/auth/login` are public. Swagger UI and `/v3/api-docs` are public. Every other `/api/**` route requires a bearer token:
+
+```text
+Authorization: Bearer <token>
+```
+
+The token expires after `JWT_EXPIRATION_MS` milliseconds. The login response field `expiresIn` is that duration in seconds. A missing token, a bad signature, or an expired token returns 401 JSON. It does not return HTML or the JWT library's exception text. Normal banking does not require `ADMIN`. Registration cannot ask for `ADMIN`.
+
+A duplicate username or email on register returns 409. A wrong password returns 401 with `Invalid username or password`. A password shorter than 8 characters returns 400.
+
 A user who still owns one or more accounts cannot be deleted. `DELETE /api/users/{id}` then returns 409 with the message `User cannot be deleted while accounts still exist`. The user and those accounts stay in the database. This keeps `Account.userId` from pointing at a customer who is gone.
 
 An account that already has transactions cannot be deleted. `DELETE /api/accounts/{id}` then returns 409 with the message `Account cannot be deleted while transactions still exist`. The audit trace for that history stays as well.
@@ -268,6 +314,7 @@ Common error responses:
 | Situation | Status |
 | --- | --- |
 | Invalid body, non-positive amount, more than 2 decimal places, or insufficient funds | 400 |
+| Missing, invalid, or expired bearer token, or wrong login password | 401 |
 | Unknown user, unknown account, or unknown route | 404 |
 | Email already registered, deleting a user who still owns accounts, or deleting an account that still has transactions | 409 |
 
@@ -275,17 +322,19 @@ Error bodies use `ErrorResponse` and do not include a stack trace, a host name, 
 
 ## Example Workflow
 
-1. Create a user with `POST /api/users`.
-2. Create an account for that string `userId` with `POST /api/accounts`. The balance starts at `0.00`.
-3. Deposit with `POST /api/accounts/{id}/deposit`.
-4. Withdraw with `POST /api/accounts/{id}/withdraw`.
-5. Read history with `GET /api/accounts/{id}/transactions`.
+1. Register with `POST /api/auth/register`, or log in with `POST /api/auth/login`.
+2. Send `Authorization: Bearer <token>` on the banking calls below.
+3. Create a bank customer with `POST /api/users`.
+4. Create an account for that string `userId` with `POST /api/accounts`. The balance starts at `0.00`.
+5. Deposit with `POST /api/accounts/{id}/deposit`.
+6. Withdraw with `POST /api/accounts/{id}/withdraw`.
+7. Read history with `GET /api/accounts/{id}/transactions`.
 
 A failed withdrawal, such as asking for more money than the balance, returns 400. The balance stays the same and no transaction is added.
 
 Deposit and withdrawal each run inside one MongoDB transaction: the balance update and the history insert commit together or roll back together. The service also keeps a per-account lock in this process so two threads in the same JVM do not apply the same balance at once. That lock does not coordinate a second running instance. The database transaction is the durable boundary.
 
-The Postman collection in `postman/` follows this flow. Import it and run the folders from top to bottom. Requests use the `baseUrl` variable (`http://localhost:8080/api`). Create User generates a new email on each run and saves `userId`. Create Account sends that id as a JSON string and saves `accountId`. A later request reuses the same email and expects 409.
+The Postman collection in `postman/` follows this flow. Import it and run the **JWT Authentication** folder first so `jwtToken` is saved. Banking requests then send `Authorization: Bearer {{jwtToken}}`. Register and login do not send that header. Create User generates a new email on each run and saves `userId`. Create Account sends that id as a JSON string and saves `accountId`. A later request reuses the same email and expects 409. The **JWT Banking Demo** folder registers, logs in, creates a customer and an account, deposits 500, withdraws 200, and reads history and audits. One request calls `GET /api/accounts` with no token and expects 401.
 
 The **Customer CRUD Demo** folder creates three customers with unique emails, lists them, updates one, rejects a duplicate email, deletes a customer who has no accounts, and refuses to delete a customer who owns an account. List checks look for those new ids inside the response. They do not require the database to contain only those three records.
 
