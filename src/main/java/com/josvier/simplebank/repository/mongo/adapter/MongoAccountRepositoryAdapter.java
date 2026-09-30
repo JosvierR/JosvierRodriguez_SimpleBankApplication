@@ -6,6 +6,7 @@ import com.josvier.simplebank.repository.mongo.document.AccountDocument;
 import com.josvier.simplebank.repository.mongo.springdata.SpringDataAccountMongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,6 +53,23 @@ public class MongoAccountRepositoryAdapter implements AccountRepository {
         return accounts.findByUserId(userId).stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public List<Account> findByBalanceGreaterThanEqual(BigDecimal threshold) {
+        if (threshold == null) {
+            return List.of();
+        }
+        return accounts.findByBalanceGreaterThanEqual(threshold).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public void deleteById(String id) {
+        if (id != null) {
+            accounts.deleteById(id);
+        }
     }
 
     private AccountDocument toDocument(Account account) {

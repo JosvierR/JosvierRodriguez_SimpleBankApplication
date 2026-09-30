@@ -91,6 +91,23 @@ class MongoAccountRepositoryAdapterTest {
     }
 
     @Test
+    void findByBalanceGreaterThanEqual_delegatesToSpringData() {
+        when(accounts.findByBalanceGreaterThanEqual(new BigDecimal("100.00"))).thenReturn(List.of(document()));
+
+        List<Account> found = adapter.findByBalanceGreaterThanEqual(new BigDecimal("100.00"));
+
+        assertEquals(1, found.size());
+        verify(accounts).findByBalanceGreaterThanEqual(new BigDecimal("100.00"));
+    }
+
+    @Test
+    void deleteById_delegatesToSpringData() {
+        adapter.deleteById(ACCOUNT_ID);
+
+        verify(accounts).deleteById(ACCOUNT_ID);
+    }
+
+    @Test
     void findById_missing_isEmpty() {
         when(accounts.findById(ACCOUNT_ID)).thenReturn(Optional.empty());
 

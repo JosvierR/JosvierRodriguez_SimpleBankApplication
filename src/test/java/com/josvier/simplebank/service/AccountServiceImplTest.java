@@ -1,18 +1,26 @@
 package com.josvier.simplebank.service;
 
 import com.josvier.simplebank.dto.request.CreateAccountRequest;
+import com.josvier.simplebank.dto.request.TransferRequest;
+import com.josvier.simplebank.dto.request.UpdateAccountRequest;
 import com.josvier.simplebank.dto.response.AccountResponse;
+import com.josvier.simplebank.dto.response.AuditResponse;
 import com.josvier.simplebank.dto.response.TransactionResponse;
+import com.josvier.simplebank.dto.response.TransferResponse;
 import com.josvier.simplebank.exception.InvalidTransactionException;
+import com.josvier.simplebank.exception.ResourceConflictException;
 import com.josvier.simplebank.exception.ResourceNotFoundException;
 import com.josvier.simplebank.model.Account;
 import com.josvier.simplebank.model.AccountType;
+import com.josvier.simplebank.model.AuditAction;
+import com.josvier.simplebank.model.AuditRecord;
 import com.josvier.simplebank.model.Transaction;
 import com.josvier.simplebank.model.TransactionType;
 import com.josvier.simplebank.model.User;
 import com.josvier.simplebank.repository.AccountRepository;
 import com.josvier.simplebank.repository.TransactionRepository;
 import com.josvier.simplebank.repository.UserRepository;
+import com.josvier.simplebank.service.AuditService;
 import com.josvier.simplebank.service.impl.AccountServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,11 +55,14 @@ class AccountServiceImplTest {
     @Mock
     private TransactionRepository transactionRepository;
 
+    @Mock
+    private AuditService auditService;
+
     private AccountService accountService;
 
     @BeforeEach
     void setUp() {
-        accountService = new AccountServiceImpl(accountRepository, userRepository, transactionRepository);
+        accountService = new AccountServiceImpl(accountRepository, userRepository, transactionRepository, auditService);
     }
 
     @Test
@@ -342,15 +353,13 @@ class AccountServiceImplTest {
     }
 
     @Test
-    void getAccounts_includesAccountWhenOwnerIsMissing() {
-        when(userRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.empty());
+    void getAccounts_missingOwner_returnsNotFound() {
         when(accountRepository.findAll()).thenReturn(List.of(account(new BigDecimal("10.00"))));
+        when(userRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.empty());
 
-        List<AccountResponse> accounts = accountService.getAccounts();
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> accountService.getAccounts());
 
-        assertEquals(1, accounts.size());
-        assertEquals("68dc1234567890abcdef0001", accounts.get(0).accountId());
-        assertEquals("Unknown", accounts.get(0).userName());
+        assertEquals("User with id 68dc1234567890abcdef0001 was not found", exception.getMessage());
     }
 
     @Test
@@ -388,6 +397,162 @@ class AccountServiceImplTest {
         List<AccountResponse> accounts = accountService.getAccountsByUser("68dc1234567890abcdef0001");
 
         assertTrue(accounts.isEmpty());
+    }
+
+    @Test
+    void updateAccount_changesTypeAndPreservesIdentityAndBalance() {
+        stubUser();
+        Account account = account(new BigDecimal("25.00"));
+        when(accountRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.of(account));
+        when(accountRepository.save(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AccountResponse response = accountService.updateAccount(
+                "68dc1234567890abcdef0001", new UpdateAccountRequest(AccountType.CHECKING));
+
+        assertEquals("68dc1234567890abcdef0001", response.accountId());
+        assertEquals("68dc1234567890abcdef0001", response.userId());
+        assertEquals(AccountType.CHECKING, response.accountType());
+        assertMoney("25.00", response.balance());
+        assertEquals(LocalDateTime.of(2026, 9, 29, 10, 0), response.createdAt());
+    }
+
+    @Test
+    void updateAccount_notFound() {
+        when(accountRepository.findById("68dc1234567890abcdef0999")).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> accountService.updateAccount("68dc1234567890abcdef0999", new UpdateAccountRequest(AccountType.CHECKING)));
+        verify(accountRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteAccount_success() {
+        when(accountRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.of(account(new BigDecimal("0.00"))));
+        when(transactionRepository.findByAccountId("68dc1234567890abcdef0001")).thenReturn(List.of());
+
+        accountService.deleteAccount("68dc1234567890abcdef0001");
+
+        verify(accountRepository).deleteById("68dc1234567890abcdef0001");
+    }
+
+    @Test
+    void deleteAccount_notFound() {
+        when(accountRepository.findById("68dc1234567890abcdef0999")).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> accountService.deleteAccount("68dc1234567890abcdef0999"));
+        verify(accountRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void deleteAccount_withTransactions_returnsConflict() {
+        when(accountRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.of(account(new BigDecimal("10.00"))));
+        when(transactionRepository.findByAccountId("68dc1234567890abcdef0001")).thenReturn(List.of(
+                transaction("68dc1234567890abcdef0011", "68dc1234567890abcdef0001", TransactionType.DEPOSIT, "10.00")));
+
+        ResourceConflictException exception = assertThrows(ResourceConflictException.class,
+                () -> accountService.deleteAccount("68dc1234567890abcdef0001"));
+
+        assertEquals("Account cannot be deleted while transactions still exist", exception.getMessage());
+        verify(accountRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void getPremiumAccounts_returnsAccountsAtOrAboveThreshold() {
+        stubUser();
+        when(accountRepository.findByBalanceGreaterThanEqual(new BigDecimal("100.00")))
+                .thenReturn(List.of(account(new BigDecimal("150.00"))));
+
+        List<AccountResponse> premium = accountService.getPremiumAccounts(new BigDecimal("100.00"));
+
+        assertEquals(1, premium.size());
+        assertMoney("150.00", premium.get(0).balance());
+        verify(accountRepository).findByBalanceGreaterThanEqual(new BigDecimal("100.00"));
+    }
+
+    @Test
+    void getPremiumAccounts_negativeThreshold_fails() {
+        assertThrows(InvalidTransactionException.class, () -> accountService.getPremiumAccounts(new BigDecimal("-1")));
+        verify(accountRepository, never()).findByBalanceGreaterThanEqual(any());
+    }
+
+    @Test
+    void transfer_success_movesMoneyAndWritesAuditForBothAccounts() {
+        stubUser();
+        Account source = account(new BigDecimal("500.00"));
+        Account destination = accountWith("68dc1234567890abcdef0002", new BigDecimal("20.00"));
+        when(accountRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.of(source));
+        when(accountRepository.findById("68dc1234567890abcdef0002")).thenReturn(Optional.of(destination));
+        when(accountRepository.save(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(auditService.record(any(AuditRecord.class))).thenAnswer(invocation -> {
+            AuditRecord record = invocation.getArgument(0);
+            record.setId("68dc1234567890abcdef0088");
+            return new AuditResponse(
+                    record.getId(),
+                    record.getAction(),
+                    record.getUserId(),
+                    "Josvier Rodriguez",
+                    record.getAccountIds(),
+                    record.getInvolvedUserIds(),
+                    record.getAmount(),
+                    record.getTransactionIds(),
+                    record.getCreatedAt());
+        });
+
+        TransferResponse response = accountService.transfer(new TransferRequest(
+                "68dc1234567890abcdef0001", "68dc1234567890abcdef0002", new BigDecimal("100.00")));
+
+        assertEquals("68dc1234567890abcdef0001", response.fromAccountId());
+        assertEquals("68dc1234567890abcdef0002", response.toAccountId());
+        assertMoney("100.00", response.amount());
+        assertMoney("400.00", response.fromBalance());
+        assertMoney("120.00", response.toBalance());
+        assertEquals("68dc1234567890abcdef0088", response.auditId());
+        ArgumentCaptor<AuditRecord> audit = ArgumentCaptor.forClass(AuditRecord.class);
+        verify(auditService).record(audit.capture());
+        assertEquals(AuditAction.TRANSFER, audit.getValue().getAction());
+        assertEquals("68dc1234567890abcdef0001", audit.getValue().getUserId());
+        assertEquals(List.of("68dc1234567890abcdef0001", "68dc1234567890abcdef0002"), audit.getValue().getAccountIds());
+        assertMoney("100.00", audit.getValue().getAmount());
+    }
+
+    @Test
+    void transfer_sameAccount_fails() {
+        InvalidTransactionException exception = assertThrows(InvalidTransactionException.class,
+                () -> accountService.transfer(new TransferRequest(
+                        "68dc1234567890abcdef0001", "68dc1234567890abcdef0001", new BigDecimal("10.00"))));
+
+        assertEquals("Cannot transfer to the same account", exception.getMessage());
+        verify(accountRepository, never()).save(any());
+        verify(auditService, never()).record(any());
+    }
+
+    @Test
+    void transfer_insufficientFunds_changesNothing() {
+        stubUser();
+        when(accountRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.of(account(new BigDecimal("10.00"))));
+        when(accountRepository.findById("68dc1234567890abcdef0002")).thenReturn(Optional.of(accountWith("68dc1234567890abcdef0002", new BigDecimal("0.00"))));
+
+        assertThrows(InvalidTransactionException.class,
+                () -> accountService.transfer(new TransferRequest(
+                        "68dc1234567890abcdef0001", "68dc1234567890abcdef0002", new BigDecimal("50.00"))));
+
+        verify(accountRepository, never()).save(any());
+        verify(transactionRepository, never()).save(any());
+        verify(auditService, never()).record(any());
+    }
+
+    @Test
+    void transfer_missingAccount_fails() {
+        when(accountRepository.findById("68dc1234567890abcdef0001")).thenReturn(Optional.of(account(new BigDecimal("50.00"))));
+        when(accountRepository.findById("68dc1234567890abcdef0999")).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> accountService.transfer(new TransferRequest(
+                        "68dc1234567890abcdef0001", "68dc1234567890abcdef0999", new BigDecimal("10.00"))));
+
+        verify(accountRepository, never()).save(any());
+        verify(auditService, never()).record(any());
     }
 
     private void stubUser() {

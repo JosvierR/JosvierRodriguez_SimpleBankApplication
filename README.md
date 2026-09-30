@@ -42,7 +42,7 @@ MongoDB Atlas
 
 - **Controller** receives the HTTP request, validates the body, calls a service, and returns a status code plus a response DTO. It does not know about MongoDB.
 - **Service** owns the banking rules: unique email, existing user, positive amount, sufficient balance, and recording a transaction only after the balance update is accepted.
-- **Repository interface** is the storage port. Services depend on `UserRepository`, `AccountRepository`, and `TransactionRepository`.
+- **Repository interface** is the storage port. Services depend on `UserRepository`, `AccountRepository`, `TransactionRepository`, and `AuditRepository`.
 - **Mongo adapter** implements that port. It maps domain objects to documents and back. It does not calculate balances.
 - **Spring Data MongoRepository** is the infrastructure that talks to a collection.
 - **MongoDB Atlas** is the database. Phase 1's in-memory classes are not on this branch.
@@ -52,16 +52,32 @@ Identifiers are MongoDB ObjectId values exposed as strings, for example `68dc123
 ## Features
 
 - Create users
-- Create accounts
-- View accounts
+- List all users
+- View one user
+- Update users
+- Delete users who own no accounts
+- Create bank accounts
+- List all accounts
+- View one account
+- Update an account type
+- Delete an account that has no transactions
+- List accounts by user
+- List premium accounts at or above a balance threshold
 - Deposit money
 - Withdraw money
+- Transfer money between two accounts
 - View transaction history
+- Audit who moved money, when, which accounts, and how much
 - Validation
 - Exception handling
-- Persistent storage across restarts
-- Unique email at the service and at the database index
-- Deposit and withdrawal atomicity through a MongoDB transaction
+- MongoDB Atlas persistence
+- Data persistence across restarts
+- BSON ObjectId identifiers exposed as strings
+- Decimal128 money storage
+- Unique email index
+- MongoDB transactions for deposit, withdraw, and transfer
+- Swagger/OpenAPI
+- Postman CRUD, banking, transfer, and audit flows
 
 ## Collections
 
@@ -102,6 +118,21 @@ TRANSACTIONS
 }
 ```
 
+AUDITS
+
+```text
+{
+  "_id": ObjectId,
+  "action": "DEPOSIT" | "WITHDRAW" | "TRANSFER",
+  "userId": String,
+  "accountIds": [String],
+  "involvedUserIds": [String],
+  "amount": Decimal128,
+  "transactionIds": [String],
+  "createdAt": Date
+}
+```
+
 An account stores `userId` instead of embedding the user. A transaction stores `accountId` instead of living inside the account document. The service checks that the referenced user or account exists. Transactions stay in their own collection so one account's history does not grow the account document without a limit. This project does not use DBRef.
 
 Indexes, created because `spring.data.mongodb.auto-index-creation=true`:
@@ -111,6 +142,7 @@ Indexes, created because `spring.data.mongodb.auto-index-creation=true`:
 | users | `email_unique_idx` unique | One email per customer, including a race between two creates |
 | accounts | `user_id_idx` | Lookup by owner |
 | transactions | `account_created_at_idx` on `accountId`, `createdAt` | History for one account, oldest first |
+| audits | `audit_created_at_idx` on `createdAt` | Traces in the order the movements happened |
 
 Money stays `BigDecimal` in Java. `spring.data.mongodb.representation.big-decimal=decimal128` and the document fields store it as BSON Decimal128. `double` is not used for balances or amounts.
 
@@ -212,14 +244,24 @@ The automated tests mock the repositories and the Spring Data interfaces. They d
 | POST | /api/accounts | 201 | Open an account with balance 0.00 |
 | GET | /api/accounts | 200 | List every account |
 | GET | /api/accounts/{id} | 200 | View an account |
+| PUT | /api/accounts/{id} | 200 | Update the account type. The id, owner, balance, and createdAt stay the same |
+| DELETE | /api/accounts/{id} | 204 | Delete an account that has no transactions |
+| GET | /api/accounts/premium?threshold= | 200 | Accounts whose balance is greater than or equal to the threshold |
 | GET | /api/users/{userId}/accounts | 200 | List accounts owned by one user. An existing user with none returns `[]` |
 | POST | /api/accounts/{id}/deposit | 200 | Deposit a positive amount |
 | POST | /api/accounts/{id}/withdraw | 200 | Withdraw a positive amount that the balance can cover |
+| POST | /api/accounts/transfer | 200 | Move money from one account to another |
 | GET | /api/accounts/{id}/transactions | 200 | View transaction history, oldest first |
+| GET | /api/audits | 200 | List compliance traces, oldest first |
+| GET | /api/audits/{id} | 200 | View who, when, which accounts, and how much |
 
 `{id}` and `{userId}` are string ObjectId values, not numbers.
 
 A user who still owns one or more accounts cannot be deleted. `DELETE /api/users/{id}` then returns 409 with the message `User cannot be deleted while accounts still exist`. The user and those accounts stay in the database. This keeps `Account.userId` from pointing at a customer who is gone.
+
+An account that already has transactions cannot be deleted. `DELETE /api/accounts/{id}` then returns 409 with the message `Account cannot be deleted while transactions still exist`. The audit trace for that history stays as well.
+
+A transfer debits the source account, credits the destination account, writes one withdrawal and one deposit in the ledger, and writes one audit row that names both accounts. The source and destination must be different accounts, and the source balance must cover the amount.
 
 Common error responses:
 
@@ -227,7 +269,7 @@ Common error responses:
 | --- | --- |
 | Invalid body, non-positive amount, more than 2 decimal places, or insufficient funds | 400 |
 | Unknown user, unknown account, or unknown route | 404 |
-| Email already registered, or deleting a user who still owns accounts | 409 |
+| Email already registered, deleting a user who still owns accounts, or deleting an account that still has transactions | 409 |
 
 Error bodies use `ErrorResponse` and do not include a stack trace, a host name, or the connection URI.
 
@@ -259,6 +301,11 @@ The **Customer CRUD Demo** folder creates three customers with unique emails, li
 | Delete | DELETE /api/users/{id} |
 | Fetch accounts | GET /api/accounts |
 | User's accounts | GET /api/users/{userId}/accounts |
+| Update account | PUT /api/accounts/{id} |
+| Delete account | DELETE /api/accounts/{id} |
+| Premium accounts | GET /api/accounts/premium?threshold= |
+| Transfer | POST /api/accounts/transfer |
+| Audit trace | GET /api/audits and GET /api/audits/{id} |
 
 ## Banking rules that did not change
 

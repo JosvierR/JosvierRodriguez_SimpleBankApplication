@@ -1,11 +1,18 @@
 package com.josvier.simplebank.service.impl;
 
 import com.josvier.simplebank.dto.request.CreateAccountRequest;
+import com.josvier.simplebank.dto.request.TransferRequest;
+import com.josvier.simplebank.dto.request.UpdateAccountRequest;
 import com.josvier.simplebank.dto.response.AccountResponse;
+import com.josvier.simplebank.dto.response.AuditResponse;
 import com.josvier.simplebank.dto.response.TransactionResponse;
+import com.josvier.simplebank.dto.response.TransferResponse;
 import com.josvier.simplebank.exception.InvalidTransactionException;
+import com.josvier.simplebank.exception.ResourceConflictException;
 import com.josvier.simplebank.exception.ResourceNotFoundException;
 import com.josvier.simplebank.model.Account;
+import com.josvier.simplebank.model.AuditAction;
+import com.josvier.simplebank.model.AuditRecord;
 import com.josvier.simplebank.model.Transaction;
 import com.josvier.simplebank.model.TransactionType;
 import com.josvier.simplebank.model.User;
@@ -13,12 +20,14 @@ import com.josvier.simplebank.repository.AccountRepository;
 import com.josvier.simplebank.repository.TransactionRepository;
 import com.josvier.simplebank.repository.UserRepository;
 import com.josvier.simplebank.service.AccountService;
+import com.josvier.simplebank.service.AuditService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,9 +38,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * controller so the rules stay reusable and can be tested without HTTP.
  * The balance is not changed until every check for that operation has passed.
  *
- * {@link Transactional} deposit and withdraw methods run the account update
- * and the history insert inside one MongoDB transaction. If the history
- * insert fails, the balance update rolls back with it.
+ * {@link Transactional} deposit, withdraw, and transfer methods run the account
+ * update, the history insert, and the audit insert inside one MongoDB transaction.
+ * If a later write fails, the earlier writes roll back with it.
  *
  * The map below is only a process-local lock. It stops two threads in this
  * JVM from applying the same account's balance at the same time. It is not
@@ -46,15 +55,18 @@ public class AccountServiceImpl implements AccountService {
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
+    private final AuditService auditService;
 
     private final ConcurrentHashMap<String, Object> accountLocks = new ConcurrentHashMap<>();
 
     public AccountServiceImpl(AccountRepository accountRepository,
                               UserRepository userRepository,
-                              TransactionRepository transactionRepository) {
+                              TransactionRepository transactionRepository,
+                              AuditService auditService) {
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
         this.transactionRepository = transactionRepository;
+        this.auditService = auditService;
     }
 
     @Override
@@ -77,7 +89,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public List<AccountResponse> getAccounts() {
         return accountRepository.findAll().stream()
-                .map(account -> toAccountResponse(account, ownerOrUnknown(account)))
+                .map(account -> toAccountResponse(account, findUser(account.getUserId())))
                 .toList();
     }
 
@@ -90,6 +102,35 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public List<AccountResponse> getPremiumAccounts(BigDecimal threshold) {
+        BigDecimal minimum = requireThreshold(threshold);
+        return accountRepository.findByBalanceGreaterThanEqual(minimum).stream()
+                .map(account -> toAccountResponse(account, findUser(account.getUserId())))
+                .toList();
+    }
+
+    @Override
+    public AccountResponse updateAccount(String accountId, UpdateAccountRequest request) {
+        synchronized (lockFor(accountId)) {
+            Account account = findAccount(accountId);
+            User user = findUser(account.getUserId());
+            account.changeType(request.accountType());
+            return toAccountResponse(accountRepository.save(account), user);
+        }
+    }
+
+    @Override
+    public void deleteAccount(String accountId) {
+        synchronized (lockFor(accountId)) {
+            findAccount(accountId);
+            if (!transactionRepository.findByAccountId(accountId).isEmpty()) {
+                throw new ResourceConflictException("Account cannot be deleted while transactions still exist");
+            }
+            accountRepository.deleteById(accountId);
+        }
+    }
+
+    @Override
     @Transactional
     public AccountResponse deposit(String accountId, BigDecimal amount) {
         synchronized (lockFor(accountId)) {
@@ -99,8 +140,10 @@ public class AccountServiceImpl implements AccountService {
             BigDecimal newBalance = scale(account.getBalance().add(normalizedAmount));
             account.setBalance(newBalance);
             Account saved = accountRepository.save(account);
-            recordTransaction(saved.getId(), TransactionType.DEPOSIT, normalizedAmount);
-            return toAccountResponse(saved, findUser(saved.getUserId()));
+            User user = findUser(saved.getUserId());
+            Transaction transaction = recordTransaction(saved.getId(), TransactionType.DEPOSIT, normalizedAmount);
+            recordAudit(AuditAction.DEPOSIT, user, List.of(saved.getId()), List.of(user.getId()), normalizedAmount, List.of(transaction));
+            return toAccountResponse(saved, user);
         }
     }
 
@@ -120,8 +163,66 @@ public class AccountServiceImpl implements AccountService {
             BigDecimal newBalance = scale(account.getBalance().subtract(normalizedAmount));
             account.setBalance(newBalance);
             Account saved = accountRepository.save(account);
-            recordTransaction(saved.getId(), TransactionType.WITHDRAW, normalizedAmount);
-            return toAccountResponse(saved, findUser(saved.getUserId()));
+            User user = findUser(saved.getUserId());
+            Transaction transaction = recordTransaction(saved.getId(), TransactionType.WITHDRAW, normalizedAmount);
+            recordAudit(AuditAction.WITHDRAW, user, List.of(saved.getId()), List.of(user.getId()), normalizedAmount, List.of(transaction));
+            return toAccountResponse(saved, user);
+        }
+    }
+
+    @Override
+    @Transactional
+    public TransferResponse transfer(TransferRequest request) {
+        if (request.fromAccountId().equals(request.toAccountId())) {
+            throw new InvalidTransactionException("Cannot transfer to the same account");
+        }
+        String firstLock = request.fromAccountId().compareTo(request.toAccountId()) <= 0
+                ? request.fromAccountId()
+                : request.toAccountId();
+        String secondLock = firstLock.equals(request.fromAccountId())
+                ? request.toAccountId()
+                : request.fromAccountId();
+
+        synchronized (lockFor(firstLock)) {
+            synchronized (lockFor(secondLock)) {
+                Account from = findAccount(request.fromAccountId());
+                Account to = findAccount(request.toAccountId());
+                User fromUser = findUser(from.getUserId());
+                User toUser = findUser(to.getUserId());
+                BigDecimal normalizedAmount = requirePositiveAmount(request.amount());
+                if (normalizedAmount.compareTo(from.getBalance()) > 0) {
+                    throw new InvalidTransactionException("Insufficient funds");
+                }
+
+                LocalDateTime when = LocalDateTime.now();
+                from.setBalance(scale(from.getBalance().subtract(normalizedAmount)));
+                to.setBalance(scale(to.getBalance().add(normalizedAmount)));
+                Account savedFrom = accountRepository.save(from);
+                Account savedTo = accountRepository.save(to);
+                Transaction withdrawal = transactionRepository.save(
+                        new Transaction(savedFrom.getId(), TransactionType.WITHDRAW, normalizedAmount, when));
+                Transaction deposit = transactionRepository.save(
+                        new Transaction(savedTo.getId(), TransactionType.DEPOSIT, normalizedAmount, when));
+                List<String> involvedUsers = fromUser.getId().equals(toUser.getId())
+                        ? List.of(fromUser.getId())
+                        : List.of(fromUser.getId(), toUser.getId());
+                AuditResponse audit = recordAudit(
+                        AuditAction.TRANSFER,
+                        fromUser,
+                        List.of(savedFrom.getId(), savedTo.getId()),
+                        involvedUsers,
+                        normalizedAmount,
+                        List.of(withdrawal, deposit));
+                return new TransferResponse(
+                        savedFrom.getId(),
+                        savedTo.getId(),
+                        normalizedAmount,
+                        savedFrom.getBalance(),
+                        savedTo.getBalance(),
+                        audit.id(),
+                        when
+                );
+            }
         }
     }
 
@@ -136,11 +237,57 @@ public class AccountServiceImpl implements AccountService {
     }
 
     /**
-     * Stores the history row after the account save. Both calls participate
-     * in the transaction started by {@link #deposit} or {@link #withdraw}.
+     * Stores the history row after the account save. The save participates
+     * in the transaction started by deposit, withdraw, or transfer.
      */
-    private void recordTransaction(String accountId, TransactionType type, BigDecimal amount) {
-        transactionRepository.save(new Transaction(accountId, type, amount, LocalDateTime.now()));
+    private Transaction recordTransaction(String accountId, TransactionType type, BigDecimal amount) {
+        return transactionRepository.save(new Transaction(accountId, type, amount, LocalDateTime.now()));
+    }
+
+    private AuditResponse recordAudit(AuditAction action,
+                                      User user,
+                                      List<String> accountIds,
+                                      List<String> involvedUserIds,
+                                      BigDecimal amount,
+                                      List<Transaction> transactions) {
+        LocalDateTime createdAt = transactions.get(0).getCreatedAt();
+        return auditService.record(new AuditRecord(
+                action,
+                user.getId(),
+                accountIds,
+                involvedUserIds,
+                amount,
+                transactionIds(transactions),
+                createdAt
+        ));
+    }
+
+    private List<String> transactionIds(List<Transaction> transactions) {
+        List<String> ids = new ArrayList<>();
+        for (Transaction transaction : transactions) {
+            if (transaction.getId() != null) {
+                ids.add(transaction.getId());
+            }
+        }
+        return List.copyOf(ids);
+    }
+
+    /**
+     * A premium threshold may be zero. A negative value, or more than two
+     * decimal places, is rejected before MongoDB is queried.
+     */
+    private BigDecimal requireThreshold(BigDecimal threshold) {
+        if (threshold == null) {
+            throw new InvalidTransactionException("Threshold is required");
+        }
+        if (threshold.scale() > MONEY_SCALE) {
+            throw new InvalidTransactionException("Threshold must have at most 2 decimal places");
+        }
+        BigDecimal normalized = scale(threshold);
+        if (normalized.compareTo(BigDecimal.ZERO) < 0) {
+            throw new InvalidTransactionException("Threshold must be zero or greater");
+        }
+        return normalized;
     }
 
     private Account findAccount(String accountId) {
@@ -151,19 +298,6 @@ public class AccountServiceImpl implements AccountService {
     private User findUser(String userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with id " + userId + " was not found"));
-    }
-
-    /**
-     * Listing every account must still succeed when one stored owner cannot be
-     * loaded. The account stays in the result and the name is Unknown.
-     * Opening, depositing, and fetching one account still require a real user.
-     */
-    private User ownerOrUnknown(Account account) {
-        return userRepository.findById(account.getUserId()).orElseGet(() -> {
-            User missing = new User("Unknown", "unknown@example.com", account.getCreatedAt());
-            missing.setId(account.getUserId());
-            return missing;
-        });
     }
 
     /**

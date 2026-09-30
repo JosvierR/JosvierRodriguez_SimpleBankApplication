@@ -14,7 +14,7 @@ public class Account {
     private String id;
     private final String userId;
     private BigDecimal balance;
-    private final AccountType accountType;
+    private AccountType accountType;
     private final LocalDateTime createdAt;
 
     public Account(String userId, BigDecimal balance, AccountType accountType, LocalDateTime createdAt) {
@@ -36,10 +36,11 @@ public class Account {
         this.balance = balance;
     }
 
-    public Account copy() {
-        Account copy = new Account(userId, balance, accountType, createdAt);
-        copy.setId(id);
-        return copy;
+    /**
+     * Replaces the account type only. The id, owner, balance, and creation time stay as stored.
+     */
+    public void changeType(AccountType accountType) {
+        this.accountType = accountType;
     }
 
     public String getId() {

@@ -25,6 +25,7 @@ class MongoDocumentMappingTest {
         assertEquals("users", UserDocument.class.getAnnotation(Document.class).collection());
         assertEquals("accounts", AccountDocument.class.getAnnotation(Document.class).collection());
         assertEquals("transactions", TransactionDocument.class.getAnnotation(Document.class).collection());
+        assertEquals("audits", AuditDocument.class.getAnnotation(Document.class).collection());
 
         Indexed email = UserDocument.class.getDeclaredField("email").getAnnotation(Indexed.class);
         assertTrue(email.unique());
@@ -43,24 +44,29 @@ class MongoDocumentMappingTest {
         assertEquals(FieldType.OBJECT_ID, UserDocument.class.getDeclaredField("id").getAnnotation(MongoId.class).value());
         assertEquals(FieldType.OBJECT_ID, AccountDocument.class.getDeclaredField("id").getAnnotation(MongoId.class).value());
         assertEquals(FieldType.OBJECT_ID, TransactionDocument.class.getDeclaredField("id").getAnnotation(MongoId.class).value());
+        assertEquals(FieldType.OBJECT_ID, AuditDocument.class.getDeclaredField("id").getAnnotation(MongoId.class).value());
     }
 
     @Test
     void moneyFieldsUseDecimal128() throws Exception {
         Field balance = AccountDocument.class.getDeclaredField("balance").getAnnotation(Field.class);
         Field amount = TransactionDocument.class.getDeclaredField("amount").getAnnotation(Field.class);
+        Field auditAmount = AuditDocument.class.getDeclaredField("amount").getAnnotation(Field.class);
         assertEquals(FieldType.DECIMAL128, balance.targetType());
         assertEquals(FieldType.DECIMAL128, amount.targetType());
+        assertEquals(FieldType.DECIMAL128, auditAmount.targetType());
     }
 
     @Test
     void depositAndWithdrawAreTransactional() throws Exception {
         Method deposit = AccountServiceImpl.class.getMethod("deposit", String.class, BigDecimal.class);
         Method withdraw = AccountServiceImpl.class.getMethod("withdraw", String.class, BigDecimal.class);
+        Method transfer = AccountServiceImpl.class.getMethod("transfer", com.josvier.simplebank.dto.request.TransferRequest.class);
         Method read = AccountServiceImpl.class.getMethod("getAccount", String.class);
 
         assertNotNull(deposit.getAnnotation(Transactional.class));
         assertNotNull(withdraw.getAnnotation(Transactional.class));
+        assertNotNull(transfer.getAnnotation(Transactional.class));
         assertNull(read.getAnnotation(Transactional.class));
     }
 }

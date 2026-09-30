@@ -39,17 +39,6 @@ public class User {
         this.email = email;
     }
 
-    /**
-     * Returns a separate instance with the same values.
-     * Repositories store and return copies so later field changes cannot
-     * silently rewrite the record that is already in memory.
-     */
-    public User copy() {
-        User copy = new User(name, email, createdAt);
-        copy.setId(id);
-        return copy;
-    }
-
     public String getId() {
         return id;
     }

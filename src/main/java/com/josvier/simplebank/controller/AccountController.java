@@ -2,9 +2,12 @@ package com.josvier.simplebank.controller;
 
 import com.josvier.simplebank.dto.request.AmountRequest;
 import com.josvier.simplebank.dto.request.CreateAccountRequest;
+import com.josvier.simplebank.dto.request.TransferRequest;
+import com.josvier.simplebank.dto.request.UpdateAccountRequest;
 import com.josvier.simplebank.dto.response.AccountResponse;
 import com.josvier.simplebank.dto.response.ErrorResponse;
 import com.josvier.simplebank.dto.response.TransactionResponse;
+import com.josvier.simplebank.dto.response.TransferResponse;
 import com.josvier.simplebank.service.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,13 +18,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -30,7 +37,7 @@ import java.util.List;
  * Deposit and withdrawal rules are not implemented here. This class only
  * forwards a validated amount to {@link AccountService}.
  */
-@Tag(name = "Accounts", description = "Open accounts and move money")
+@Tag(name = "Accounts", description = "Open, update, delete, and move money between accounts")
 @RestController
 @RequestMapping("/api/accounts")
 public class AccountController {
@@ -62,6 +69,30 @@ public class AccountController {
         return ResponseEntity.ok(accountService.getAccounts());
     }
 
+    @Operation(summary = "List premium accounts at or above a balance threshold")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Accounts whose balance is greater than or equal to the threshold. The list can be empty"),
+            @ApiResponse(responseCode = "400", description = "Threshold is missing, negative, or has more than 2 decimal places",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/premium")
+    public ResponseEntity<List<AccountResponse>> getPremiumAccounts(@RequestParam BigDecimal threshold) {
+        return ResponseEntity.ok(accountService.getPremiumAccounts(threshold));
+    }
+
+    @Operation(summary = "Transfer money from one account to another")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Transfer accepted. One audit row records both accounts"),
+            @ApiResponse(responseCode = "400", description = "Invalid amount, same account, or insufficient funds",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Source or destination account does not exist",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping("/transfer")
+    public ResponseEntity<TransferResponse> transfer(@Valid @RequestBody TransferRequest request) {
+        return ResponseEntity.ok(accountService.transfer(request));
+    }
+
     @Operation(summary = "View an account")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Account found"),
@@ -71,6 +102,34 @@ public class AccountController {
     @GetMapping("/{id}")
     public ResponseEntity<AccountResponse> getAccount(@PathVariable String id) {
         return ResponseEntity.ok(accountService.getAccount(id));
+    }
+
+    @Operation(summary = "Update an account type")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Account type updated. The id, owner, balance, and createdAt stay the same"),
+            @ApiResponse(responseCode = "400", description = "Account type is missing",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Account does not exist",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<AccountResponse> updateAccount(@PathVariable String id,
+                                                         @Valid @RequestBody UpdateAccountRequest request) {
+        return ResponseEntity.ok(accountService.updateAccount(id, request));
+    }
+
+    @Operation(summary = "Delete an account that has no transactions")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Account deleted"),
+            @ApiResponse(responseCode = "404", description = "Account does not exist",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Account still has transaction history",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAccount(@PathVariable String id) {
+        accountService.deleteAccount(id);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Deposit a positive amount")

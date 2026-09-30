@@ -2,8 +2,10 @@ package com.josvier.simplebank.controller;
 
 import com.josvier.simplebank.dto.response.AccountResponse;
 import com.josvier.simplebank.dto.response.TransactionResponse;
+import com.josvier.simplebank.dto.response.TransferResponse;
 import com.josvier.simplebank.exception.GlobalExceptionHandler;
 import com.josvier.simplebank.exception.InvalidTransactionException;
+import com.josvier.simplebank.exception.ResourceConflictException;
 import com.josvier.simplebank.exception.ResourceNotFoundException;
 import com.josvier.simplebank.model.AccountType;
 import com.josvier.simplebank.model.TransactionType;
@@ -25,8 +27,10 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -199,6 +203,71 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].accountId").value("68dc1234567890abcdef0001"))
                 .andExpect(jsonPath("$[0].balance").value(550.00));
+    }
+
+    @Test
+    void getPremiumAccounts_returnsOk() throws Exception {
+        when(accountService.getPremiumAccounts(new BigDecimal("100.00"))).thenReturn(List.of(account(new BigDecimal("150.00"))));
+
+        mockMvc.perform(get("/api/accounts/premium").param("threshold", "100.00"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].balance").value(150.00));
+    }
+
+    @Test
+    void updateAccount_returnsOk() throws Exception {
+        when(accountService.updateAccount(eq("68dc1234567890abcdef0001"), any()))
+                .thenReturn(account(new BigDecimal("25.00")));
+
+        mockMvc.perform(put("/api/accounts/68dc1234567890abcdef0001")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"accountType":"CHECKING"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountId").value("68dc1234567890abcdef0001"));
+    }
+
+    @Test
+    void deleteAccount_returnsNoContent() throws Exception {
+        mockMvc.perform(delete("/api/accounts/68dc1234567890abcdef0001"))
+                .andExpect(status().isNoContent());
+
+        verify(accountService).deleteAccount("68dc1234567890abcdef0001");
+    }
+
+    @Test
+    void deleteAccount_withTransactions_returnsConflict() throws Exception {
+        org.mockito.Mockito.doThrow(new ResourceConflictException("Account cannot be deleted while transactions still exist"))
+                .when(accountService).deleteAccount("68dc1234567890abcdef0001");
+
+        mockMvc.perform(delete("/api/accounts/68dc1234567890abcdef0001"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Account cannot be deleted while transactions still exist"));
+    }
+
+    @Test
+    void transfer_returnsOk() throws Exception {
+        when(accountService.transfer(any())).thenReturn(new TransferResponse(
+                "68dc1234567890abcdef0001",
+                "68dc1234567890abcdef0002",
+                new BigDecimal("25.00"),
+                new BigDecimal("75.00"),
+                new BigDecimal("25.00"),
+                "68dc1234567890abcdef0088",
+                LocalDateTime.of(2026, 9, 29, 12, 0)));
+
+        mockMvc.perform(post("/api/accounts/transfer")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"fromAccountId":"68dc1234567890abcdef0001","toAccountId":"68dc1234567890abcdef0002","amount":25.00}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fromAccountId").value("68dc1234567890abcdef0001"))
+                .andExpect(jsonPath("$.toAccountId").value("68dc1234567890abcdef0002"))
+                .andExpect(jsonPath("$.auditId").value("68dc1234567890abcdef0088"))
+                .andExpect(jsonPath("$.fromBalance").value(75.00));
     }
 
     @Test

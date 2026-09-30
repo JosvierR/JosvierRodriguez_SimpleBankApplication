@@ -28,12 +28,6 @@ public class Transaction {
         this.id = id;
     }
 
-    public Transaction copy() {
-        Transaction copy = new Transaction(accountId, type, amount, createdAt);
-        copy.setId(id);
-        return copy;
-    }
-
     public String getId() {
         return id;
     }

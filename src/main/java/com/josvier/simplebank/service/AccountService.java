@@ -1,8 +1,11 @@
 package com.josvier.simplebank.service;
 
 import com.josvier.simplebank.dto.request.CreateAccountRequest;
+import com.josvier.simplebank.dto.request.TransferRequest;
+import com.josvier.simplebank.dto.request.UpdateAccountRequest;
 import com.josvier.simplebank.dto.response.AccountResponse;
 import com.josvier.simplebank.dto.response.TransactionResponse;
+import com.josvier.simplebank.dto.response.TransferResponse;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -40,6 +43,37 @@ public interface AccountService {
      * @throws com.josvier.simplebank.exception.ResourceNotFoundException if the user does not exist
      */
     List<AccountResponse> getAccountsByUser(String userId);
+
+    /**
+     * Returns accounts whose balance is greater than or equal to the threshold.
+     * The comparison runs in MongoDB. An empty result is a successful empty list.
+     *
+     * @throws com.josvier.simplebank.exception.InvalidTransactionException if the threshold is negative or has more than 2 decimal places
+     */
+    List<AccountResponse> getPremiumAccounts(BigDecimal threshold);
+
+    /**
+     * Replaces the account type. The id, owner, balance, and creation time stay the same.
+     *
+     * @throws com.josvier.simplebank.exception.ResourceNotFoundException if the account does not exist
+     */
+    AccountResponse updateAccount(String accountId, UpdateAccountRequest request);
+
+    /**
+     * Deletes an account that has no transaction history.
+     *
+     * @throws com.josvier.simplebank.exception.ResourceNotFoundException if the account does not exist
+     * @throws com.josvier.simplebank.exception.ResourceConflictException if the account already has transactions
+     */
+    void deleteAccount(String accountId);
+
+    /**
+     * Moves money from one account to another and records one audit trace for both accounts.
+     *
+     * @throws com.josvier.simplebank.exception.ResourceNotFoundException if either account does not exist
+     * @throws com.josvier.simplebank.exception.InvalidTransactionException if the accounts are the same, the amount is invalid, or funds are insufficient
+     */
+    TransferResponse transfer(TransferRequest request);
 
     /**
      * Adds a positive amount to the account and records one DEPOSIT transaction.
