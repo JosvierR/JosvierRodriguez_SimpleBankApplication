@@ -1,8 +1,9 @@
+import { apiBaseUrl } from '@/shared/config/env';
 import type { ErrorResponse } from '@/shared/types/api';
 
 export const TOKEN_KEY = 'simple-bank-access-token';
 export const AUTH_INVALID_EVENT = 'simple-bank:auth-invalid';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE_URL = apiBaseUrl();
 
 export type ClientErrorCode = 'SERVICE_UNAVAILABLE' | 'HTTP_REQUEST_FAILED';
 

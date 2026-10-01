@@ -14,6 +14,7 @@
   "signOut": "Se déconnecter",
   "openApp": "Ouvrir l’application",
   "demoBadge": "Environnement de démonstration",
+  "stagingBadge": "Préproduction",
   "demoNote": "Utilisez les comptes de test publics documentés dans le dépôt.",
   "language": "Langue",
   "languages": {

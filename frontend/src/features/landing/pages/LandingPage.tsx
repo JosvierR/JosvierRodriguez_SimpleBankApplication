@@ -3,12 +3,14 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { APP_HOME } from '@/app/routes';
+import { apiBaseUrl } from '@/shared/config/env';
 import { PublicFooter } from '@/features/landing/components/PublicFooter';
 import { PublicHeader } from '@/features/landing/components/PublicHeader';
 import { useAuth } from '@/shared/auth/useAuth';
 
 interface PublicConfig {
   demoMode: boolean;
+  environment?: string;
   registrationEnabled: boolean;
   supportedLanguages: string[];
 }
@@ -21,11 +23,15 @@ export function LandingPage() {
   const { t } = useTranslation(['landing', 'common', 'auth']);
   const { isAuthenticated } = useAuth();
   const [demoMode, setDemoMode] = useState(false);
+  const [environment, setEnvironment] = useState<string>();
 
   useEffect(() => {
-    void fetch('/api/public/config')
+    void fetch(`${apiBaseUrl()}/public/config`)
       .then((response) => (response.ok ? response.json() : null))
-      .then((config: PublicConfig | null) => setDemoMode(Boolean(config?.demoMode)))
+      .then((config: PublicConfig | null) => {
+        setDemoMode(Boolean(config?.demoMode));
+        setEnvironment(config?.environment);
+      })
       .catch(() => setDemoMode(false));
   }, []);
 
@@ -34,7 +40,7 @@ export function LandingPage() {
 
   return (
     <div className="landing">
-      <PublicHeader isAuthenticated={isAuthenticated} />
+      <PublicHeader isAuthenticated={isAuthenticated} environment={environment} />
 
       <main id="top">
         <section className="landing__hero" id="personal">

@@ -14,12 +14,14 @@ import {
   WalletCards,
   X,
 } from 'lucide-react';
-import { useState, type ComponentType } from 'react';
+import { useEffect, useState, type ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { appPath } from '@/app/routes';
+import { apiBaseUrl } from '@/shared/config/env';
 import { useAuth } from '@/shared/auth/useAuth';
 import { LanguageSwitcher } from '@/shared/components/LanguageSwitcher';
+import { StagingBadge } from '@/shared/components/StagingBadge';
 import type { Role } from '@/shared/types/api';
 
 interface NavItem {
@@ -34,6 +36,14 @@ export function AppShell() {
   const { username, primaryRole, logout } = useAuth();
   const location = useLocation();
   const [navigationOpen, setNavigationOpen] = useState(false);
+  const [environment, setEnvironment] = useState<string>();
+  useEffect(() => {
+    void fetch(`${apiBaseUrl()}/public/config`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((config: { environment?: string } | null) => setEnvironment(config?.environment))
+      .catch(() => setEnvironment(undefined));
+  }, []);
+
   const role = primaryRole || 'CUSTOMER';
   const items = role === 'CUSTOMER' ? customerItems(t) : staffItems(t)[role];
   const title = titleFor(location.pathname, t);
@@ -50,6 +60,7 @@ export function AppShell() {
               <Building2 size={18} />
             </span>
             <strong>Simple Bank</strong>
+            <StagingBadge environment={environment} />
           </div>
           <Navigation items={items} label={t('nav.primary')} />
           <UserBlock username={username} role={role} logout={logout} />
@@ -86,6 +97,7 @@ export function AppShell() {
               </Dialog.Portal>
             </Dialog.Root>
             <h1>{title}</h1>
+            <StagingBadge environment={environment} />
             <div className="topbar__tools">
               <LanguageSwitcher />
               <div className="topbar__identity">

@@ -4,12 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { APP_HOME } from '@/app/routes';
 import { LanguageSwitcher } from '@/shared/components/LanguageSwitcher';
+import { StagingBadge } from '@/shared/components/StagingBadge';
 
 export interface PublicHeaderProps {
   isAuthenticated: boolean;
+  environment?: string;
 }
 
-export function PublicHeader({ isAuthenticated }: PublicHeaderProps) {
+export function PublicHeader({ isAuthenticated, environment }: PublicHeaderProps) {
   const { t } = useTranslation(['landing', 'common', 'auth']);
   const accessLabel = isAuthenticated ? t('common:openApp') : t('auth:signIn');
   const accessPath = isAuthenticated ? APP_HOME : '/login';
@@ -21,6 +23,7 @@ export function PublicHeader({ isAuthenticated }: PublicHeaderProps) {
           <Building2 size={18} aria-hidden="true" />
         </span>
         <strong>Simple Bank</strong>
+        <StagingBadge environment={environment} />
       </a>
       <nav className="landing__desktop-nav" aria-label={t('landing:navigation')}>
         <a href="#personal">{t('landing:personalBanking')}</a>

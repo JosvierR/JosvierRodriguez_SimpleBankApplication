@@ -14,6 +14,7 @@
   "signOut": "Log out",
   "openApp": "Open app",
   "demoBadge": "Demo environment",
+  "stagingBadge": "Staging",
   "demoNote": "Use the public test accounts documented in the repository.",
   "language": "Language",
   "languages": {

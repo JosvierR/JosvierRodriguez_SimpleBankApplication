@@ -14,6 +14,7 @@
   "signOut": "Cerrar sesión",
   "openApp": "Abrir aplicación",
   "demoBadge": "Entorno de demostración",
+  "stagingBadge": "Pruebas",
   "demoNote": "Use las cuentas de prueba públicas documentadas en el repositorio.",
   "language": "Idioma",
   "languages": {
