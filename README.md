@@ -38,6 +38,12 @@ docker compose -f docker-compose.yml -f docker-compose.demo.yml up --build
 
 Old bookmarks such as `/customers` and `/accounts` redirect to `/app/customers` and `/app/accounts`. Routes stay in English when the language changes.
 
+## Trainer / coursework alignment
+
+The classroom checklist is mapped in [docs/trainer-requirements.md](docs/trainer-requirements.md). A 12-minute screen-share order is in [docs/trainer-demo-runbook.md](docs/trainer-demo-runbook.md). Short oral answers are in [docs/trainer-qa.md](docs/trainer-qa.md).
+
+The Postman collection is [postman/SimpleBank_Backend_API.postman_collection.json](postman/SimpleBank_Backend_API.postman_collection.json). The local environment file leaves passwords blank. Copy demo usernames and passwords from `docs/demo-credentials.txt` into Postman on your machine. The submission branch to paste after push is `ReactFrontend-BankApp-Making-RestCall-To-Backend`. See [docs/submission-links.md](docs/submission-links.md).
+
 Bank customers and API logins stay separate. A record in `users` owns bank accounts. A record in `auth_users` proves that a person may call the API. Registration creates a Customer login. It does not create a bank customer, and it does not grant staff or admin authority.
 
 ## Architecture
@@ -398,7 +404,7 @@ Details are in `docs/demo-spike.md`.
 | Auth | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/verify` |
 | Dashboard | `GET /api/dashboard` (authenticated role is derived server-side) |
 | Customer portal | `GET /api/me`, `GET /api/me/accounts`, `GET /api/me/accounts/{id}`, `GET /api/me/accounts/{id}/transactions`, `PUT /api/me/profile`, `POST /api/me/transfers` |
-| Customers | `POST/GET /api/users`, `GET/PUT/DELETE /api/users/{id}`, `GET /api/users/{id}/accounts` |
+| Customers | `POST/GET /api/users`, `GET /api/users/search?firstName=`, `GET/PUT/DELETE /api/users/{id}`, `GET /api/users/{id}/accounts` |
 | Accounts | `POST/GET /api/accounts`, `GET/PUT/DELETE /api/accounts/{id}`, `GET /api/accounts/premium` |
 | Money | `POST /api/accounts/{id}/deposit`, `POST /api/accounts/{id}/withdraw`, `POST /api/accounts/transfer` |
 | History | `GET /api/accounts/{id}/transactions` |
