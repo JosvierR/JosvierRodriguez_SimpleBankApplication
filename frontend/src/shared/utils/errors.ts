@@ -3,6 +3,7 @@ import i18n from '@/shared/i18n/i18n';
 
 export function getErrorMessage(error: unknown, fallback = i18n.t('errors:fallback')): string {
   if (!(error instanceof ApiError)) return fallback;
+  if (error.code && i18n.exists(`errors:${error.code}`)) return i18n.t(`errors:${error.code}`);
   const code = error.details?.code;
   if (code && i18n.exists(`errors:${code}`)) return i18n.t(`errors:${code}`);
   if (error.status === 403) return i18n.t('errors:ACCESS_DENIED');

@@ -10,5 +10,13 @@
   "allStatuses": "All statuses",
   "noLinked": "No linked customer",
   "username": "Username",
-  "linkedCustomer": "Linked customer"
+  "linkedCustomer": "Linked customer",
+  "auditAction": {
+    "ROLE_CHANGED": "Role changed",
+    "AUTH_USER_ENABLED": "User enabled",
+    "AUTH_USER_DISABLED": "User disabled",
+    "CUSTOMER_LINKED": "Customer linked",
+    "CUSTOMER_UNLINKED": "Customer unlinked",
+    "ADMIN_BOOTSTRAPPED": "Administrator bootstrapped"
+  }
 }

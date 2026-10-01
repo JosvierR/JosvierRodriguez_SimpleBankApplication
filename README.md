@@ -181,14 +181,15 @@ A production design could add step-up authentication, fraud and risk checks, tra
 
 | Class UI requirement | React implementation |
 | --- | --- |
-| Home Page | Dashboard at `/` |
-| Create Account | `CreateAccountPage` at `/accounts/new` |
-| Account Details | `AccountDetailsPage` at `/accounts/:accountId` |
-| Deposit | `DepositPage` at `/accounts/:accountId/deposit` |
-| Withdraw | `WithdrawPage` at `/accounts/:accountId/withdraw` |
-| Transaction History | `TransactionHistoryPage` at `/accounts/:accountId/transactions` |
+| Public Home | `LandingPage` at `/` |
+| Authenticated Dashboard | `DashboardPage` at `/app` |
+| Create Account | `CreateAccountPage` at `/app/accounts/new` |
+| Account Details | `AccountDetailsPage` at `/app/accounts/:accountId` |
+| Deposit | `DepositPage` at `/app/accounts/:accountId/deposit` |
+| Withdraw | `WithdrawPage` at `/app/accounts/:accountId/withdraw` |
+| Transaction History | `TransactionHistoryPage` at `/app/accounts/:accountId/transactions` |
 
-Additional routes are `/customers`, `/customers/:userId`, `/accounts`, `/transfer`, `/audits`, and role-protected `/admin`.
+Additional authenticated routes live under `/app`, including customers, accounts, transfers, audits, and admin access management. Compatibility redirects preserve old bookmarks such as `/accounts` without treating them as the canonical route structure.
 
 ## Project Structure
 
@@ -196,14 +197,28 @@ Additional routes are `/customers`, `/customers/:userId`, `/accounts`, `/transfe
 frontend/
   public/
   src/
-    api/           centralized typed request client and endpoint modules
-    auth/          session state, verify, login, register, and logout
-    components/    application shell, states, dialogs, and notifications
-    pages/         route-level banking workflows
-    routes/        protected and admin guards
-    styles/        tokens, global rules, and responsive components
-    types/         backend API contracts
-    utils/         currency, date, amount, and error helpers
+    app/            router, route guards, and application providers
+    features/
+      access-management/
+      accounts/
+      audits/
+      auth/
+      customer-portal/
+      customers/
+      dashboard/
+      landing/
+      transactions/
+      transfers/
+    shared/
+      api/          centralized request transport
+      auth/         verified browser session state
+      components/   reusable behavior and display primitives
+      i18n/         EN/ES/FR resources and language state
+      layout/       authenticated application shell
+      pages/        shared route-level pages
+      types/        backend API contracts
+      utils/        currency, date, amount, and error helpers
+    styles/         tokens, global rules, components, and breakpoints
   Dockerfile
   nginx.conf
 src/main/java/com/josvier/simplebank/

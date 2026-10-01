@@ -92,7 +92,7 @@ function CustomerOverview({
   accounts: CustomerAccountResponse[];
   transactions: CustomerTransactionResponse[];
 }) {
-  const { t } = useTranslation(['banking', 'common']);
+  const { t } = useTranslation(['banking', 'common', 'admin']);
   const total = accounts.reduce((sum, account) => sum + Number(account.balance), 0);
   const recent = [...transactions].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).slice(0, 6);
   return (
@@ -159,7 +159,7 @@ function StaffOverview({
   role: Exclude<NonNullable<ReturnType<typeof useAuth>['primaryRole']>, 'CUSTOMER'>;
   data: DashboardData;
 }) {
-  const { t } = useTranslation(['banking', 'common']);
+  const { t } = useTranslation(['banking', 'common', 'admin']);
   const total = data.accounts.reduce((sum, account) => sum + Number(account.balance), 0);
   const recentAudits = [...data.audits].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).slice(0, 6);
   const metrics =
@@ -232,7 +232,7 @@ function StaffOverview({
                 <div className="activity-row" key={audit.id}>
                   <span className="operation-dot" />
                   <div>
-                    <strong>{audit.action.replaceAll('_', ' ')}</strong>
+                    <strong>{t(`admin:auditAction.${audit.action}`)}</strong>
                     <small>{audit.actorUsername}</small>
                   </div>
                   <small>{formatDateTime(audit.createdAt)}</small>
@@ -245,7 +245,7 @@ function StaffOverview({
                 <div className="activity-row" key={audit.id}>
                   <span className={`operation-dot operation-dot--${audit.action.toLowerCase()}`} />
                   <div>
-                    <strong>{audit.action.replaceAll('_', ' ')}</strong>
+                    <strong>{t(`banking:transaction.${audit.action}`)}</strong>
                     <small>
                       {audit.userName} · {audit.actorUsername || t('legacyActor')}
                     </small>

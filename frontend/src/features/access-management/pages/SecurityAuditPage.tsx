@@ -39,7 +39,7 @@ export function SecurityAuditPage() {
         header: t('banking:action'),
         sortValue: (row) => row.action,
         mobile: 'primary',
-        cell: (row) => row.action.replaceAll('_', ' '),
+        cell: (row) => t(`admin:auditAction.${row.action}`),
       },
       {
         id: 'actor',

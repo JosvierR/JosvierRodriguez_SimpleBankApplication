@@ -13,5 +13,7 @@
   "CUSTOMER_LINK_CONFLICT": "Ce client de la banque a déjà un accès lié.",
   "UNEXPECTED": "Une erreur s’est produite. Veuillez réessayer.",
   "fallback": "Une erreur s’est produite. Veuillez réessayer.",
-  "unavailable": "Le service bancaire est indisponible. Vérifiez la connexion et réessayez."
+  "unavailable": "Le service bancaire est indisponible. Vérifiez la connexion et réessayez.",
+  "SERVICE_UNAVAILABLE": "Le service bancaire est indisponible. Vérifiez la connexion et réessayez.",
+  "HTTP_REQUEST_FAILED": "Le service bancaire n’a pas pu traiter la demande. Réessayez."
 }

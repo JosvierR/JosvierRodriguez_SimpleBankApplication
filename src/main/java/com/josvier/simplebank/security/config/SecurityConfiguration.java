@@ -27,8 +27,9 @@ import java.time.Clock;
  * Stateless API security.
  *
  * Register and login are public. Swagger stays public for the class demo.
- * {@code /api/admin/**} requires role ADMIN. Every other {@code /api/**} route
- * requires a bearer token. Banking rules are unchanged.
+ * Every {@code /api/**} route outside the explicit public list requires a bearer token.
+ * Method security and {@code BankAuthorizationService} enforce admin, role, and
+ * object-level banking authorization after authentication.
  */
 @Configuration
 @EnableWebSecurity

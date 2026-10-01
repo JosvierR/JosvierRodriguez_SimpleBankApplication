@@ -4,15 +4,19 @@ export const TOKEN_KEY = 'simple-bank-access-token';
 export const AUTH_INVALID_EVENT = 'simple-bank:auth-invalid';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
+export type ClientErrorCode = 'SERVICE_UNAVAILABLE' | 'HTTP_REQUEST_FAILED';
+
 export class ApiError extends Error {
   status: number;
   details?: ErrorResponse;
+  code?: ClientErrorCode;
 
-  constructor(message: string, status = 0, details?: ErrorResponse) {
+  constructor(message: string, status = 0, details?: ErrorResponse, code?: ClientErrorCode) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.details = details;
+    this.code = code;
   }
 }
 
@@ -32,7 +36,7 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
   try {
     response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
   } catch {
-    throw new ApiError('The bank service is unavailable. Check your connection and try again.');
+    throw new ApiError('', 0, undefined, 'SERVICE_UNAVAILABLE');
   }
 
   if (response.status === 204) return undefined as T;
@@ -46,7 +50,7 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
       sessionStorage.removeItem(TOKEN_KEY);
       window.dispatchEvent(new Event(AUTH_INVALID_EVENT));
     }
-    throw new ApiError(details?.message || `Request failed with status ${response.status}.`, response.status, details);
+    throw new ApiError(details?.message || '', response.status, details, details ? undefined : 'HTTP_REQUEST_FAILED');
   }
 
   return body as T;

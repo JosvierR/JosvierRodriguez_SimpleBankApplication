@@ -51,16 +51,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(AUTH_INVALID_EVENT, clearSession);
   }, [clearSession]);
 
-  async function authenticate(action: () => ReturnType<typeof authApi.login>) {
-    const response = await action();
-    sessionStorage.setItem(TOKEN_KEY, response.token);
-    setToken(response.token);
-    const identity = await authApi.verify();
-    setUsername(identity.username);
-    setRoles(identity.roles);
-    setPrimaryRole(identity.primaryRole);
-    setBankUserLinked(identity.bankUserLinked);
-  }
+  const authenticate = useCallback(
+    async (action: () => ReturnType<typeof authApi.login>) => {
+      try {
+        const response = await action();
+        sessionStorage.setItem(TOKEN_KEY, response.token);
+        setToken(response.token);
+        const identity = await authApi.verify();
+        setUsername(identity.username);
+        setRoles(identity.roles);
+        setPrimaryRole(identity.primaryRole);
+        setBankUserLinked(identity.bankUserLinked);
+      } catch (cause) {
+        clearSession();
+        throw cause;
+      }
+    },
+    [clearSession],
+  );
 
   const value = useMemo(
     () => ({
@@ -76,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout: clearSession,
       verify,
     }),
-    [token, username, roles, primaryRole, bankUserLinked, isLoading, clearSession, verify],
+    [token, username, roles, primaryRole, bankUserLinked, isLoading, clearSession, verify, authenticate],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

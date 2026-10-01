@@ -18,6 +18,15 @@ function Harness() {
       >
         login
       </button>
+      <button
+        onClick={() =>
+          void auth
+            .register({ username: 'ada', email: 'ada@example.com', password: 'password123' })
+            .catch((cause: Error) => setError(cause.message))
+        }
+      >
+        register
+      </button>
       <button onClick={auth.logout}>logout</button>
       <span>{error}</span>
     </div>
@@ -58,6 +67,21 @@ describe('AuthProvider', () => {
     await userEvent.click(screen.getByRole('button', { name: 'login' }));
     expect(await screen.findByText('Invalid credentials')).toBeInTheDocument();
     expect(screen.getByText('signed-out')).toBeInTheDocument();
+  });
+
+  it.each(['login', 'register'] as const)('clears a partial %s session when verification fails', async (action) => {
+    const response = { token: 'partial-jwt', tokenType: 'Bearer', expiresIn: 3600, username: 'ada', roles: ['CUSTOMER'] as const };
+    vi.spyOn(authApi, action).mockResolvedValue(response);
+    vi.spyOn(authApi, 'verify').mockRejectedValue(new Error('Bank service unavailable'));
+    render(
+      <AuthProvider>
+        <Harness />
+      </AuthProvider>,
+    );
+    await userEvent.click(screen.getByRole('button', { name: action }));
+    expect(await screen.findByText('Bank service unavailable')).toBeInTheDocument();
+    expect(screen.getByText('signed-out')).toBeInTheDocument();
+    expect(sessionStorage.getItem(TOKEN_KEY)).toBeNull();
   });
 
   it('restores a stored session through verify', async () => {

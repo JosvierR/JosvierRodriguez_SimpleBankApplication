@@ -13,5 +13,7 @@
   "CUSTOMER_LINK_CONFLICT": "This bank customer already has a linked login.",
   "UNEXPECTED": "Something went wrong. Please try again.",
   "fallback": "Something went wrong. Please try again.",
-  "unavailable": "The bank service is unavailable. Check your connection and try again."
+  "unavailable": "The bank service is unavailable. Check your connection and try again.",
+  "SERVICE_UNAVAILABLE": "The bank service is unavailable. Check your connection and try again.",
+  "HTTP_REQUEST_FAILED": "The bank service could not complete the request. Please try again."
 }

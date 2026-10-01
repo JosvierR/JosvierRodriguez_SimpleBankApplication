@@ -34,4 +34,14 @@ describe('API client', () => {
     expect(sessionStorage.getItem(TOKEN_KEY)).toBeNull();
     expect(listener).toHaveBeenCalledOnce();
   });
+
+  it('uses a stable client code for a network failure', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('network down'));
+    await expect(request('/users')).rejects.toMatchObject({ code: 'SERVICE_UNAVAILABLE', message: '' });
+  });
+
+  it('uses a stable client code for a non-JSON HTTP failure', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('gateway failure', { status: 502 }));
+    await expect(request('/users')).rejects.toMatchObject({ code: 'HTTP_REQUEST_FAILED', status: 502, message: '' });
+  });
 });

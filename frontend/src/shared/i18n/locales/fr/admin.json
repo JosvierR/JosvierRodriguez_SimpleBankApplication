@@ -10,5 +10,13 @@
   "allStatuses": "Tous les états",
   "noLinked": "Aucun client lié",
   "username": "Nom d’utilisateur",
-  "linkedCustomer": "Client lié"
+  "linkedCustomer": "Client lié",
+  "auditAction": {
+    "ROLE_CHANGED": "Rôle modifié",
+    "AUTH_USER_ENABLED": "Utilisateur activé",
+    "AUTH_USER_DISABLED": "Utilisateur désactivé",
+    "CUSTOMER_LINKED": "Client lié",
+    "CUSTOMER_UNLINKED": "Client dissocié",
+    "ADMIN_BOOTSTRAPPED": "Administrateur initialisé"
+  }
 }
