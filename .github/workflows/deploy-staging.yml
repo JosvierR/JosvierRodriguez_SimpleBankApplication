@@ -1,0 +1,206 @@
+name: Staging Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [staging]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  statuses: write
+
+concurrency:
+  group: staging-deployment
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: Require successful CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check triggering CI result
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual staging recovery requested"
+            exit 0
+          fi
+          conclusion="${{ github.event.workflow_run.conclusion }}"
+          echo "CI conclusion=${conclusion}"
+          if [ "$conclusion" != "success" ]; then
+            echo "Staging is not eligible for deployment"
+            exit 1
+          fi
+
+  deploy:
+    name: Deploy staging
+    needs: gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_FRONTEND_URL }}
+    steps:
+      - name: Resolve exact deploy SHA
+        id: sha
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            deploy_sha="${{ github.sha }}"
+          else
+            deploy_sha="${{ github.event.workflow_run.head_sha }}"
+          fi
+          if ! printf '%s' "$deploy_sha" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "Deploy SHA is not a 40-character commit id"
+            exit 1
+          fi
+          echo "sha=${deploy_sha}" >> "$GITHUB_OUTPUT"
+          echo "DEPLOY_SHA=${deploy_sha}" >> "$GITHUB_ENV"
+          echo "Deploying ${deploy_sha}"
+
+      - name: Require staging configuration
+        env:
+          STAGING_API_BASE_URL: ${{ vars.STAGING_API_BASE_URL }}
+          STAGING_FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
+          STAGING_RECIPIENT_ACCOUNT_NUMBER: ${{ vars.STAGING_RECIPIENT_ACCOUNT_NUMBER }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_STAGING_PROJECT_ID: ${{ secrets.VERCEL_STAGING_PROJECT_ID }}
+          RENDER_STAGING_DEPLOY_HOOK_URL: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
+          STAGING_CUSTOMER_USERNAME: ${{ secrets.STAGING_CUSTOMER_USERNAME }}
+          STAGING_CUSTOMER_PASSWORD: ${{ secrets.STAGING_CUSTOMER_PASSWORD }}
+          STAGING_ADMIN_USERNAME: ${{ secrets.STAGING_ADMIN_USERNAME }}
+          STAGING_ADMIN_PASSWORD: ${{ secrets.STAGING_ADMIN_PASSWORD }}
+        run: |
+          missing=0
+          for name in \
+            STAGING_API_BASE_URL \
+            STAGING_FRONTEND_URL \
+            STAGING_RECIPIENT_ACCOUNT_NUMBER \
+            VERCEL_TOKEN \
+            VERCEL_ORG_ID \
+            VERCEL_STAGING_PROJECT_ID \
+            RENDER_STAGING_DEPLOY_HOOK_URL \
+            STAGING_CUSTOMER_USERNAME \
+            STAGING_CUSTOMER_PASSWORD \
+            STAGING_ADMIN_USERNAME \
+            STAGING_ADMIN_PASSWORD
+          do
+            if [ -z "${!name}" ]; then
+              echo "Missing staging setting: ${name}"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Confirm CI succeeded for this SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          count=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${DEPLOY_SHA}&status=success&per_page=5" --jq "[.workflow_runs[] | select(.head_sha==\"${DEPLOY_SHA}\" and .conclusion==\"success\")] | length")
+          echo "Successful CI runs for ${DEPLOY_SHA}: ${count}"
+          if [ "${count}" -lt 1 ]; then
+            echo "Refusing to deploy a SHA without successful CI"
+            exit 1
+          fi
+
+      - name: Checkout exact SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.sha.outputs.sha }}
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+
+      - name: Request Render deploy of exact SHA
+        env:
+          RENDER_STAGING_DEPLOY_HOOK_URL: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
+        run: |
+          hook="${RENDER_STAGING_DEPLOY_HOOK_URL}"
+          case "$hook" in
+            *\?*) separator='&' ;;
+            *) separator='?' ;;
+          esac
+          code=$(curl --silent --output /dev/null --write-out "%{http_code}" --request POST "${hook}${separator}ref=${DEPLOY_SHA}" || true)
+          echo "Render deploy hook HTTP ${code}"
+          case "$code" in
+            200|201|202) ;;
+            *) echo "Render deploy request failed"; exit 1 ;;
+          esac
+
+      - name: Wait for backend readiness
+        env:
+          STAGING_API_BASE_URL: ${{ vars.STAGING_API_BASE_URL }}
+        run: |
+          api="${STAGING_API_BASE_URL%/}"
+          deadline=$((SECONDS + 900))
+          ready=0
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            body=$(mktemp)
+            code=$(curl --silent --output "$body" --write-out "%{http_code}" "${api}/public/ready" || true)
+            status=$(jq -r '.status // empty' "$body" 2>/dev/null || true)
+            environment=$(jq -r '.environment // empty' "$body" 2>/dev/null || true)
+            revision=$(jq -r '.revision // empty' "$body" 2>/dev/null || true)
+            rm -f "$body"
+            echo "ready HTTP ${code} status=${status} environment=${environment} revision=${revision}"
+            if [ "$code" = "200" ] && [ "$status" = "UP" ] && [ "$environment" = "staging" ] && [ "$revision" = "$DEPLOY_SHA" ]; then
+              ready=1
+              break
+            fi
+            sleep 20
+          done
+          if [ "$ready" != "1" ]; then
+            echo "Backend readiness did not match ${DEPLOY_SHA}"
+            exit 1
+          fi
+
+      - name: Deploy Vercel staging project
+        working-directory: frontend
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_STAGING_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npm install --global vercel@58.9.1
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          vercel build --prod --token="$VERCEL_TOKEN"
+          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" > "$RUNNER_TEMP/vercel-deploy-url.txt"
+          echo "Vercel staging deployment finished"
+
+      - name: Run staging smoke and acceptance
+        env:
+          STAGING_API_BASE_URL: ${{ vars.STAGING_API_BASE_URL }}
+          STAGING_FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
+          STAGING_RECIPIENT_ACCOUNT_NUMBER: ${{ vars.STAGING_RECIPIENT_ACCOUNT_NUMBER }}
+          STAGING_CUSTOMER_USERNAME: ${{ secrets.STAGING_CUSTOMER_USERNAME }}
+          STAGING_CUSTOMER_PASSWORD: ${{ secrets.STAGING_CUSTOMER_PASSWORD }}
+          STAGING_ADMIN_USERNAME: ${{ secrets.STAGING_ADMIN_USERNAME }}
+          STAGING_ADMIN_PASSWORD: ${{ secrets.STAGING_ADMIN_PASSWORD }}
+          EXPECTED_REVISION: ${{ steps.sha.outputs.sha }}
+          EXPECTED_ENVIRONMENT: staging
+          REQUIRE_ADMIN: "true"
+        run: node scripts/staging-smoke.mjs
+
+      - name: Record staging deploy status
+        if: always() && steps.sha.outputs.sha != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            state="success"
+            description="Staging deploy succeeded"
+          else
+            state="failure"
+            description="Staging deploy failed"
+          fi
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${DEPLOY_SHA}" \
+            -f state="$state" \
+            -f context="staging/deploy" \
+            -f description="$description" \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [ "$state" != "success" ]; then
+            exit 1
+          fi
