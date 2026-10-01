@@ -7,5 +7,7 @@ package com.josvier.simplebank.model;
  */
 public enum TransactionType {
     DEPOSIT,
-    WITHDRAW
+    WITHDRAW,
+    TRANSFER_OUT,
+    TRANSFER_IN
 }

@@ -16,6 +16,7 @@ public class Account {
     private BigDecimal balance;
     private AccountType accountType;
     private final LocalDateTime createdAt;
+    private String accountNumber;
 
     public Account(String userId, BigDecimal balance, AccountType accountType, LocalDateTime createdAt) {
         this.userId = userId;
@@ -26,6 +27,10 @@ public class Account {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public void setAccountNumber(String accountNumber) {
+        this.accountNumber = accountNumber;
     }
 
     /**
@@ -61,5 +66,9 @@ public class Account {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public String getAccountNumber() {
+        return accountNumber;
     }
 }

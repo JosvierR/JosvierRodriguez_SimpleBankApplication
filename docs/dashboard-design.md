@@ -21,14 +21,14 @@ A customer is the authenticated owner of one explicitly linked bank-customer rec
 ### What do they need immediately?
 
 - Current total balance
-- Owned accounts and masked account suffixes
-- Recent deposits and withdrawals
-- Thirty-day deposit and withdrawal movement
-- A direct path to transfer between eligible owned accounts
+- Owned accounts and masked account numbers
+- Recent deposits, withdrawals, transfers in, and transfers out
+- Thirty-day movement that does not label transfers as spending
+- A direct path to transfer to an owned account or another Simple Bank account number
 
 ### What is shown?
 
-The view shows `totalBalance`, account count, owned account summaries, 30-day deposit and withdrawal totals, an owned-account activity series, and recent owned transactions. A lightweight line chart answers, “when did money enter or leave my accounts?”
+The view shows `totalBalance`, account count, owned account summaries, 30-day deposits, withdrawals, transfers in, and transfers out, an owned-account activity series, and recent owned transactions. Transfer rows name the counterparty with a limited display name and a masked account number.
 
 ### What is deliberately not shown?
 

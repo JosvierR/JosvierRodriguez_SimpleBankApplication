@@ -57,6 +57,19 @@ public class DemoDatasetVerifier {
     }
 
     public void verify() {
+        verify(true);
+    }
+
+    /**
+     * A complete demo may later gain internal transfers. Identity counts stay
+     * fixed. Movement and banking-audit counts may only grow, and every
+     * balance must still reconcile.
+     */
+    public void verifyExisting() {
+        verify(false);
+    }
+
+    private void verify(boolean exactMovements) {
         List<AuthUser> logins = authUsers.findAll();
         require(logins.size() == AUTH_USERS, "expected " + AUTH_USERS + " auth users but found " + logins.size());
         require(count(logins, AuthRole.ADMIN) == 1, "expected 1 ADMIN");
@@ -67,6 +80,8 @@ public class DemoDatasetVerifier {
         require(bankUsers.findAll().size() == BANK_USERS, "expected " + BANK_USERS + " bank customers");
         List<Account> storedAccounts = accounts.findAll();
         require(storedAccounts.size() == ACCOUNTS, "expected " + ACCOUNTS + " accounts but found " + storedAccounts.size());
+        require(storedAccounts.stream().allMatch(account -> account.getAccountNumber() != null
+                && account.getAccountNumber().matches("\\d{12}")), "account number missing");
         require(unique(logins.stream().map(AuthUser::getUsername).toList()), "duplicate demo usernames");
         require(unique(logins.stream().map(AuthUser::getEmail).toList()), "duplicate demo emails");
         long linkedCustomers = logins.stream().filter(user -> user.getPrimaryRole() == AuthRole.CUSTOMER && user.getBankUserId() != null).count();
@@ -79,12 +94,18 @@ public class DemoDatasetVerifier {
             transactionCount += history.size();
             BigDecimal net = BigDecimal.ZERO;
             for (Transaction transaction : history) {
-                net = transaction.getType() == TransactionType.DEPOSIT ? net.add(transaction.getAmount()) : net.subtract(transaction.getAmount());
+                net = switch (transaction.getType()) {
+                    case DEPOSIT, TRANSFER_IN -> net.add(transaction.getAmount());
+                    case WITHDRAW, TRANSFER_OUT -> net.subtract(transaction.getAmount());
+                };
             }
             require(net.compareTo(account.getBalance()) == 0, "account balance does not reconcile");
         }
-        require(transactionCount == TRANSACTIONS, "expected " + TRANSACTIONS + " transactions but found " + transactionCount);
-        require(audits.findAll().size() == BANK_AUDITS, "expected " + BANK_AUDITS + " banking audits");
+        require(exactMovements ? transactionCount == TRANSACTIONS : transactionCount >= TRANSACTIONS,
+                "expected " + (exactMovements ? "" : "at least ") + TRANSACTIONS + " transactions but found " + transactionCount);
+        int auditCount = audits.findAll().size();
+        require(exactMovements ? auditCount == BANK_AUDITS : auditCount >= BANK_AUDITS,
+                "expected " + (exactMovements ? "" : "at least ") + BANK_AUDITS + " banking audits but found " + auditCount);
         require(securityAudits.findAll().size() == SECURITY_AUDITS, "expected " + SECURITY_AUDITS + " security audits");
         for (Document document : mongo.findAll(Document.class, "auth_users")) {
             require(!document.containsKey("password") && !document.containsKey("plaintextPassword"), "plaintext password field is stored");

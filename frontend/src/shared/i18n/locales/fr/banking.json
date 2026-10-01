@@ -57,7 +57,9 @@
   "transaction": {
     "DEPOSIT": "Dépôt",
     "WITHDRAW": "Retrait",
-    "TRANSFER": "Virement"
+    "TRANSFER": "Virement",
+    "TRANSFER_OUT": "Virement émis",
+    "TRANSFER_IN": "Virement reçu"
   },
   "amountLabel": "Montant",
   "completeDeposit": "Valider le dépôt",
@@ -187,5 +189,19 @@
   "openTwoAccounts": "Ouvrez au moins deux comptes avant d’effectuer un virement.",
   "deleteAccountAction": "Supprimer le compte",
   "deleteAccountBody": "Cette action supprime définitivement le compte. La suppression est refusée lorsqu’un historique de mouvements existe.",
-  "customerCreatedAccountFailed": "Le client a été créé, mais le compte n’a pas pu être ouvert."
+  "customerCreatedAccountFailed": "Le client a été créé, mais le compte n’a pas pu être ouvert.",
+  "destinationMode": "Destination",
+  "myAccount": "Mon compte",
+  "anotherBankAccount": "Un autre compte Simple Bank",
+  "destinationAccountNumber": "Numéro de compte destinataire",
+  "previewTransfer": "Vérifier le virement",
+  "confirmTransfer": "Confirmer le virement",
+  "transferReceipt": "Reçu",
+  "recipient": "Destinataire",
+  "reference": "Référence",
+  "transferOutTo": "Virement émis vers {{name}}",
+  "transferInFrom": "Virement reçu de {{name}}",
+  "noOwnedAccounts": "Aucun compte n’est encore disponible.",
+  "backToTransfer": "Modifier le virement",
+  "postedOn": "Date"
 }

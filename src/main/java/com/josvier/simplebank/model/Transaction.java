@@ -16,6 +16,9 @@ public class Transaction {
     private final TransactionType type;
     private final BigDecimal amount;
     private final LocalDateTime createdAt;
+    private String transferReference;
+    private String counterpartyAccountNumberMasked;
+    private String counterpartyDisplayName;
 
     public Transaction(String accountId, TransactionType type, BigDecimal amount, LocalDateTime createdAt) {
         this.accountId = accountId;
@@ -46,5 +49,29 @@ public class Transaction {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public void setTransferReference(String transferReference) {
+        this.transferReference = transferReference;
+    }
+
+    public void setCounterpartyAccountNumberMasked(String counterpartyAccountNumberMasked) {
+        this.counterpartyAccountNumberMasked = counterpartyAccountNumberMasked;
+    }
+
+    public void setCounterpartyDisplayName(String counterpartyDisplayName) {
+        this.counterpartyDisplayName = counterpartyDisplayName;
+    }
+
+    public String getTransferReference() {
+        return transferReference;
+    }
+
+    public String getCounterpartyAccountNumberMasked() {
+        return counterpartyAccountNumberMasked;
+    }
+
+    public String getCounterpartyDisplayName() {
+        return counterpartyDisplayName;
     }
 }

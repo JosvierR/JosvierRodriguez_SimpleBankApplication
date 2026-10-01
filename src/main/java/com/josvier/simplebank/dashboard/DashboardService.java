@@ -96,7 +96,7 @@ public class DashboardService {
         if (actor.bankUserId() == null) {
             return new CustomerDashboardResponse(
                     AuthRole.CUSTOMER, now, false, actor.username(), ZERO, 0, List.of(),
-                    ZERO, ZERO, List.of(), List.of());
+                    ZERO, ZERO, ZERO, ZERO, List.of(), List.of());
         }
         User customer = users.findById(actor.bankUserId()).orElseThrow(authorization::hiddenResource);
         List<Account> ownedAccounts = accounts.findByUserId(actor.bankUserId());
@@ -105,17 +105,22 @@ public class DashboardService {
                 accountIds, now.minusDays(30), now);
         BigDecimal deposits = sumTransactions(periodTransactions, TransactionType.DEPOSIT);
         BigDecimal withdrawals = sumTransactions(periodTransactions, TransactionType.WITHDRAW);
+        BigDecimal transfersIn = sumTransactions(periodTransactions, TransactionType.TRANSFER_IN);
+        BigDecimal transfersOut = sumTransactions(periodTransactions, TransactionType.TRANSFER_OUT);
         List<DashboardCustomerTransaction> recent = periodTransactions.stream()
                 .sorted(Comparator.comparing(Transaction::getCreatedAt).reversed())
                 .limit(RECENT_LIMIT)
                 .map(transaction -> new DashboardCustomerTransaction(
                         transaction.getType(), suffix(transaction.getAccountId()),
-                        transaction.getAmount(), transaction.getCreatedAt()))
+                        transaction.getAmount(), transaction.getCreatedAt(),
+                        transaction.getCounterpartyDisplayName(),
+                        transaction.getCounterpartyAccountNumberMasked()))
                 .toList();
         List<DashboardAccountSummary> summaries = ownedAccounts.stream()
                 .sorted(Comparator.comparing(Account::getCreatedAt))
                 .map(account -> new DashboardAccountSummary(
-                        account.getId(), account.getAccountType(), account.getBalance(), account.getCreatedAt()))
+                        account.getId(), account.getAccountType(), account.getBalance(),
+                        account.getCreatedAt(), account.getAccountNumber()))
                 .toList();
         return new CustomerDashboardResponse(
                 AuthRole.CUSTOMER,
@@ -127,6 +132,8 @@ public class DashboardService {
                 summaries,
                 deposits,
                 withdrawals,
+                transfersIn,
+                transfersOut,
                 transactionSeries(periodTransactions),
                 recent
         );
@@ -277,7 +284,8 @@ public class DashboardService {
         for (Transaction transaction : values) {
             MoneyTotals totals = byDate.computeIfAbsent(transaction.getCreatedAt().toLocalDate(), ignored -> new MoneyTotals());
             if (transaction.getType() == TransactionType.DEPOSIT) totals.deposits = totals.deposits.add(transaction.getAmount());
-            else totals.withdrawals = totals.withdrawals.add(transaction.getAmount());
+            else if (transaction.getType() == TransactionType.WITHDRAW) totals.withdrawals = totals.withdrawals.add(transaction.getAmount());
+            else totals.transfers = totals.transfers.add(transaction.getAmount());
         }
         return points(byDate);
     }

@@ -7,7 +7,7 @@ import { customer, managerAuth, renderRoute } from '@/test/render';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
 import { dashboardApi } from '@/features/dashboard/api/dashboardApi';
 import { CustomerTransferPage } from '@/features/customer-portal/pages/CustomerTransferPage';
-import { MyAccountsPage } from '@/features/customer-portal/pages/CustomerAccountsPage';
+import { MyAccountsPage, MyTransactionsPage } from '@/features/customer-portal/pages/CustomerAccountsPage';
 
 const customerAuth: AuthContextValue = {
   ...managerAuth,
@@ -30,6 +30,8 @@ describe('customer portal ownership boundaries', () => {
       accounts: [],
       last30DayDeposits: 0,
       last30DayWithdrawals: 0,
+      last30DayTransfersIn: 0,
+      last30DayTransfersOut: 0,
       activitySeries: [],
       recentTransactions: [],
     });
@@ -51,9 +53,35 @@ describe('customer portal ownership boundaries', () => {
 
   it('shows a transfer empty state when the customer owns fewer than two accounts', async () => {
     vi.spyOn(meApi, 'accounts').mockResolvedValue([
-      { accountId: 'own-1', accountType: 'SAVINGS', balance: 125, createdAt: customer.createdAt },
+      { accountId: 'own-1', accountType: 'SAVINGS', balance: 125, createdAt: customer.createdAt, accountNumber: '100000000001' },
     ]);
     renderRoute(<CustomerTransferPage />, '/my-transfer', '*', customerAuth);
-    expect(await screen.findByText('Two accounts required')).toBeInTheDocument();
+    expect(await screen.findByRole('radio', { name: 'Another Simple Bank account' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Preview transfer' })).toBeInTheDocument();
+  });
+
+  it('labels transfer history with the counterparty and masked account', async () => {
+    vi.spyOn(meApi, 'account').mockResolvedValue({
+      accountId: 'own-1',
+      accountType: 'CHECKING',
+      balance: 400,
+      createdAt: customer.createdAt,
+      accountNumber: '100000000001',
+    });
+    vi.spyOn(meApi, 'transactions').mockResolvedValue([
+      {
+        transactionId: 'tx-out',
+        accountId: 'own-1',
+        type: 'TRANSFER_OUT',
+        amount: 100,
+        createdAt: customer.createdAt,
+        counterpartyDisplayName: 'Ethan P.',
+        counterpartyAccountNumberMasked: '•••• 1982',
+      },
+    ]);
+    renderRoute(<MyTransactionsPage />, '/my-accounts/own-1/transactions', '/my-accounts/:accountId/transactions', customerAuth);
+    expect(await screen.findByText('Transfer out to Ethan P.')).toBeInTheDocument();
+    expect(screen.getByText(/•••• 1982/)).toBeInTheDocument();
+    expect(screen.getByText(/-\$100\.00/)).toBeInTheDocument();
   });
 });

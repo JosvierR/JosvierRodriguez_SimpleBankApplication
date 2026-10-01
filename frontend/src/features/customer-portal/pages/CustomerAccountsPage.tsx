@@ -10,6 +10,7 @@ import { EmptyState, ErrorState, PageLoading } from '@/shared/components/States'
 import type { CustomerAccountResponse, CustomerTransactionResponse } from '@/shared/types/api';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDateTime } from '@/shared/utils/dates';
+import { isIncomingMovement, isTransferMovement } from '@/shared/utils/transfers';
 import { getErrorMessage } from '@/shared/utils/errors';
 import { useTranslation } from 'react-i18next';
 
@@ -85,7 +86,7 @@ export function MyAccountDetailsPage() {
       </Link>
       <PageHeader
         title={data.account.accountType === 'CHECKING' ? t('checkingAccount') : t('savingsAccount')}
-        description={t('accountEnding', { id: data.account.accountId.slice(-4) })}
+        description={t('accountEnding', { id: (data.account.accountNumber || '').slice(-4) })}
       />
       <section className="customer-balance">
         <span>{t('balance')}</span>
@@ -120,12 +121,15 @@ export function MyTransactionsPage() {
   const { t } = useTranslation(['banking', 'common']);
   const { accountId = '' } = useParams();
   const { bankUserLinked } = useAuth();
+  const [accountNumber, setAccountNumber] = useState('');
   const [transactions, setTransactions] = useState<CustomerTransactionResponse[] | null>(null);
   const [error, setError] = useState('');
   const load = useCallback(async () => {
     setError('');
     try {
-      setTransactions(await meApi.transactions(accountId));
+      const [account, loaded] = await Promise.all([meApi.account(accountId), meApi.transactions(accountId)]);
+      setAccountNumber(account.accountNumber || '');
+      setTransactions(loaded);
     } catch (cause) {
       setError(getErrorMessage(cause));
     }
@@ -142,7 +146,7 @@ export function MyTransactionsPage() {
         <ArrowLeft size={16} />
         {t('backToAccount')}
       </Link>
-      <PageHeader title={t('transactions')} description={t('accountEnding', { id: accountId.slice(-4) })} />
+      <PageHeader title={t('transactions')} description={t('accountEnding', { id: accountNumber.slice(-4) })} />
       <section className="grouped-section">
         {transactions.length === 0 ? (
           <EmptyState title={t('noTransactions')} message={t('activityWillAppear')} />
@@ -159,16 +163,25 @@ function TransactionRows({ transactions }: { transactions: CustomerTransactionRe
   return (
     <div className="customer-transactions">
       {transactions.map((transaction) => {
-        const deposit = transaction.type === 'DEPOSIT';
+        const incoming = isIncomingMovement(transaction.type, Boolean(transaction.counterpartyDisplayName));
+        const transfer = isTransferMovement(transaction.type, transaction.counterpartyDisplayName);
+        const label = transfer
+          ? t(transaction.type === 'TRANSFER_IN' || transaction.type === 'DEPOSIT' ? 'transferInFrom' : 'transferOutTo', {
+              name: transaction.counterpartyDisplayName,
+            })
+          : t(`transaction.${transaction.type}`);
         return (
           <div key={transaction.transactionId}>
-            <span className={`operation-dot operation-dot--${deposit ? 'deposit' : 'withdraw'}`} />
+            <span className={`operation-dot operation-dot--${incoming ? 'deposit' : 'withdraw'}`} />
             <div>
-              <strong>{deposit ? t('transaction.DEPOSIT') : t('transaction.WITHDRAW')}</strong>
-              <small>{formatDateTime(transaction.createdAt)}</small>
+              <strong>{label}</strong>
+              <small>
+                {transaction.counterpartyAccountNumberMasked ? `${transaction.counterpartyAccountNumberMasked} · ` : ''}
+                {formatDateTime(transaction.createdAt)}
+              </small>
             </div>
-            <strong className={deposit ? 'positive' : 'negative'}>
-              {deposit ? '+' : '-'}
+            <strong className={incoming ? 'positive' : 'negative'}>
+              {incoming ? '+' : '-'}
               {formatCurrency(Math.abs(Number(transaction.amount)))}
             </strong>
           </div>

@@ -20,6 +20,8 @@ public interface SpringDataAccountMongoRepository extends MongoRepository<Accoun
 
     Optional<AccountDocument> findByIdAndUserId(String id, String userId);
 
+    Optional<AccountDocument> findByAccountNumber(String accountNumber);
+
     List<AccountDocument> findByBalanceGreaterThanEqual(BigDecimal balance);
 
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);

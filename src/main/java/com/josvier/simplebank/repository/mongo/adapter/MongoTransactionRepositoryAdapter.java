@@ -58,6 +58,9 @@ public class MongoTransactionRepositoryAdapter implements TransactionRepository 
         document.setType(transaction.getType());
         document.setAmount(transaction.getAmount());
         document.setCreatedAt(transaction.getCreatedAt());
+        document.setTransferReference(transaction.getTransferReference());
+        document.setCounterpartyAccountNumberMasked(transaction.getCounterpartyAccountNumberMasked());
+        document.setCounterpartyDisplayName(transaction.getCounterpartyDisplayName());
         return document;
     }
 
@@ -69,6 +72,9 @@ public class MongoTransactionRepositoryAdapter implements TransactionRepository 
                 document.getCreatedAt()
         );
         transaction.setId(document.getId());
+        transaction.setTransferReference(document.getTransferReference());
+        transaction.setCounterpartyAccountNumberMasked(document.getCounterpartyAccountNumberMasked());
+        transaction.setCounterpartyDisplayName(document.getCounterpartyDisplayName());
         return transaction;
     }
 }

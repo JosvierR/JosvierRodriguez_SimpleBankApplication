@@ -182,7 +182,8 @@ class UserControllerTest {
                         "Customer Two",
                         AccountType.SAVINGS,
                         new BigDecimal("0.00"),
-                        LocalDateTime.of(2026, 9, 29, 10, 0))));
+                        LocalDateTime.of(2026, 9, 29, 10, 0),
+                        null)));
 
         mockMvc.perform(get("/api/users/68dc1234567890abcdef0001/accounts"))
                 .andExpect(status().isOk())

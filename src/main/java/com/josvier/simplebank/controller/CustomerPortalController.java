@@ -1,16 +1,16 @@
 package com.josvier.simplebank.controller;
 
 import com.josvier.simplebank.auth.model.AuthRole;
-import com.josvier.simplebank.dto.request.TransferRequest;
+import com.josvier.simplebank.dto.request.CustomerTransferRequest;
 import com.josvier.simplebank.dto.request.UpdateUserRequest;
 import com.josvier.simplebank.dto.response.AccountResponse;
 import com.josvier.simplebank.dto.response.CustomerAccountResponse;
 import com.josvier.simplebank.dto.response.CustomerMeResponse;
 import com.josvier.simplebank.dto.response.CustomerProfileResponse;
 import com.josvier.simplebank.dto.response.CustomerTransactionResponse;
-import com.josvier.simplebank.dto.response.CustomerTransferResponse;
+import com.josvier.simplebank.dto.response.CustomerTransferReceiptResponse;
 import com.josvier.simplebank.dto.response.TransactionResponse;
-import com.josvier.simplebank.dto.response.TransferResponse;
+import com.josvier.simplebank.dto.response.TransferPreviewResponse;
 import com.josvier.simplebank.dto.response.UserResponse;
 import com.josvier.simplebank.security.actor.CurrentActor;
 import com.josvier.simplebank.security.authorization.BankAuthorizationService;
@@ -86,12 +86,14 @@ public class CustomerPortalController {
         return ResponseEntity.ok(profile(user));
     }
 
+    @PostMapping("/transfers/preview")
+    public ResponseEntity<TransferPreviewResponse> previewTransfer(@Valid @RequestBody CustomerTransferRequest request) {
+        return ResponseEntity.ok(accountService.previewCustomerTransfer(request));
+    }
+
     @PostMapping("/transfers")
-    public ResponseEntity<CustomerTransferResponse> transfer(@Valid @RequestBody TransferRequest request) {
-        TransferResponse transfer = accountService.transfer(request);
-        return ResponseEntity.ok(new CustomerTransferResponse(
-                transfer.fromAccountId(), transfer.toAccountId(), transfer.amount(),
-                transfer.fromBalance(), transfer.toBalance(), transfer.createdAt()));
+    public ResponseEntity<CustomerTransferReceiptResponse> transfer(@Valid @RequestBody CustomerTransferRequest request) {
+        return ResponseEntity.ok(accountService.submitCustomerTransfer(request));
     }
 
     private static CustomerProfileResponse profile(UserResponse user) {
@@ -100,12 +102,13 @@ public class CustomerPortalController {
 
     private static CustomerAccountResponse account(AccountResponse account) {
         return new CustomerAccountResponse(
-                account.accountId(), account.accountType(), account.balance(), account.createdAt());
+                account.accountId(), account.accountType(), account.balance(), account.createdAt(), account.accountNumber());
     }
 
     private static CustomerTransactionResponse transaction(TransactionResponse transaction) {
         return new CustomerTransactionResponse(
                 transaction.transactionId(), transaction.accountId(), transaction.type(),
-                transaction.amount(), transaction.createdAt());
+                transaction.amount(), transaction.createdAt(), transaction.transferReference(),
+                transaction.counterpartyAccountNumberMasked(), transaction.counterpartyDisplayName());
     }
 }

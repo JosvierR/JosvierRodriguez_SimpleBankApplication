@@ -16,6 +16,8 @@ public record CustomerDashboardResponse(
         List<DashboardAccountSummary> accounts,
         BigDecimal last30DayDeposits,
         BigDecimal last30DayWithdrawals,
+        BigDecimal last30DayTransfersIn,
+        BigDecimal last30DayTransfersOut,
         List<DashboardActivityPoint> activitySeries,
         List<DashboardCustomerTransaction> recentTransactions
 ) implements RoleDashboardResponse {

@@ -16,6 +16,7 @@ import com.josvier.simplebank.repository.AuditRepository;
 import com.josvier.simplebank.repository.TransactionRepository;
 import com.josvier.simplebank.repository.UserRepository;
 import com.josvier.simplebank.security.audit.SecurityAudit;
+import com.josvier.simplebank.service.AccountPrivacy;
 import com.josvier.simplebank.security.audit.SecurityAuditAction;
 import com.josvier.simplebank.security.audit.SecurityAuditRepository;
 import org.slf4j.Logger;
@@ -87,7 +88,7 @@ public class DemoDataSeeder implements ApplicationRunner {
         if (reset) {
             COLLECTIONS.forEach(mongo::dropCollection);
         } else if (isComplete()) {
-            verifier.verify();
+            verifier.verifyExisting();
             log.info("Demo dataset {} is already complete", DATASET_VERSION);
             return;
         } else if (!authUsers.findAll().isEmpty() || !bankUsers.findAll().isEmpty()) {
@@ -112,6 +113,7 @@ public class DemoDataSeeder implements ApplicationRunner {
                 .map(AuthUser::getId).toList();
         int tellerTurn = 0;
         int managerTurn = 0;
+        int accountSequence = 1;
         AuthUser firstCustomer = null;
         for (DemoIdentity identity : identities) {
             if (identity.staff()) continue;
@@ -120,7 +122,10 @@ public class DemoDataSeeder implements ApplicationRunner {
             if (firstCustomer == null) firstCustomer = login;
             List<Account> owned = new ArrayList<>();
             for (DemoAccountPlan plan : identity.accounts()) {
-                owned.add(accounts.save(new Account(customer.getId(), plan.balance(), plan.type(), cursor)));
+                Account account = new Account(customer.getId(), plan.balance(), plan.type(), cursor);
+                account.setAccountNumber(String.format("%012d", 100_000_000_000L + accountSequence));
+                accountSequence++;
+                owned.add(accounts.save(account));
                 cursor = cursor.plusHours(3);
             }
             List<BigDecimal> targets = identity.accounts().stream().map(DemoAccountPlan::balance).toList();
@@ -128,8 +133,13 @@ public class DemoDataSeeder implements ApplicationRunner {
             Transaction pendingTransferOut = null;
             for (PlannedMovement movement : plan) {
                 Account account = owned.get(movement.accountIndex());
-                Transaction saved = transactions.save(new Transaction(
-                        account.getId(), movement.type(), movement.amount(), cursor));
+                Transaction saved = new Transaction(account.getId(), movement.type(), movement.amount(), cursor);
+                if (movement.transfer() && owned.size() > 1) {
+                    Account other = owned.get(movement.accountIndex() == 0 ? 1 : 0);
+                    saved.setCounterpartyAccountNumberMasked(AccountPrivacy.mask(other.getAccountNumber()));
+                    saved.setCounterpartyDisplayName(AccountPrivacy.limitedName(customer.getName()));
+                }
+                saved = transactions.save(saved);
                 if (movement.transfer() && movement.type() == TransactionType.WITHDRAW) {
                     pendingTransferOut = saved;
                 } else if (movement.transfer()) {

@@ -48,6 +48,14 @@ public class MongoAccountRepositoryAdapter implements AccountRepository {
     }
 
     @Override
+    public Optional<Account> findByAccountNumber(String accountNumber) {
+        if (accountNumber == null || accountNumber.isBlank()) {
+            return Optional.empty();
+        }
+        return accounts.findByAccountNumber(accountNumber).map(this::toDomain);
+    }
+
+    @Override
     public List<Account> findAll() {
         return accounts.findAll().stream()
                 .map(this::toDomain)
@@ -101,6 +109,7 @@ public class MongoAccountRepositoryAdapter implements AccountRepository {
         document.setBalance(account.getBalance());
         document.setAccountType(account.getAccountType());
         document.setCreatedAt(account.getCreatedAt());
+        document.setAccountNumber(account.getAccountNumber());
         return document;
     }
 
@@ -112,6 +121,7 @@ public class MongoAccountRepositoryAdapter implements AccountRepository {
                 document.getCreatedAt()
         );
         account.setId(document.getId());
+        account.setAccountNumber(document.getAccountNumber());
         return account;
     }
 }

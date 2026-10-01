@@ -34,6 +34,9 @@ public class AccountDocument {
     @Indexed(name = "account_created_at_idx")
     private LocalDateTime createdAt;
 
+    @Indexed(name = "account_number_uidx", unique = true, sparse = true)
+    private String accountNumber;
+
     public String getId() {
         return id;
     }
@@ -72,5 +75,13 @@ public class AccountDocument {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getAccountNumber() {
+        return accountNumber;
+    }
+
+    public void setAccountNumber(String accountNumber) {
+        this.accountNumber = accountNumber;
     }
 }

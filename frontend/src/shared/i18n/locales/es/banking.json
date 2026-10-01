@@ -57,7 +57,9 @@
   "transaction": {
     "DEPOSIT": "Depósito",
     "WITHDRAW": "Retiro",
-    "TRANSFER": "Transferencia"
+    "TRANSFER": "Transferencia",
+    "TRANSFER_OUT": "Transferencia enviada",
+    "TRANSFER_IN": "Transferencia recibida"
   },
   "amountLabel": "Importe",
   "completeDeposit": "Completar depósito",
@@ -187,5 +189,19 @@
   "openTwoAccounts": "Abra al menos dos cuentas antes de hacer una transferencia.",
   "deleteAccountAction": "Eliminar cuenta",
   "deleteAccountBody": "Esto elimina la cuenta de forma permanente. El sistema impide eliminarla si conserva historial de movimientos.",
-  "customerCreatedAccountFailed": "El cliente se creó, pero no se pudo abrir la cuenta."
+  "customerCreatedAccountFailed": "El cliente se creó, pero no se pudo abrir la cuenta.",
+  "destinationMode": "Destino",
+  "myAccount": "Mi cuenta",
+  "anotherBankAccount": "Otra cuenta de Simple Bank",
+  "destinationAccountNumber": "Número de cuenta de destino",
+  "previewTransfer": "Revisar transferencia",
+  "confirmTransfer": "Confirmar transferencia",
+  "transferReceipt": "Comprobante",
+  "recipient": "Destinatario",
+  "reference": "Referencia",
+  "transferOutTo": "Transferencia enviada a {{name}}",
+  "transferInFrom": "Transferencia recibida de {{name}}",
+  "noOwnedAccounts": "Todavía no hay una cuenta disponible.",
+  "backToTransfer": "Editar transferencia",
+  "postedOn": "Fecha"
 }

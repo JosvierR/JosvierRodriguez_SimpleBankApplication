@@ -33,6 +33,12 @@ public class TransactionDocument {
 
     private LocalDateTime createdAt;
 
+    private String transferReference;
+
+    private String counterpartyAccountNumberMasked;
+
+    private String counterpartyDisplayName;
+
     public String getId() {
         return id;
     }
@@ -71,5 +77,29 @@ public class TransactionDocument {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getTransferReference() {
+        return transferReference;
+    }
+
+    public void setTransferReference(String transferReference) {
+        this.transferReference = transferReference;
+    }
+
+    public String getCounterpartyAccountNumberMasked() {
+        return counterpartyAccountNumberMasked;
+    }
+
+    public void setCounterpartyAccountNumberMasked(String counterpartyAccountNumberMasked) {
+        this.counterpartyAccountNumberMasked = counterpartyAccountNumberMasked;
+    }
+
+    public String getCounterpartyDisplayName() {
+        return counterpartyDisplayName;
+    }
+
+    public void setCounterpartyDisplayName(String counterpartyDisplayName) {
+        this.counterpartyDisplayName = counterpartyDisplayName;
     }
 }
