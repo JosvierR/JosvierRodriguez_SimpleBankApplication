@@ -80,6 +80,8 @@ An API login and a bank customer are deliberately separate records. Public regis
 
 Customer account reads use `findByIdAndUserId(accountId, bankUserId)`. This combines the object identifier and authenticated owner in the persistence lookup, so a customer cannot distinguish another customer’s account from a nonexistent account. Customer dashboard aggregation begins with `accounts.findByUserId(currentActor.bankUserId)` and requests transactions only for those account IDs.
 
+A customer internal transfer is the exception that moves money without granting that read. Source selection still uses `findByIdAndUserId`. Destination selection uses `findByAccountNumber` only inside preview and submit. See [transfer-flow.md](transfer-flow.md) and [c4-architecture.md](c4-architecture.md).
+
 ## RBAC and resource decisions
 
 ```mermaid

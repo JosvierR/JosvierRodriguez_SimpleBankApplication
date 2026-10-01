@@ -60,6 +60,8 @@ Repository adapters
 MongoDB Atlas
 ```
 
+Container and component diagrams are in [docs/c4-architecture.md](docs/c4-architecture.md). The internal transfer sequence is in [docs/transfer-flow.md](docs/transfer-flow.md).
+
 The React application calls relative `/api` URLs. Vite proxies those calls to `localhost:8080` during development; Nginx proxies them to the `backend` service over Docker's internal network in containers. No permissive Spring CORS configuration is required.
 
 ## Technology
@@ -127,6 +129,8 @@ transactions
 A Customer login sees only the bank customer named by `bankUserId`, and only the accounts and transactions that belong to that customer. Matching email addresses are not linked automatically. An administrator must connect the login explicitly. A bank customer can be linked to one Customer login; a second link returns `409`.
 
 A Customer login with `bankUserId = null` can sign in and pass verify, then sees “Bank profile connection pending.” It does not receive customers, accounts, balances, or audits.
+
+Each account has a public 12-digit `accountNumber`. It is not the MongoDB id. Customers use that number to send an internal transfer to another account in the same bank, including an account owned by someone else. That command does not grant read access. The sender still cannot open the destination account, its history, or the other customer. Preview returns a masked number and a first-name plus last-initial confirmation only. Details are in [docs/transfer-flow.md](docs/transfer-flow.md).
 
 ## Role matrix
 
@@ -397,7 +401,7 @@ Details are in `docs/demo-spike.md`.
 | --- | --- |
 | Auth | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/verify` |
 | Dashboard | `GET /api/dashboard` (authenticated role is derived server-side) |
-| Customer portal | `GET /api/me`, `GET /api/me/accounts`, `GET /api/me/accounts/{id}`, `GET /api/me/accounts/{id}/transactions`, `PUT /api/me/profile`, `POST /api/me/transfers` |
+| Customer portal | `GET /api/me`, `GET /api/me/accounts`, `GET /api/me/accounts/{id}`, `GET /api/me/accounts/{id}/transactions`, `PUT /api/me/profile`, `POST /api/me/transfers/preview`, `POST /api/me/transfers` |
 | Customers | `POST/GET /api/users`, `GET/PUT/DELETE /api/users/{id}`, `GET /api/users/{id}/accounts` |
 | Accounts | `POST/GET /api/accounts`, `GET/PUT/DELETE /api/accounts/{id}`, `GET /api/accounts/premium` |
 | Money | `POST /api/accounts/{id}/deposit`, `POST /api/accounts/{id}/withdraw`, `POST /api/accounts/transfer` |
@@ -406,5 +410,7 @@ Details are in `docs/demo-spike.md`.
 | Admin | `GET /api/admin/whoami`, `GET/PUT /api/admin/auth-users`, customer link, `GET /api/admin/security-audits` |
 
 All protected requests use `Authorization: Bearer <token>`. IDs are strings. Amounts must be at least `0.01` with no more than two decimal places. Customer deletion conflicts while accounts exist; account deletion conflicts while transactions exist. Handled failures return a structured `ErrorResponse` without stack traces.
+
+Customer transfer preview and submit accept `sourceAccountId`, `destinationAccountNumber` (12 digits), and `amount`. The server derives the actor from the token. Staff `POST /api/accounts/transfer` still uses internal `fromAccountId` and `toAccountId`.
 
 No screenshot or application claim implies a production bank, PCI compliance, SOC 2 compliance, or regulatory certification.
