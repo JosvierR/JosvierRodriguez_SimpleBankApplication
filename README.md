@@ -316,6 +316,35 @@ Captured from `http://localhost:3000` against the Dockerized API and Atlas. No t
 | --- | --- | --- | --- |
 | ![Audit log](docs/screenshots/07-audit-log.png) | ![Access management](docs/screenshots/08-access-management.png) | ![Security audit](docs/screenshots/09-security-audit.png) | ![Customer on a phone](docs/screenshots/10-mobile-customer.png) |
 
+## Product spike evidence
+
+Captured from the isolated `simple_bank_demo` dataset. No passwords, tokens, or the credential file are shown.
+
+| English landing | Spanish landing | French customer phone |
+| --- | --- | --- |
+| ![English landing](docs/screenshots/product-spike/01-landing-en.png) | ![Spanish landing](docs/screenshots/product-spike/02-landing-es.png) | ![French customer](docs/screenshots/product-spike/03-customer-mobile-fr.png) |
+
+| Admin overview | Customers | Customer account |
+| --- | --- | --- |
+| ![Admin overview](docs/screenshots/product-spike/04-admin-overview.png) | ![Customers](docs/screenshots/product-spike/05-customers-datatable.png) | ![Customer account](docs/screenshots/product-spike/07-account-details.png) |
+
+| Access management | Security audit | Phone menu |
+| --- | --- | --- |
+| ![Access management](docs/screenshots/product-spike/08-access-management.png) | ![Security audit](docs/screenshots/product-spike/09-security-audit.png) | ![Phone menu](docs/screenshots/product-spike/10-mobile-menu.png) |
+
+The customer portal screenshot is `docs/screenshots/product-spike/06-customer-portal.png`.
+
+Live checks on 2026-09-30:
+
+- Demo authentication: 20/20, with 1 administrator, 2 managers, 3 tellers, 2 auditors, and 12 customers.
+- Dataset `product-spike-v1`: 20 auth users, 12 bank customers, 21 accounts, 78 transactions, 60 banking audits, and 4 security audits.
+- Landing had no horizontal overflow at 1440, 1280, 1024, 834, 768, 430, 390, and 360.
+- Spanish and French stayed selected after reload, and `document.documentElement.lang` was `es` and `fr`.
+- A restart without reset kept those counts. `DEMO_SEED_RESET=true` recreated the same counts, and the compose default was returned to `false`.
+- The normal `simple_bank` counts recorded before the demo were unchanged after demo start, restart, and reset: 12 customers, 16 accounts, 38 transactions, 26 banking audits, 17 auth users, and 15 security audits. `ava.admin` was absent from the normal database.
+
+Details are in `docs/demo-spike.md`.
+
 ## API Summary
 
 | Area | Endpoints |
