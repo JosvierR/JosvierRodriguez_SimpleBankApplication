@@ -6,6 +6,7 @@ import { authApi } from '@/features/auth/api/authApi';
 import { TOKEN_KEY } from '@/shared/api/client';
 import { AuthProvider } from '@/shared/auth/AuthProvider';
 import { useAuth } from '@/shared/auth/useAuth';
+import type { AuthResponse } from '@/shared/types/api';
 
 function Harness() {
   const auth = useAuth();
@@ -70,7 +71,13 @@ describe('AuthProvider', () => {
   });
 
   it.each(['login', 'register'] as const)('clears a partial %s session when verification fails', async (action) => {
-    const response = { token: 'partial-jwt', tokenType: 'Bearer', expiresIn: 3600, username: 'ada', roles: ['CUSTOMER'] as const };
+    const response: AuthResponse = {
+      token: 'partial-jwt',
+      tokenType: 'Bearer',
+      expiresIn: 3600,
+      username: 'ada',
+      roles: ['CUSTOMER'],
+    };
     vi.spyOn(authApi, action).mockResolvedValue(response);
     vi.spyOn(authApi, 'verify').mockRejectedValue(new Error('Bank service unavailable'));
     render(

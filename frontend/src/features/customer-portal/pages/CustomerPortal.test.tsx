@@ -5,6 +5,7 @@ import { accountsApi } from '@/features/accounts/api/accountsApi';
 import type { AuthContextValue } from '@/shared/auth/AuthContext';
 import { customer, managerAuth, renderRoute } from '@/test/render';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
+import { dashboardApi } from '@/features/dashboard/api/dashboardApi';
 import { CustomerTransferPage } from '@/features/customer-portal/pages/CustomerTransferPage';
 import { MyAccountsPage } from '@/features/customer-portal/pages/CustomerAccountsPage';
 
@@ -17,10 +18,23 @@ const customerAuth: AuthContextValue = {
 };
 
 describe('customer portal ownership boundaries', () => {
-  it('shows the pending-link state without requesting banking data', () => {
+  it('shows the pending-link state from the ownership-scoped dashboard response', async () => {
     const ownAccounts = vi.spyOn(meApi, 'accounts');
+    vi.spyOn(dashboardApi, 'get').mockResolvedValue({
+      role: 'CUSTOMER',
+      generatedAt: customer.createdAt,
+      bankUserLinked: false,
+      displayName: 'ada',
+      totalBalance: 0,
+      accountCount: 0,
+      accounts: [],
+      last30DayDeposits: 0,
+      last30DayWithdrawals: 0,
+      activitySeries: [],
+      recentTransactions: [],
+    });
     renderRoute(<DashboardPage />, '/', '*', { ...customerAuth, bankUserLinked: false });
-    expect(screen.getByText('Bank profile connection pending')).toBeInTheDocument();
+    expect(await screen.findByText('Bank profile connection pending')).toBeInTheDocument();
     expect(ownAccounts).not.toHaveBeenCalled();
   });
 
