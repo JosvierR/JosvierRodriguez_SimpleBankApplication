@@ -6,7 +6,9 @@ Canonical branch to paste into the trainer's Excel tracker after the branch is p
 
 https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/tree/ReactFrontend-BankApp-Making-RestCall-To-Backend
 
-That branch is the submission branch. It contains the React frontend, RBAC and ownership, the product spike, the banking dashboards, and the trainer-alignment work. Do not paste an older phase branch.
+That branch is the submission branch. It contains the React frontend, RBAC and ownership, the product spike, the banking dashboards, trainer alignment, public account numbers, and customer-to-customer transfers. Do not paste an older phase branch.
+
+Staging and production Vercel URLs are not listed here because the Spring Boot API does not yet have a public host. Do not invent those URLs.
 
 Useful demo paths after the app is running:
 

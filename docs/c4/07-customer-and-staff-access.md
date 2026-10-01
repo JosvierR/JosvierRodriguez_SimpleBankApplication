@@ -26,7 +26,7 @@ Staff customer lookup and the customer portal are different doors onto the same 
 
 An `AuthUser` may store `bankUserId`. That field points at one document in `users`. Public registration does not set it. An administrator sets it from access management. Until then, `GET /api/me` returns 200 with the login and `bankUserLinked: false`. `GET /api/me/accounts` then refuses the call because there is no bank profile yet.
 
-When the link exists, `CustomerPortalController` uses that id. The customer does not pass another customer's id. Account reads for a customer go through `findByIdAndUserId(accountId, bankUserId)`. If that pair does not exist, the response is 404 `Resource not found`. The body does not say whether the account exists for someone else.
+When the link exists, `CustomerPortalController` uses that id. The customer does not pass another customer's id. Account reads for a customer go through `findByIdAndUserId(accountId, bankUserId)`. If that pair does not exist, the response is 404 `Resource not found`. The body does not say whether the account exists for someone else. A customer can still send money to another person by that person's public 12-digit account number. The preview shows a masked number and a short name, not the Mongo id, balance, or history.
 
 Staff with `CUSTOMER_ANY_READ` may call `GET /api/users/{id}` and `GET /api/users/{id}/accounts` for any customer.
 

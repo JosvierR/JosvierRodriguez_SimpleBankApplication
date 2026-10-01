@@ -40,9 +40,11 @@ Premium accounts already exist as `GET /api/accounts/premium?threshold=`. MANAGE
 
 Deposit is `POST /api/accounts/{id}/deposit`. Withdraw is `POST /api/accounts/{id}/withdraw`. Each method is `@Transactional`. It updates the balance and inserts one `transactions` row of type `DEPOSIT` or `WITHDRAW`. A failed amount check does not insert a row.
 
-Staff transfer is `POST /api/accounts/transfer`. The customer portal uses `POST /api/me/transfers`. The account transfer route also accepts a customer token, and the service still requires both accounts to belong to that customer. `TransactionType` on this branch contains only `DEPOSIT` and `WITHDRAW`. A transfer saves one WITHDRAW on the source account and one DEPOSIT on the destination account, plus a banking audit whose action is TRANSFER. Those writes share one MongoDB transaction. The source and destination cannot be the same account. The source must have enough balance.
+Staff transfer is `POST /api/accounts/transfer` and uses internal account ids. A customer previews with `POST /api/me/transfers/preview` and submits with `POST /api/me/transfers`. The destination is a public 12-digit `accountNumber`, not another customer's Mongo id. The preview returns a masked number and a short name such as `Ethan P.` It does not return the other customer's balance, history, or internal ids.
 
-A customer may transfer only between accounts that person owns. Asking for another customer's account id returns 404. A teller can deposit and withdraw and cannot transfer. A manager or admin can transfer between accounts by id.
+One transfer writes `TRANSFER_OUT` on the source and `TRANSFER_IN` on the destination, with the same `transferReference`, and a banking audit. Those writes share one MongoDB transaction. If any write fails, the whole transfer rolls back. The source and destination cannot be the same account. The source must have enough balance.
+
+A customer can move money to another customer's public account number. Asking for that other account by id still returns 404. A teller can deposit and withdraw and cannot transfer. A manager or admin can transfer between accounts by id.
 
 An empty transaction list, an empty search, and a customer with no accounts are successful empty lists. The React screen uses `EmptyState`, not `ErrorState`.
 

@@ -68,7 +68,7 @@ Collections used by the adapters:
 | --- | --- |
 | `users` | Bank customers: name, email |
 | `accounts` | Accounts owned by a user id |
-| `transactions` | DEPOSIT or WITHDRAW rows |
+| `transactions` | DEPOSIT, WITHDRAW, TRANSFER_OUT, or TRANSFER_IN rows |
 | `audits` | Banking actions such as deposit, withdraw, and transfer |
 | `auth_users` | Logins: username, BCrypt hash, role, optional `bankUserId` |
 | `security_audits` | Role changes, enablement, links, bootstrap |

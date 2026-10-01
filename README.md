@@ -68,7 +68,13 @@ MongoDB Atlas
 
 Container and component diagrams are in [docs/c4-architecture.md](docs/c4-architecture.md). The internal transfer sequence is in [docs/transfer-flow.md](docs/transfer-flow.md).
 
-The React application calls relative `/api` URLs. Vite proxies those calls to `localhost:8080` during development; Nginx proxies them to the `backend` service over Docker's internal network in containers. No permissive Spring CORS configuration is required.
+The React application calls relative `/api` URLs in local development and Docker. Vite proxies those calls to `localhost:8080`; Nginx proxies them to the `backend` service. A hosted Vercel frontend sets the public `VITE_API_BASE_URL` and the API allows only that exact origin through `CORS_ALLOWED_ORIGINS`. There is no wildcard CORS entry.
+
+## Environments / Deployment
+
+Local, demo, staging, and production share this source. They differ by Spring profile, database name, and frontend origin. The setup, including why Vercel hosts only the React app, is in [docs/deployment-environments.md](docs/deployment-environments.md).
+
+Historical snapshots stay on `bankapp-Java-Springboot-Backend-API-MVC`, `SpringbootRESTApiBackend-With-DB-MongoDBCloudAtlas`, and `SpringbootRESTApiBackend-With-DB-MongoDBCloudAtlas-With-JWT`. The canonical application is `ReactFrontend-BankApp-Making-RestCall-To-Backend`. Release branches are `staging` and `deploy/vercel-production`.
 
 Zoomed architecture diagrams, with an explanation of each part, are in [docs/c4/README.md](docs/c4/README.md). The layer overview in [docs/system-architecture.md](docs/system-architecture.md) stays the short companion.
 
