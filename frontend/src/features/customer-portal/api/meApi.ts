@@ -4,8 +4,9 @@ import type {
   CustomerMeResponse,
   CustomerProfileResponse,
   CustomerTransactionResponse,
-  CustomerTransferResponse,
-  TransferRequest,
+  CustomerTransferReceiptResponse,
+  CustomerTransferRequest,
+  TransferPreviewResponse,
   UpdateUserRequest,
 } from '@/shared/types/api';
 
@@ -16,5 +17,8 @@ export const meApi = {
   transactions: (id: string) => request<CustomerTransactionResponse[]>(`/me/accounts/${id}/transactions`),
   updateProfile: (body: UpdateUserRequest) =>
     request<CustomerProfileResponse>('/me/profile', { method: 'PUT', body: JSON.stringify(body) }),
-  transfer: (body: TransferRequest) => request<CustomerTransferResponse>('/me/transfers', { method: 'POST', body: JSON.stringify(body) }),
+  previewTransfer: (body: CustomerTransferRequest) =>
+    request<TransferPreviewResponse>('/me/transfers/preview', { method: 'POST', body: JSON.stringify(body) }),
+  transfer: (body: CustomerTransferRequest) =>
+    request<CustomerTransferReceiptResponse>('/me/transfers', { method: 'POST', body: JSON.stringify(body) }),
 };

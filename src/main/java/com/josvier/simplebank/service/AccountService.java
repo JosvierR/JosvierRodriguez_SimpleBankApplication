@@ -1,10 +1,13 @@
 package com.josvier.simplebank.service;
 
 import com.josvier.simplebank.dto.request.CreateAccountRequest;
+import com.josvier.simplebank.dto.request.CustomerTransferRequest;
 import com.josvier.simplebank.dto.request.TransferRequest;
 import com.josvier.simplebank.dto.request.UpdateAccountRequest;
 import com.josvier.simplebank.dto.response.AccountResponse;
+import com.josvier.simplebank.dto.response.CustomerTransferReceiptResponse;
 import com.josvier.simplebank.dto.response.TransactionResponse;
+import com.josvier.simplebank.dto.response.TransferPreviewResponse;
 import com.josvier.simplebank.dto.response.TransferResponse;
 
 import java.math.BigDecimal;
@@ -74,6 +77,18 @@ public interface AccountService {
      * @throws com.josvier.simplebank.exception.InvalidTransactionException if the accounts are the same, the amount is invalid, or funds are insufficient
      */
     TransferResponse transfer(TransferRequest request);
+
+    /**
+     * Confirms an internal transfer without moving money.
+     * The destination is resolved only by its public account number.
+     */
+    TransferPreviewResponse previewCustomerTransfer(CustomerTransferRequest request);
+
+    /**
+     * Moves money from an owned account to any account in this bank
+     * identified by its public account number.
+     */
+    CustomerTransferReceiptResponse submitCustomerTransfer(CustomerTransferRequest request);
 
     /**
      * Adds a positive amount to the account and records one DEPOSIT transaction.

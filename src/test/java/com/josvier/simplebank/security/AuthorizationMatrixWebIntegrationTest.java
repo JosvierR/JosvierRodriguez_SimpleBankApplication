@@ -29,6 +29,7 @@ import com.josvier.simplebank.security.config.SecurityConfiguration;
 import com.josvier.simplebank.security.filter.SecurityErrorWriter;
 import com.josvier.simplebank.security.jwt.JwtService;
 import com.josvier.simplebank.security.service.CustomUserDetailsService;
+import com.josvier.simplebank.service.AccountNumberGenerator;
 import com.josvier.simplebank.service.impl.AccountServiceImpl;
 import com.josvier.simplebank.service.impl.AuditServiceImpl;
 import com.josvier.simplebank.service.impl.UserServiceImpl;
@@ -70,6 +71,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         SecurityConfiguration.class, JwtService.class, CustomUserDetailsService.class,
         SecurityContextCurrentActorProvider.class, BankAuthorizationService.class,
         AccountServiceImpl.class, UserServiceImpl.class, AuditServiceImpl.class,
+        AccountNumberGenerator.class,
         AdminAuthUserService.class, DashboardService.class, SecurityErrorWriter.class, GlobalExceptionHandler.class
 })
 class AuthorizationMatrixWebIntegrationTest {
@@ -103,6 +105,9 @@ class AuthorizationMatrixWebIntegrationTest {
         accountA1 = account(ACCOUNT_A1, CUSTOMER_A, "500.00");
         accountA2 = account(ACCOUNT_A2, CUSTOMER_A, "100.00");
         accountB1 = account(ACCOUNT_B1, CUSTOMER_B, "250.00");
+        accountA1.setAccountNumber("100000000001");
+        accountA2.setAccountNumber("100000000002");
+        accountB1.setAccountNumber("100000000021");
 
         when(users.findById(CUSTOMER_A)).thenReturn(Optional.of(customerA));
         when(users.findById(CUSTOMER_B)).thenReturn(Optional.of(customerB));
@@ -116,6 +121,9 @@ class AuthorizationMatrixWebIntegrationTest {
         when(accounts.findByIdAndUserId(ACCOUNT_A1, CUSTOMER_A)).thenReturn(Optional.of(accountA1));
         when(accounts.findByIdAndUserId(ACCOUNT_A2, CUSTOMER_A)).thenReturn(Optional.of(accountA2));
         when(accounts.findByIdAndUserId(ACCOUNT_B1, CUSTOMER_B)).thenReturn(Optional.of(accountB1));
+        when(accounts.findByAccountNumber("100000000001")).thenReturn(Optional.of(accountA1));
+        when(accounts.findByAccountNumber("100000000002")).thenReturn(Optional.of(accountA2));
+        when(accounts.findByAccountNumber("100000000021")).thenReturn(Optional.of(accountB1));
         when(accounts.findByUserId(CUSTOMER_A)).thenReturn(List.of(accountA1, accountA2));
         when(accounts.findByUserId(CUSTOMER_B)).thenReturn(List.of(accountB1));
         when(accounts.findAll()).thenReturn(List.of(accountA1, accountA2, accountB1));
@@ -238,11 +246,33 @@ class AuthorizationMatrixWebIntegrationTest {
     }
 
     @Test
-    void customerCannotTransferUsingAnotherCustomersAccount() throws Exception {
+    void customerCanTransferToAnotherCustomerWithoutReadingThatAccount() throws Exception {
+        String token = token("customer-a", AuthRole.CUSTOMER, CUSTOMER_A);
+        request(post("/api/me/transfers/preview").contentType(MediaType.APPLICATION_JSON)
+                        .content(customerTransferBody(ACCOUNT_A1, "100000000021", "10.00")), token)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ownTransfer").value(false))
+                .andExpect(jsonPath("$.destinationDisplayName").value("Customer B."))
+                .andExpect(jsonPath("$.destinationAccountNumberMasked").value("•••• 0021"))
+                .andExpect(content().string(not(containsString(ACCOUNT_B1))));
         request(post("/api/me/transfers").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"fromAccountId\":\"" + ACCOUNT_A1 + "\",\"toAccountId\":\""
-                        + ACCOUNT_B1 + "\",\"amount\":10}"),
-                token("customer-a", AuthRole.CUSTOMER, CUSTOMER_A)).andExpect(status().isNotFound());
+                        .content(customerTransferBody(ACCOUNT_A1, "100000000021", "10.00")), token)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transferReference").exists())
+                .andExpect(jsonPath("$.sourceBalance").value(490.00));
+        request(get("/api/accounts/" + ACCOUNT_B1), token).andExpect(status().isNotFound());
+        request(get("/api/me/accounts/" + ACCOUNT_B1), token).andExpect(status().isNotFound());
+        request(get("/api/users/" + CUSTOMER_B + "/accounts"), token).andExpect(status().isNotFound());
+        request(get("/api/accounts/" + ACCOUNT_B1 + "/transactions"), token).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void customerCannotTransferFromAnAccountTheyDoNotOwn() throws Exception {
+        request(post("/api/me/transfers").contentType(MediaType.APPLICATION_JSON)
+                        .content(customerTransferBody(ACCOUNT_B1, "100000000001", "10.00")),
+                token("customer-a", AuthRole.CUSTOMER, CUSTOMER_A))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Resource not found"));
     }
 
     @Test
@@ -374,6 +404,11 @@ class AuthorizationMatrixWebIntegrationTest {
                 new BigDecimal("50.00"), LocalDateTime.of(2026, 9, 30, 11, 0));
         transaction.setId(id);
         return transaction;
+    }
+
+    private static String customerTransferBody(String sourceAccountId, String destinationAccountNumber, String amount) {
+        return "{\"sourceAccountId\":\"" + sourceAccountId + "\",\"destinationAccountNumber\":\""
+                + destinationAccountNumber + "\",\"amount\":" + amount + "}";
     }
 
     private static String transferBody() {

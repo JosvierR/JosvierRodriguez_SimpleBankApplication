@@ -1,6 +1,6 @@
 export type Role = 'CUSTOMER' | 'TELLER' | 'MANAGER' | 'AUDITOR' | 'ADMIN';
 export type AccountType = 'CHECKING' | 'SAVINGS';
-export type TransactionType = 'DEPOSIT' | 'WITHDRAW';
+export type TransactionType = 'DEPOSIT' | 'WITHDRAW' | 'TRANSFER_OUT' | 'TRANSFER_IN';
 
 export interface AuthResponse {
   token: string;
@@ -47,6 +47,7 @@ export interface AccountResponse {
   accountType: AccountType;
   balance: number;
   createdAt: string;
+  accountNumber?: string | null;
 }
 
 export interface CreateAccountRequest {
@@ -63,6 +64,9 @@ export interface TransactionResponse {
   type: TransactionType;
   amount: number;
   createdAt: string;
+  transferReference?: string | null;
+  counterpartyAccountNumberMasked?: string | null;
+  counterpartyDisplayName?: string | null;
 }
 
 export interface TransferRequest {
@@ -127,6 +131,7 @@ export interface CustomerAccountResponse {
   accountType: AccountType;
   balance: number;
   createdAt: string;
+  accountNumber?: string | null;
 }
 
 export interface CustomerTransactionResponse {
@@ -135,14 +140,33 @@ export interface CustomerTransactionResponse {
   type: TransactionType;
   amount: number;
   createdAt: string;
+  transferReference?: string | null;
+  counterpartyAccountNumberMasked?: string | null;
+  counterpartyDisplayName?: string | null;
 }
 
-export interface CustomerTransferResponse {
-  fromAccountId: string;
-  toAccountId: string;
+export interface CustomerTransferRequest {
+  sourceAccountId: string;
+  destinationAccountNumber: string;
   amount: number;
-  fromBalance: number;
-  toBalance: number;
+}
+
+export interface TransferPreviewResponse {
+  sourceAccountNumberMasked: string;
+  sourceBalance: number;
+  destinationAccountNumberMasked: string;
+  destinationDisplayName: string;
+  amount: number;
+  ownTransfer: boolean;
+}
+
+export interface CustomerTransferReceiptResponse {
+  transferReference: string;
+  amount: number;
+  sourceAccountNumberMasked: string;
+  destinationAccountNumberMasked: string;
+  destinationDisplayName: string;
+  sourceBalance: number;
   createdAt: string;
 }
 

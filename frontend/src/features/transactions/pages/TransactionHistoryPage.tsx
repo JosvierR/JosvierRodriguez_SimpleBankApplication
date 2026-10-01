@@ -62,19 +62,22 @@ export function TransactionHistoryPage() {
               </thead>
               <tbody>
                 {data.transactions.map((transaction) => {
-                  const deposit = transaction.type === 'DEPOSIT';
-                  const Icon = deposit ? ArrowDownToLine : ArrowUpFromLine;
+                  const incoming = transaction.type === 'DEPOSIT' || transaction.type === 'TRANSFER_IN';
+                  const Icon = incoming ? ArrowDownToLine : ArrowUpFromLine;
+                  const label = transaction.counterpartyDisplayName
+                    ? t(incoming ? 'transferInFrom' : 'transferOutTo', { name: transaction.counterpartyDisplayName })
+                    : t(`transaction.${transaction.type}`);
                   return (
                     <tr key={transaction.transactionId}>
                       <td className="mono">{transaction.transactionId}</td>
                       <td>
-                        <span className={`transaction-type transaction-type--${deposit ? 'positive' : 'negative'}`}>
+                        <span className={`transaction-type transaction-type--${incoming ? 'positive' : 'negative'}`}>
                           <Icon size={15} />
-                          {deposit ? t('transaction.DEPOSIT') : t('transaction.WITHDRAW')}
+                          {label}
                         </span>
                       </td>
-                      <td className={`money-cell money ${deposit ? 'positive' : 'negative'}`}>
-                        {deposit ? '+' : '-'}
+                      <td className={`money-cell money ${incoming ? 'positive' : 'negative'}`}>
+                        {incoming ? '+' : '-'}
                         {formatCurrency(Math.abs(Number(transaction.amount)))}
                       </td>
                       <td>{formatDateTime(transaction.createdAt)}</td>

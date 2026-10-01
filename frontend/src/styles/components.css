@@ -674,6 +674,66 @@
   color: var(--text-primary);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
+.segmented--choice {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+}
+.segmented--choice legend {
+  grid-column: 1 / -1;
+  margin-bottom: 4px;
+  padding: 0;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.segmented--choice label {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+}
+.segmented--choice label:has(input:checked) {
+  background: white;
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.segmented--choice input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.transfer-result {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+}
+.transfer-result div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.transfer-result dt {
+  color: var(--text-tertiary);
+  font-size: 0.72rem;
+}
+.transfer-result dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
 .form-layout,
 .money-layout {
   display: grid;
@@ -1699,6 +1759,9 @@
   .main-content {
     padding: 24px 16px 42px;
   }
+  .segmented--choice {
+    grid-template-columns: 1fr;
+  }
   .topbar {
     height: 58px;
     padding-right: 16px;
@@ -1832,6 +1895,9 @@
   border-radius: var(--radius-md);
   background: var(--surface-primary);
   box-shadow: var(--shadow);
+}
+.dashboard-metrics--customer {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 .dashboard-metric {
   display: grid;

@@ -32,6 +32,8 @@ describe('DashboardPage', () => {
       accounts: [{ accountId: 'account-2A91', accountType: 'CHECKING', balance: 1250, createdAt: generatedAt }],
       last30DayDeposits: 400,
       last30DayWithdrawals: 100,
+      last30DayTransfersIn: 0,
+      last30DayTransfersOut: 0,
       activitySeries: [{ periodStart: '2026-09-30', deposits: 400, withdrawals: 100, transfers: 0 }],
       recentTransactions: [{ type: 'DEPOSIT', accountSuffix: '2A91', amount: 400, createdAt: generatedAt }],
     });

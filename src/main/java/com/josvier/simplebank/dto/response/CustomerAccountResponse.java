@@ -9,6 +9,7 @@ public record CustomerAccountResponse(
         String accountId,
         AccountType accountType,
         BigDecimal balance,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String accountNumber
 ) {
 }

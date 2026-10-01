@@ -1,11 +1,14 @@
 package com.josvier.simplebank.service.impl;
 
 import com.josvier.simplebank.dto.request.CreateAccountRequest;
+import com.josvier.simplebank.dto.request.CustomerTransferRequest;
 import com.josvier.simplebank.dto.request.TransferRequest;
 import com.josvier.simplebank.dto.request.UpdateAccountRequest;
 import com.josvier.simplebank.dto.response.AccountResponse;
 import com.josvier.simplebank.dto.response.AuditResponse;
+import com.josvier.simplebank.dto.response.CustomerTransferReceiptResponse;
 import com.josvier.simplebank.dto.response.TransactionResponse;
+import com.josvier.simplebank.dto.response.TransferPreviewResponse;
 import com.josvier.simplebank.dto.response.TransferResponse;
 import com.josvier.simplebank.exception.InvalidTransactionException;
 import com.josvier.simplebank.exception.ResourceConflictException;
@@ -23,8 +26,11 @@ import com.josvier.simplebank.security.actor.CurrentActor;
 import com.josvier.simplebank.security.actor.CurrentActorProvider;
 import com.josvier.simplebank.security.authorization.BankAuthorizationService;
 import com.josvier.simplebank.security.authorization.BankPermission;
+import com.josvier.simplebank.service.AccountNumberGenerator;
+import com.josvier.simplebank.service.AccountPrivacy;
 import com.josvier.simplebank.service.AccountService;
 import com.josvier.simplebank.service.AuditService;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +40,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -63,6 +70,7 @@ public class AccountServiceImpl implements AccountService {
     private final AuditService auditService;
     private final CurrentActorProvider currentActorProvider;
     private final BankAuthorizationService authorization;
+    private final AccountNumberGenerator accountNumbers;
 
     private final ConcurrentHashMap<String, Object> accountLocks = new ConcurrentHashMap<>();
 
@@ -72,13 +80,15 @@ public class AccountServiceImpl implements AccountService {
                               TransactionRepository transactionRepository,
                               AuditService auditService,
                               CurrentActorProvider currentActorProvider,
-                              BankAuthorizationService authorization) {
+                              BankAuthorizationService authorization,
+                              AccountNumberGenerator accountNumbers) {
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
         this.transactionRepository = transactionRepository;
         this.auditService = auditService;
         this.currentActorProvider = currentActorProvider;
         this.authorization = authorization;
+        this.accountNumbers = accountNumbers;
     }
 
     public AccountServiceImpl(AccountRepository accountRepository,
@@ -87,7 +97,7 @@ public class AccountServiceImpl implements AccountService {
                               AuditService auditService,
                               CurrentActorProvider currentActorProvider) {
         this(accountRepository, userRepository, transactionRepository, auditService,
-                currentActorProvider, new BankAuthorizationService(currentActorProvider));
+                currentActorProvider, new BankAuthorizationService(currentActorProvider), new AccountNumberGenerator());
     }
 
     @Override
@@ -95,8 +105,7 @@ public class AccountServiceImpl implements AccountService {
         CurrentActor actor = authorization.currentActor();
         authorization.require(actor, BankPermission.ACCOUNT_CREATE);
         User user = findUser(request.userId());
-        Account account = new Account(user.getId(), zeroMoney(), request.accountType(), LocalDateTime.now());
-        Account saved = accountRepository.save(account);
+        Account saved = saveNewAccount(new Account(user.getId(), zeroMoney(), request.accountType(), LocalDateTime.now()));
         return toAccountResponse(saved, user);
     }
 
@@ -271,6 +280,59 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public TransferPreviewResponse previewCustomerTransfer(CustomerTransferRequest request) {
+        ResolvedTransfer resolved = resolveCustomerTransfer(request);
+        return new TransferPreviewResponse(
+                AccountPrivacy.mask(resolved.from().getAccountNumber()),
+                resolved.from().getBalance(),
+                AccountPrivacy.mask(resolved.to().getAccountNumber()),
+                resolved.destinationName(),
+                resolved.amount(),
+                resolved.ownTransfer()
+        );
+    }
+
+    @Override
+    @Transactional
+    public CustomerTransferReceiptResponse submitCustomerTransfer(CustomerTransferRequest request) {
+        ResolvedTransfer resolved = resolveCustomerTransfer(request);
+        String firstLock = resolved.from().getId().compareTo(resolved.to().getId()) <= 0
+                ? resolved.from().getId() : resolved.to().getId();
+        String secondLock = firstLock.equals(resolved.from().getId()) ? resolved.to().getId() : resolved.from().getId();
+        synchronized (lockFor(firstLock)) {
+            synchronized (lockFor(secondLock)) {
+                ResolvedTransfer current = resolveCustomerTransfer(request);
+                LocalDateTime when = LocalDateTime.now();
+                String reference = "TRF-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
+                String sourceMask = AccountPrivacy.mask(current.from().getAccountNumber());
+                String destinationMask = AccountPrivacy.mask(current.to().getAccountNumber());
+                User fromUser = findUser(current.from().getUserId());
+                User toUser = findUser(current.to().getUserId());
+                String sourceName = AccountPrivacy.limitedName(fromUser.getName());
+                current.from().setBalance(scale(current.from().getBalance().subtract(current.amount())));
+                current.to().setBalance(scale(current.to().getBalance().add(current.amount())));
+                Account savedFrom = accountRepository.save(current.from());
+                Account savedTo = accountRepository.save(current.to());
+                Transaction outgoing = transferTransaction(
+                        savedFrom.getId(), TransactionType.TRANSFER_OUT, current.amount(), when,
+                        reference, destinationMask, current.destinationName());
+                Transaction incoming = transferTransaction(
+                        savedTo.getId(), TransactionType.TRANSFER_IN, current.amount(), when,
+                        reference, sourceMask, sourceName);
+                List<String> involvedUsers = fromUser.getId().equals(toUser.getId())
+                        ? List.of(fromUser.getId())
+                        : List.of(fromUser.getId(), toUser.getId());
+                recordAudit(AuditAction.TRANSFER, fromUser,
+                        List.of(savedFrom.getId(), savedTo.getId()), involvedUsers,
+                        current.amount(), List.of(outgoing, incoming));
+                return new CustomerTransferReceiptResponse(
+                        reference, current.amount(), sourceMask, destinationMask,
+                        current.destinationName(), savedFrom.getBalance(), when);
+            }
+        }
+    }
+
+    @Override
     public List<TransactionResponse> getTransactions(String accountId) {
         synchronized (lockFor(accountId)) {
             CurrentActor actor = authorization.currentActor();
@@ -339,6 +401,52 @@ public class AccountServiceImpl implements AccountService {
         return normalized;
     }
 
+    private Account saveNewAccount(Account account) {
+        DuplicateKeyException last = null;
+        for (int attempt = 0; attempt < 5; attempt++) {
+            account.setAccountNumber(accountNumbers.next());
+            try {
+                return accountRepository.save(account);
+            } catch (DuplicateKeyException exception) {
+                last = exception;
+            }
+        }
+        throw new IllegalStateException("Could not allocate a unique account number", last);
+    }
+
+    private ResolvedTransfer resolveCustomerTransfer(CustomerTransferRequest request) {
+        CurrentActor actor = authorization.currentActor();
+        authorization.require(actor, BankPermission.TRANSFER_SELF);
+        String bankUserId = authorization.requireCustomerLink(actor);
+        BigDecimal amount = requirePositiveAmount(request.amount());
+        Account from = accountRepository.findByIdAndUserId(request.sourceAccountId(), bankUserId)
+                .orElseThrow(authorization::hiddenResource);
+        Account to = accountRepository.findByAccountNumber(request.destinationAccountNumber())
+                .orElseThrow(() -> new ResourceNotFoundException("Destination account was not found"));
+        if (from.getId().equals(to.getId())) {
+            throw new InvalidTransactionException("Cannot transfer to the same account");
+        }
+        if (amount.compareTo(from.getBalance()) > 0) {
+            throw new InvalidTransactionException("Insufficient funds");
+        }
+        User destinationOwner = findUser(to.getUserId());
+        return new ResolvedTransfer(from, to, amount, from.getUserId().equals(to.getUserId()),
+                AccountPrivacy.limitedName(destinationOwner.getName()));
+    }
+
+    private Transaction transferTransaction(String accountId, TransactionType type, BigDecimal amount,
+                                            LocalDateTime when, String reference, String counterpartyMask,
+                                            String counterpartyName) {
+        Transaction transaction = new Transaction(accountId, type, amount, when);
+        transaction.setTransferReference(reference);
+        transaction.setCounterpartyAccountNumberMasked(counterpartyMask);
+        transaction.setCounterpartyDisplayName(counterpartyName);
+        return transactionRepository.save(transaction);
+    }
+
+    private record ResolvedTransfer(Account from, Account to, BigDecimal amount, boolean ownTransfer, String destinationName) {
+    }
+
     private Account findAccount(String accountId) {
         return accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account with id " + accountId + " was not found"));
@@ -403,7 +511,8 @@ public class AccountServiceImpl implements AccountService {
                 user.getName(),
                 account.getAccountType(),
                 account.getBalance(),
-                account.getCreatedAt()
+                account.getCreatedAt(),
+                account.getAccountNumber()
         );
     }
 
@@ -413,7 +522,10 @@ public class AccountServiceImpl implements AccountService {
                 transaction.getAccountId(),
                 transaction.getType(),
                 transaction.getAmount(),
-                transaction.getCreatedAt()
+                transaction.getCreatedAt(),
+                transaction.getTransferReference(),
+                transaction.getCounterpartyAccountNumberMasked(),
+                transaction.getCounterpartyDisplayName()
         );
     }
 }

@@ -72,11 +72,14 @@ class MongoDocumentMappingTest {
         Method deposit = AccountServiceImpl.class.getMethod("deposit", String.class, BigDecimal.class);
         Method withdraw = AccountServiceImpl.class.getMethod("withdraw", String.class, BigDecimal.class);
         Method transfer = AccountServiceImpl.class.getMethod("transfer", com.josvier.simplebank.dto.request.TransferRequest.class);
+        Method customerTransfer = AccountServiceImpl.class.getMethod(
+                "submitCustomerTransfer", com.josvier.simplebank.dto.request.CustomerTransferRequest.class);
         Method read = AccountServiceImpl.class.getMethod("getAccount", String.class);
 
         assertNotNull(deposit.getAnnotation(Transactional.class));
         assertNotNull(withdraw.getAnnotation(Transactional.class));
         assertNotNull(transfer.getAnnotation(Transactional.class));
+        assertNotNull(customerTransfer.getAnnotation(Transactional.class));
         assertNull(read.getAnnotation(Transactional.class));
     }
 }

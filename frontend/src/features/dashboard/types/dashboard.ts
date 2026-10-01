@@ -14,13 +14,16 @@ export interface DashboardAccountSummary {
   accountType: AccountType;
   balance: number;
   createdAt: string;
+  accountNumber?: string | null;
 }
 
 export interface DashboardCustomerTransaction {
-  type: 'DEPOSIT' | 'WITHDRAW';
+  type: 'DEPOSIT' | 'WITHDRAW' | 'TRANSFER_OUT' | 'TRANSFER_IN';
   accountSuffix: string;
   amount: number;
   createdAt: string;
+  counterpartyDisplayName?: string | null;
+  counterpartyAccountNumberMasked?: string | null;
 }
 
 export interface DashboardBankingActivity {
@@ -53,6 +56,8 @@ export interface CustomerDashboardData extends DashboardBase {
   accounts: DashboardAccountSummary[];
   last30DayDeposits: number;
   last30DayWithdrawals: number;
+  last30DayTransfersIn: number;
+  last30DayTransfersOut: number;
   activitySeries: DashboardActivityPoint[];
   recentTransactions: DashboardCustomerTransaction[];
 }

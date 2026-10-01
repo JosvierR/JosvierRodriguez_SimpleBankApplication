@@ -9,6 +9,8 @@ public record DashboardCustomerTransaction(
         TransactionType type,
         String accountSuffix,
         BigDecimal amount,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String counterpartyDisplayName,
+        String counterpartyAccountNumberMasked
 ) {
 }

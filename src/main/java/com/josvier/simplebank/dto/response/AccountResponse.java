@@ -15,6 +15,7 @@ public record AccountResponse(
         String userName,
         AccountType accountType,
         BigDecimal balance,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String accountNumber
 ) {
 }

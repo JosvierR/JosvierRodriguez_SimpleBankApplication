@@ -13,6 +13,9 @@ public record TransactionResponse(
         String accountId,
         TransactionType type,
         BigDecimal amount,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String transferReference,
+        String counterpartyAccountNumberMasked,
+        String counterpartyDisplayName
 ) {
 }

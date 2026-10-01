@@ -181,9 +181,9 @@ class AccountControllerTest {
     void getTransactions_returnsOk() throws Exception {
         when(accountService.getTransactions("68dc1234567890abcdef0001")).thenReturn(List.of(
                 new TransactionResponse("68dc1234567890abcdef0001", "68dc1234567890abcdef0001", TransactionType.DEPOSIT, new BigDecimal("500.00"),
-                        LocalDateTime.of(2026, 9, 29, 10, 0)),
+                        LocalDateTime.of(2026, 9, 29, 10, 0), null, null, null),
                 new TransactionResponse("68dc1234567890abcdef0002", "68dc1234567890abcdef0001", TransactionType.WITHDRAW, new BigDecimal("200.00"),
-                        LocalDateTime.of(2026, 9, 29, 11, 0))
+                        LocalDateTime.of(2026, 9, 29, 11, 0), null, null, null)
         ));
 
         mockMvc.perform(get("/api/accounts/68dc1234567890abcdef0001/transactions"))
@@ -289,7 +289,8 @@ class AccountControllerTest {
                 "Josvier Rodriguez",
                 AccountType.SAVINGS,
                 balance,
-                LocalDateTime.of(2026, 9, 29, 10, 0)
+                LocalDateTime.of(2026, 9, 29, 10, 0),
+                "100000000001"
         );
     }
 }

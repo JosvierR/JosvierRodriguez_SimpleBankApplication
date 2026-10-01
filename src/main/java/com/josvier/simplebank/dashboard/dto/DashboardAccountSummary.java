@@ -9,6 +9,7 @@ public record DashboardAccountSummary(
         String accountId,
         AccountType accountType,
         BigDecimal balance,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String accountNumber
 ) {
 }

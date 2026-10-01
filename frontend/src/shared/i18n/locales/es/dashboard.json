@@ -13,6 +13,8 @@
     "customers": "Clientes",
     "deposits30": "Depósitos",
     "withdrawals30": "Retiros",
+    "transfersIn30": "Transferencias recibidas",
+    "transfersOut30": "Transferencias enviadas",
     "myOperationsToday": "Mis operaciones",
     "myDepositsToday": "Mis depósitos",
     "myWithdrawalsToday": "Mis retiros",

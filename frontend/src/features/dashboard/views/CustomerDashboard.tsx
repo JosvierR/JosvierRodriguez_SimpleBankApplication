@@ -40,6 +40,16 @@ export function CustomerDashboard({ data }: { data: CustomerDashboardData }) {
           value={formatCurrency(Number(data.last30DayWithdrawals))}
           detail={t('dashboard:period.last30Days')}
         />
+        <DashboardMetric
+          label={t('dashboard:metrics.transfersIn30')}
+          value={formatCurrency(Number(data.last30DayTransfersIn))}
+          detail={t('dashboard:period.last30Days')}
+        />
+        <DashboardMetric
+          label={t('dashboard:metrics.transfersOut30')}
+          value={formatCurrency(Number(data.last30DayTransfersOut))}
+          detail={t('dashboard:period.last30Days')}
+        />
       </section>
       <div className="dashboard-layout dashboard-layout--balanced">
         <DashboardSection
@@ -64,7 +74,7 @@ export function CustomerDashboard({ data }: { data: CustomerDashboardData }) {
           )}
         </DashboardSection>
         <DashboardSection title={t('dashboard:chart.customerTitle')} description={t('dashboard:chart.customerDescription')}>
-          <ActivityChart data={data.activitySeries} />
+          <ActivityChart data={data.activitySeries} includeTransfers />
         </DashboardSection>
       </div>
       <DashboardSection title={t('dashboard:customer.recentTitle')} description={t('dashboard:customer.recentDescription')}>
@@ -73,17 +83,22 @@ export function CustomerDashboard({ data }: { data: CustomerDashboardData }) {
         ) : (
           <div className="dashboard-activity-list">
             {data.recentTransactions.map((transaction, index) => {
-              const deposit = transaction.type === 'DEPOSIT';
+              const incoming = transaction.type === 'DEPOSIT' || transaction.type === 'TRANSFER_IN';
+              const transfer =
+                transaction.type === 'TRANSFER_IN' || transaction.type === 'TRANSFER_OUT' || transaction.counterpartyDisplayName;
+              const label = transfer
+                ? t(incoming ? 'banking:transferInFrom' : 'banking:transferOutTo', { name: transaction.counterpartyDisplayName || '' })
+                : t(`banking:transaction.${transaction.type}`);
               return (
                 <div className="dashboard-activity" key={`${transaction.createdAt}-${index}`}>
-                  <span className={`activity-marker activity-marker--${deposit ? 'deposit' : 'withdraw'}`} aria-hidden="true" />
+                  <span className={`activity-marker activity-marker--${incoming ? 'deposit' : 'withdraw'}`} aria-hidden="true" />
                   <div className="dashboard-activity__primary">
-                    <strong>{t(`banking:transaction.${transaction.type}`)}</strong>
-                    <span className="mono">•••• {transaction.accountSuffix}</span>
+                    <strong>{label}</strong>
+                    <span className="mono">{transaction.counterpartyAccountNumberMasked || `•••• ${transaction.accountSuffix}`}</span>
                   </div>
                   <div className="dashboard-activity__value">
-                    <strong className={deposit ? 'positive' : 'negative'}>
-                      {deposit ? '+' : '−'}
+                    <strong className={incoming ? 'positive' : 'negative'}>
+                      {incoming ? '+' : '−'}
                       {formatCurrency(Math.abs(Number(transaction.amount)))}
                     </strong>
                     <time dateTime={transaction.createdAt}>{formatDateTime(transaction.createdAt)}</time>

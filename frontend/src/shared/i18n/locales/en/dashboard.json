@@ -13,6 +13,8 @@
     "customers": "Customers",
     "deposits30": "Deposits",
     "withdrawals30": "Withdrawals",
+    "transfersIn30": "Transfers in",
+    "transfersOut30": "Transfers out",
     "myOperationsToday": "My operations",
     "myDepositsToday": "My deposits",
     "myWithdrawalsToday": "My withdrawals",
