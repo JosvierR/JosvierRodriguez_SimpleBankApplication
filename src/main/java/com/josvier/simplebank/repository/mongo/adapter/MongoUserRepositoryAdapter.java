@@ -61,6 +61,11 @@ public class MongoUserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public long count() {
+        return users.count();
+    }
+
+    @Override
     public void deleteById(String id) {
         if (id != null) {
             users.deleteById(id);

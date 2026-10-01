@@ -9,6 +9,8 @@ import com.josvier.simplebank.controller.AdminAccessController;
 import com.josvier.simplebank.controller.AuditController;
 import com.josvier.simplebank.controller.CustomerPortalController;
 import com.josvier.simplebank.controller.UserController;
+import com.josvier.simplebank.dashboard.DashboardController;
+import com.josvier.simplebank.dashboard.DashboardService;
 import com.josvier.simplebank.exception.GlobalExceptionHandler;
 import com.josvier.simplebank.model.Account;
 import com.josvier.simplebank.model.AccountType;
@@ -47,23 +49,28 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = {
         UserController.class, AccountController.class, AuditController.class,
-        CustomerPortalController.class, AdminAccessController.class
+        CustomerPortalController.class, AdminAccessController.class, DashboardController.class
 })
 @Import({
         SecurityConfiguration.class, JwtService.class, CustomUserDetailsService.class,
         SecurityContextCurrentActorProvider.class, BankAuthorizationService.class,
         AccountServiceImpl.class, UserServiceImpl.class, AuditServiceImpl.class,
-        AdminAuthUserService.class, SecurityErrorWriter.class, GlobalExceptionHandler.class
+        AdminAuthUserService.class, DashboardService.class, SecurityErrorWriter.class, GlobalExceptionHandler.class
 })
 class AuthorizationMatrixWebIntegrationTest {
     private static final String CUSTOMER_A = "68dc1234567890abcdef0001";
@@ -100,6 +107,7 @@ class AuthorizationMatrixWebIntegrationTest {
         when(users.findById(CUSTOMER_A)).thenReturn(Optional.of(customerA));
         when(users.findById(CUSTOMER_B)).thenReturn(Optional.of(customerB));
         when(users.findAll()).thenReturn(List.of(customerA, customerB));
+        when(users.count()).thenReturn(2L);
         when(users.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         when(accounts.findById(ACCOUNT_A1)).thenReturn(Optional.of(accountA1));
@@ -111,12 +119,19 @@ class AuthorizationMatrixWebIntegrationTest {
         when(accounts.findByUserId(CUSTOMER_A)).thenReturn(List.of(accountA1, accountA2));
         when(accounts.findByUserId(CUSTOMER_B)).thenReturn(List.of(accountB1));
         when(accounts.findAll()).thenReturn(List.of(accountA1, accountA2, accountB1));
+        when(accounts.count()).thenReturn(3L);
+        when(accounts.countByCreatedAtBetween(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(0L);
         when(accounts.save(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Transaction aTransaction = transaction("68dc1234567890abcdef0101", ACCOUNT_A1);
         Transaction bTransaction = transaction("68dc1234567890abcdef0102", ACCOUNT_B1);
         when(transactions.findByAccountId(ACCOUNT_A1)).thenReturn(List.of(aTransaction));
         when(transactions.findByAccountId(ACCOUNT_B1)).thenReturn(List.of(bTransaction));
+        when(transactions.findByAccountIdInAndCreatedAtBetween(anyList(), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenAnswer(invocation -> {
+                    List<String> accountIds = invocation.getArgument(0);
+                    return accountIds.contains(ACCOUNT_B1) ? List.of(bTransaction) : List.of(aTransaction);
+                });
         AtomicInteger ids = new AtomicInteger(200);
         when(transactions.save(any(Transaction.class))).thenAnswer(invocation -> {
             Transaction transaction = invocation.getArgument(0);
@@ -124,6 +139,9 @@ class AuthorizationMatrixWebIntegrationTest {
             return transaction;
         });
         when(securityAudits.findAll()).thenReturn(List.of());
+        when(audits.findByCreatedAtBetween(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(List.of());
+        when(audits.findByActorAuthUserIdAndCreatedAtBetween(
+                anyString(), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(List.of());
         when(audits.save(any(AuditRecord.class))).thenAnswer(invocation -> {
             AuditRecord audit = invocation.getArgument(0);
             audit.setId("68dc1234567890abcdef0999");
@@ -141,6 +159,57 @@ class AuthorizationMatrixWebIntegrationTest {
         request(get("/api/me/accounts/" + ACCOUNT_A1), token).andExpect(status().isOk());
         request(get("/api/me/accounts/" + ACCOUNT_A1 + "/transactions"), token)
                 .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
+    void customerDashboardCannotContainAnotherCustomersDataOrImpersonateAdmin() throws Exception {
+        String token = token("customer-a", AuthRole.CUSTOMER, CUSTOMER_A);
+        request(get("/api/dashboard?role=ADMIN"), token)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("CUSTOMER"))
+                .andExpect(jsonPath("$.accounts.length()").value(2))
+                .andExpect(content().string(not(containsString(ACCOUNT_B1))))
+                .andExpect(content().string(not(containsString(CUSTOMER_B))));
+    }
+
+    @Test
+    void dashboardEndpointReturnsTheServerDerivedTellerView() throws Exception {
+        request(get("/api/dashboard"), token("teller", AuthRole.TELLER, null))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("TELLER"))
+                .andExpect(jsonPath("$.customerCount").value(2))
+                .andExpect(jsonPath("$.recentBankingAudits").doesNotExist());
+    }
+
+    @Test
+    void dashboardEndpointReturnsTheServerDerivedManagerView() throws Exception {
+        request(get("/api/dashboard"), token("manager", AuthRole.MANAGER, null))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("MANAGER"))
+                .andExpect(jsonPath("$.accountCount").value(3))
+                .andExpect(jsonPath("$.totalBankBalance").value(850.00));
+    }
+
+    @Test
+    void dashboardEndpointReturnsTheReadOnlyAuditorView() throws Exception {
+        request(get("/api/dashboard"), token("auditor", AuthRole.AUDITOR, null))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("AUDITOR"))
+                .andExpect(jsonPath("$.auditRecordsLast30Days").value(0))
+                .andExpect(jsonPath("$.activeAuthUsers").doesNotExist());
+    }
+
+    @Test
+    void dashboardEndpointReturnsTheAdminIdentityViewWithoutCredentialFields() throws Exception {
+        AuthUser admin = authUser("admin-dashboard", AuthRole.ADMIN, null);
+        when(authUsers.findByUsername("admin-dashboard")).thenReturn(Optional.of(admin));
+        when(authUsers.findAll()).thenReturn(List.of(admin));
+        request(get("/api/dashboard"), jwtService.generateToken(userDetailsService.toUserDetails(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("ADMIN"))
+                .andExpect(jsonPath("$.activeAuthUsers").value(1))
+                .andExpect(jsonPath("$.passwordHash").doesNotExist())
+                .andExpect(content().string(not(containsString("passwordHash"))));
     }
 
     @Test

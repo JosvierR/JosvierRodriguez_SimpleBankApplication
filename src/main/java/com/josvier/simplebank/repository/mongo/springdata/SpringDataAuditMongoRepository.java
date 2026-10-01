@@ -3,6 +3,7 @@ package com.josvier.simplebank.repository.mongo.springdata;
 import com.josvier.simplebank.repository.mongo.document.AuditDocument;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -13,4 +14,9 @@ import java.util.List;
 public interface SpringDataAuditMongoRepository extends MongoRepository<AuditDocument, String> {
 
     List<AuditDocument> findAllByOrderByCreatedAtAsc();
+
+    List<AuditDocument> findByCreatedAtBetweenOrderByCreatedAtAscIdAsc(LocalDateTime start, LocalDateTime end);
+
+    List<AuditDocument> findByActorAuthUserIdAndCreatedAtBetweenOrderByCreatedAtAscIdAsc(
+            String actorAuthUserId, LocalDateTime start, LocalDateTime end);
 }

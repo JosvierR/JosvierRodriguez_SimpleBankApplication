@@ -4,6 +4,7 @@ import com.josvier.simplebank.repository.mongo.document.AccountDocument;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,4 +21,6 @@ public interface SpringDataAccountMongoRepository extends MongoRepository<Accoun
     Optional<AccountDocument> findByIdAndUserId(String id, String userId);
 
     List<AccountDocument> findByBalanceGreaterThanEqual(BigDecimal balance);
+
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

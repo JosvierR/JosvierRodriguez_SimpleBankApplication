@@ -3,6 +3,7 @@ package com.josvier.simplebank.repository.mongo.springdata;
 import com.josvier.simplebank.repository.mongo.document.TransactionDocument;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -14,4 +15,7 @@ import java.util.List;
 public interface SpringDataTransactionMongoRepository extends MongoRepository<TransactionDocument, String> {
 
     List<TransactionDocument> findByAccountIdOrderByCreatedAtAscIdAsc(String accountId);
+
+    List<TransactionDocument> findByAccountIdInAndCreatedAtBetweenOrderByCreatedAtAscIdAsc(
+            List<String> accountIds, LocalDateTime start, LocalDateTime end);
 }

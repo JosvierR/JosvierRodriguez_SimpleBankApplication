@@ -6,6 +6,7 @@ import com.josvier.simplebank.repository.mongo.document.TransactionDocument;
 import com.josvier.simplebank.repository.mongo.springdata.SpringDataTransactionMongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -34,6 +35,18 @@ public class MongoTransactionRepositoryAdapter implements TransactionRepository 
             return List.of();
         }
         return transactions.findByAccountIdOrderByCreatedAtAscIdAsc(accountId).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Transaction> findByAccountIdInAndCreatedAtBetween(List<String> accountIds,
+                                                                  LocalDateTime start,
+                                                                  LocalDateTime end) {
+        if (accountIds == null || accountIds.isEmpty() || start == null || end == null) {
+            return List.of();
+        }
+        return transactions.findByAccountIdInAndCreatedAtBetweenOrderByCreatedAtAscIdAsc(accountIds, start, end).stream()
                 .map(this::toDomain)
                 .toList();
     }

@@ -2,6 +2,7 @@ package com.josvier.simplebank.repository;
 
 import com.josvier.simplebank.model.AuditRecord;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,4 +19,10 @@ public interface AuditRepository {
     Optional<AuditRecord> findById(String id);
 
     List<AuditRecord> findAll();
+
+    List<AuditRecord> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    List<AuditRecord> findByActorAuthUserIdAndCreatedAtBetween(String actorAuthUserId,
+                                                               LocalDateTime start,
+                                                               LocalDateTime end);
 }

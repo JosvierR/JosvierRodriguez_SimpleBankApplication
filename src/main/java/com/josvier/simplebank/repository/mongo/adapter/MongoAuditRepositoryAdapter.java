@@ -6,6 +6,7 @@ import com.josvier.simplebank.repository.mongo.document.AuditDocument;
 import com.josvier.simplebank.repository.mongo.springdata.SpringDataAuditMongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +42,28 @@ public class MongoAuditRepositoryAdapter implements AuditRepository {
     @Override
     public List<AuditRecord> findAll() {
         return audits.findAllByOrderByCreatedAtAsc().stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<AuditRecord> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end) {
+        if (start == null || end == null) {
+            return List.of();
+        }
+        return audits.findByCreatedAtBetweenOrderByCreatedAtAscIdAsc(start, end).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<AuditRecord> findByActorAuthUserIdAndCreatedAtBetween(String actorAuthUserId,
+                                                                      LocalDateTime start,
+                                                                      LocalDateTime end) {
+        if (actorAuthUserId == null || start == null || end == null) {
+            return List.of();
+        }
+        return audits.findByActorAuthUserIdAndCreatedAtBetweenOrderByCreatedAtAscIdAsc(actorAuthUserId, start, end).stream()
                 .map(this::toDomain)
                 .toList();
     }

@@ -22,5 +22,7 @@ public interface UserRepository {
 
     List<User> findAll();
 
+    long count();
+
     void deleteById(String id);
 }

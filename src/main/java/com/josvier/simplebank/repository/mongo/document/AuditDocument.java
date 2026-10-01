@@ -1,6 +1,7 @@
 package com.josvier.simplebank.repository.mongo.document;
 
 import com.josvier.simplebank.model.AuditAction;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -19,6 +20,7 @@ import java.util.List;
  * Account ids stay strings. They are not a second copy of the ledger.
  */
 @Document(collection = "audits")
+@CompoundIndex(name = "audit_actor_created_at_idx", def = "{'actorAuthUserId': 1, 'createdAt': -1}")
 public class AuditDocument {
 
     @MongoId(FieldType.OBJECT_ID)

@@ -2,6 +2,7 @@ package com.josvier.simplebank.repository;
 
 import com.josvier.simplebank.model.Transaction;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -15,4 +16,8 @@ public interface TransactionRepository {
     Transaction save(Transaction transaction);
 
     List<Transaction> findByAccountId(String accountId);
+
+    List<Transaction> findByAccountIdInAndCreatedAtBetween(List<String> accountIds,
+                                                           LocalDateTime start,
+                                                           LocalDateTime end);
 }

@@ -31,6 +31,7 @@ public class AccountDocument {
 
     private AccountType accountType;
 
+    @Indexed(name = "account_created_at_idx")
     private LocalDateTime createdAt;
 
     public String getId() {

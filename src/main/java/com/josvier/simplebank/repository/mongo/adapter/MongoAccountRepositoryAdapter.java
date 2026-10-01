@@ -7,6 +7,7 @@ import com.josvier.simplebank.repository.mongo.springdata.SpringDataAccountMongo
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -71,6 +72,19 @@ public class MongoAccountRepositoryAdapter implements AccountRepository {
         return accounts.findByBalanceGreaterThanEqual(threshold).stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public long count() {
+        return accounts.count();
+    }
+
+    @Override
+    public long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end) {
+        if (start == null || end == null) {
+            return 0;
+        }
+        return accounts.countByCreatedAtBetween(start, end);
     }
 
     @Override
