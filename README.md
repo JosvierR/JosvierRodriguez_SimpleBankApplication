@@ -1,6 +1,23 @@
 # Simple Bank Application
 
-Simple Bank is an educational full-stack banking application. It combines a modern public banking homepage, five role-specific authenticated dashboards, English/Spanish/French localization, and an isolated twenty-user demo dataset. Role-based authorization and customer ownership remain authoritative on the backend.
+[![CI](https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/workflows/ci.yml/badge.svg?branch=ReactFrontend-BankApp-Making-RestCall-To-Backend)](https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/workflows/ci.yml?query=branch%3AReactFrontend-BankApp-Making-RestCall-To-Backend)
+
+React, Spring Boot, and MongoDB Atlas. Sign-in uses a JWT. Passwords are BCrypt hashes. Five roles share one bank. A customer sees only their own accounts and can transfer internally by a public account number. GitHub Actions tests the backend, the frontend, and both Docker images before a commit is eligible for staging.
+
+## Navigate
+
+| Question | Page |
+| --- | --- |
+| How the system is shaped | [C4 architecture](docs/c4-architecture.md), [layers](docs/system-architecture.md), [zoomed diagrams](docs/c4/README.md) |
+| How a transfer works | [Transfer flow](docs/transfer-flow.md) |
+| What each dashboard shows | [Dashboard design](docs/dashboard-design.md) |
+| Local, demo, staging, production | [Environments](docs/deployment-environments.md), [staging runbook](docs/staging-runbook.md), [acceptance](docs/staging-acceptance.md) |
+| What to show in class | [Final presentation](docs/final-presentation-runbook.md), [checklist](docs/final-presentation-checklist.md) |
+| Trainer mapping | [Requirements](docs/trainer-requirements.md), [answers](docs/trainer-qa.md), [12-minute order](docs/trainer-demo-runbook.md) |
+| API calls | [Postman collection](postman/SimpleBank_Backend_API.postman_collection.json) |
+| Links to paste | [Submission links](docs/submission-links.md) |
+
+Canonical branch: `ReactFrontend-BankApp-Making-RestCall-To-Backend`. Staging receives that same commit after CI. Production stays on an approved staging SHA only and is not deployed yet.
 
 ## Current Phase
 

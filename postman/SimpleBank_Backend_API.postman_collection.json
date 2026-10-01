@@ -86,6 +86,14 @@
     {
       "key": "adminPassword",
       "value": ""
+    },
+    {
+      "key": "sourceAccountId",
+      "value": ""
+    },
+    {
+      "key": "destinationAccountNumber",
+      "value": ""
     }
   ],
   "item": [
@@ -2365,6 +2373,100 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/accounts"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer Internal Transfer",
+      "item": [
+        {
+          "name": "Preview Transfer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Preview is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Destination is masked and limited', function () {",
+                  "    pm.expect(body.destinationAccountNumberMasked).to.be.a('string');",
+                  "    pm.expect(body.destinationAccountNumberMasked).to.not.eql(pm.collectionVariables.get('destinationAccountNumber'));",
+                  "    pm.expect(body.destinationDisplayName).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body).to.not.have.property('destinationAccountId');",
+                  "    pm.expect(body).to.not.have.property('destinationBalance');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"{{sourceAccountId}}\",\n  \"destinationAccountNumber\": \"{{destinationAccountNumber}}\",\n  \"amount\": 1.00\n}"
+            },
+            "url": "{{baseUrl}}/me/transfers/preview"
+          }
+        },
+        {
+          "name": "Submit Transfer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Submit is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Receipt shares one transfer reference', function () {",
+                  "    pm.expect(body.transferReference).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.destinationAccountNumberMasked).to.not.eql(pm.collectionVariables.get('destinationAccountNumber'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"{{sourceAccountId}}\",\n  \"destinationAccountNumber\": \"{{destinationAccountNumber}}\",\n  \"amount\": 1.00\n}"
+            },
+            "url": "{{baseUrl}}/me/transfers"
           }
         }
       ]

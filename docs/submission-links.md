@@ -8,9 +8,15 @@ https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/tree/ReactFro
 
 That branch is the submission branch. It contains the React frontend, RBAC and ownership, the product spike, the banking dashboards, trainer alignment, public account numbers, and customer-to-customer transfers. Do not paste an older phase branch.
 
-Staging and production Vercel URLs are not listed here because the Spring Boot API does not yet have a public host. Do not invent those URLs.
+| Surface | URL |
+| --- | --- |
+| Canonical branch | https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/tree/ReactFrontend-BankApp-Making-RestCall-To-Backend |
+| GitHub Actions | https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/workflows/ci.yml?query=branch%3AReactFrontend-BankApp-Making-RestCall-To-Backend |
+| Staging frontend | Not deployed. A public URL is added here only after the Vercel staging project exists. |
+| Staging backend | Not deployed. A public URL is added here only after the Render staging service exists. |
+| Production | Not deployed / pending approval |
 
-Useful demo paths after the app is running:
+Local demo paths, after Docker or the Vite dev server is running on your machine:
 
 | What | Where |
 | --- | --- |
@@ -23,6 +29,8 @@ Useful demo paths after the app is running:
 | Postman environment | `postman/SimpleBank_Local_Demo.postman_environment.json` |
 | Oral answers | `docs/trainer-qa.md` |
 | Screen-share order | `docs/trainer-demo-runbook.md` |
+| Final presentation | `docs/final-presentation-runbook.md` |
+| Screenshots | `docs/screenshots/` |
 
 The Excel tracker itself is not updated from this repository. Paste the canonical URL after the final push.
 

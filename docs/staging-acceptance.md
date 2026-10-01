@@ -43,10 +43,24 @@ On the deployed staging frontend, confirm English, Spanish, and French, a deskto
 
 | Item | Value |
 | --- | --- |
+| Date | 2026-10-01 |
 | STAGING_APPROVED_SHA | not approved |
-| Staging workflow run | not recorded |
+| Backend URL | not deployed |
+| Frontend URL | not deployed |
+| Health | not run against a host |
+| Ready | not run against a host |
+| Environment | not run against a host |
+| Revision | not run against a host |
+| Customer login | not run |
+| Admin login | not run |
+| Dashboard | not run |
+| Accounts | not run |
+| Transfer preview | not run |
 | Manual transfer | not run |
-| EN / ES / FR | not recorded |
-| Desktop / 390px | not recorded |
+| Ownership 404 | not run |
+| CORS | not run against a host |
+| EN / ES / FR | not run against a host |
+| Responsive | not run against a host |
+| Staging workflow run | not recorded |
 
-Production branch `deploy/vercel-production` stays unchanged until this table names an approved SHA and a human runs the manual production workflow.
+Staging acceptance stays blocked until Atlas `simple_bank_staging`, the Render service, and the Vercel staging project exist. Production branch `deploy/vercel-production` stays unchanged until this table names an approved SHA and a human runs the manual production workflow.
