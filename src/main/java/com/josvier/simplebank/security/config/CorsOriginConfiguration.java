@@ -22,8 +22,12 @@ public class CorsOriginConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource(
             @Value("${cors.allowed-origins:}") String allowedOrigins) {
+        List<String> origins = exactOrigins(allowedOrigins);
+        if (origins.isEmpty()) {
+            return request -> null;
+        }
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(exactOrigins(allowedOrigins));
+        configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(false);

@@ -64,6 +64,17 @@ class SecurityWebIntegrationTest {
     }
 
     @Test
+    void browserOriginIsAllowedWhenNoRemoteOriginsAreConfigured() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .header("Origin", "http://localhost:3000")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"username":"","password":""}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void protectedRoute_withoutJwt_returnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/accounts"))
                 .andExpect(status().isUnauthorized());
