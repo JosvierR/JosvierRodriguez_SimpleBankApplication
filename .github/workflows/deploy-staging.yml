@@ -1,9 +1,7 @@
 name: Staging Deploy
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
+  push:
     branches: [staging]
   workflow_dispatch:
 
@@ -18,21 +16,63 @@ concurrency:
 
 jobs:
   gate:
-    name: Require successful CI
+    name: Wait for successful CI
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      deploy_sha: ${{ steps.sha.outputs.sha }}
     steps:
-      - name: Check triggering CI result
+      - name: Require staging ref
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "Manual staging recovery requested"
-            exit 0
-          fi
-          conclusion="${{ github.event.workflow_run.conclusion }}"
-          echo "CI conclusion=${conclusion}"
-          if [ "$conclusion" != "success" ]; then
-            echo "Staging is not eligible for deployment"
+          if [ "${GITHUB_REF}" != "refs/heads/staging" ]; then
+            echo "Staging deploys must run from refs/heads/staging; got ${GITHUB_REF}"
             exit 1
           fi
+
+      - name: Resolve exact deploy SHA
+        id: sha
+        run: |
+          deploy_sha="${GITHUB_SHA}"
+          if ! printf '%s' "$deploy_sha" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "Deploy SHA is not a 40-character commit id"
+            exit 1
+          fi
+          echo "sha=${deploy_sha}" >> "$GITHUB_OUTPUT"
+          echo "Waiting for staging CI on ${deploy_sha}"
+
+      - name: Wait for successful CI on this staging SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOY_SHA: ${{ steps.sha.outputs.sha }}
+        run: |
+          deadline=$((SECONDS + 1200))
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?branch=staging&head_sha=${DEPLOY_SHA}&per_page=10")
+            count=$(printf '%s' "$json" | jq '.workflow_runs | length')
+            if [ "$count" -eq 0 ]; then
+              echo "CI run not visible yet for ${DEPLOY_SHA}; waiting"
+              sleep 15
+              continue
+            fi
+
+            status=$(printf '%s' "$json" | jq -r '.workflow_runs[0].status // "unknown"')
+            conclusion=$(printf '%s' "$json" | jq -r '.workflow_runs[0].conclusion // ""')
+            run_url=$(printf '%s' "$json" | jq -r '.workflow_runs[0].html_url // ""')
+            echo "CI status=${status} conclusion=${conclusion} ${run_url}"
+
+            if [ "$status" = "completed" ]; then
+              if [ "$conclusion" = "success" ]; then
+                exit 0
+              fi
+              echo "Staging CI completed without success"
+              exit 1
+            fi
+
+            sleep 15
+          done
+
+          echo "Timed out waiting for successful staging CI"
+          exit 1
 
   deploy:
     name: Deploy staging
@@ -42,23 +82,9 @@ jobs:
     environment:
       name: staging
       url: ${{ vars.STAGING_FRONTEND_URL }}
+    env:
+      DEPLOY_SHA: ${{ needs.gate.outputs.deploy_sha }}
     steps:
-      - name: Resolve exact deploy SHA
-        id: sha
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            deploy_sha="${{ github.sha }}"
-          else
-            deploy_sha="${{ github.event.workflow_run.head_sha }}"
-          fi
-          if ! printf '%s' "$deploy_sha" | grep -Eq '^[0-9a-f]{40}$'; then
-            echo "Deploy SHA is not a 40-character commit id"
-            exit 1
-          fi
-          echo "sha=${deploy_sha}" >> "$GITHUB_OUTPUT"
-          echo "DEPLOY_SHA=${deploy_sha}" >> "$GITHUB_ENV"
-          echo "Deploying ${deploy_sha}"
-
       - name: Require staging configuration
         env:
           STAGING_API_BASE_URL: ${{ vars.STAGING_API_BASE_URL }}
@@ -98,17 +124,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          count=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${DEPLOY_SHA}&status=success&per_page=5" --jq "[.workflow_runs[] | select(.head_sha==\"${DEPLOY_SHA}\" and .conclusion==\"success\")] | length")
-          echo "Successful CI runs for ${DEPLOY_SHA}: ${count}"
+          count=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?branch=staging&head_sha=${DEPLOY_SHA}&status=success&per_page=5" --jq "[.workflow_runs[] | select(.head_sha==\"${DEPLOY_SHA}\" and .head_branch==\"staging\" and .conclusion==\"success\")] | length")
+          echo "Successful staging CI runs for ${DEPLOY_SHA}: ${count}"
           if [ "${count}" -lt 1 ]; then
-            echo "Refusing to deploy a SHA without successful CI"
+            echo "Refusing to deploy a SHA without successful staging CI"
             exit 1
           fi
 
       - name: Checkout exact SHA
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.sha.outputs.sha }}
+          ref: ${{ needs.gate.outputs.deploy_sha }}
 
       - name: Set up Node 24
         uses: actions/setup-node@v4
@@ -179,13 +205,13 @@ jobs:
           STAGING_CUSTOMER_PASSWORD: ${{ secrets.STAGING_CUSTOMER_PASSWORD }}
           STAGING_ADMIN_USERNAME: ${{ secrets.STAGING_ADMIN_USERNAME }}
           STAGING_ADMIN_PASSWORD: ${{ secrets.STAGING_ADMIN_PASSWORD }}
-          EXPECTED_REVISION: ${{ steps.sha.outputs.sha }}
+          EXPECTED_REVISION: ${{ needs.gate.outputs.deploy_sha }}
           EXPECTED_ENVIRONMENT: staging
           REQUIRE_ADMIN: "true"
         run: node scripts/staging-smoke.mjs
 
       - name: Record staging deploy status
-        if: always() && steps.sha.outputs.sha != ''
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
