@@ -88,7 +88,7 @@ export function MyAccountDetailsPage() {
         description={t('accountEnding', { id: data.account.accountId.slice(-4) })}
       />
       <section className="customer-balance">
-        <span>{t('availableBalance')}</span>
+        <span>{t('balance')}</span>
         <strong>{formatCurrency(Number(data.account.balance))}</strong>
         <div>
           <Link className="button" to={appPath(`/my-transfer?from=${accountId}`)}>

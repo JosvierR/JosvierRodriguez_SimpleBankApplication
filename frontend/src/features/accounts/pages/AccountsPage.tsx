@@ -2,7 +2,7 @@ import { appPath } from '@/app/routes';
 import { Plus, Search, SlidersHorizontal } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { accountsApi } from '@/features/accounts/api/accountsApi';
 import { useAuth } from '@/shared/auth/useAuth';
 import { DataTable, type DataColumn } from '@/shared/components/DataTable';
@@ -21,7 +21,8 @@ export function AccountsPage() {
   const canPremium = primaryRole === 'MANAGER' || primaryRole === 'AUDITOR' || primaryRole === 'ADMIN';
   const [accounts, setAccounts] = useState<AccountResponse[] | null>(null);
   const [error, setError] = useState('');
-  const [query, setQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const [query, setQuery] = useState(() => searchParams.get('query') || '');
   const [type, setType] = useState<AccountType | 'ALL'>('ALL');
   const [threshold, setThreshold] = useState('');
   const [premiumActive, setPremiumActive] = useState(false);

@@ -77,7 +77,7 @@ export function AccountDetailsPage() {
       <PageHeader title={account.userName} description={t('accountEnding', { id: account.accountId.slice(-6) })} />
       <section className="balance-hero">
         <div>
-          <span>{t('availableBalance')}</span>
+          <span>{t('balance')}</span>
           <strong>{formatCurrency(Number(account.balance))}</strong>
         </div>
         <div className="balance-actions">

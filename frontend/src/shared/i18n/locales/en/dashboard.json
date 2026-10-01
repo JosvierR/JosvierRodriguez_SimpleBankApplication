@@ -1,0 +1,143 @@
+{
+  "error": {
+    "title": "Dashboard unavailable"
+  },
+  "period": {
+    "last30Days": "Last 30 days · UTC",
+    "todayUtc": "Today · UTC"
+  },
+  "metrics": {
+    "totalBalance": "Total balance",
+    "totalBankBalance": "Total bank balance",
+    "accounts": "Accounts",
+    "customers": "Customers",
+    "deposits30": "Deposits",
+    "withdrawals30": "Withdrawals",
+    "myOperationsToday": "My operations",
+    "myDepositsToday": "My deposits",
+    "myWithdrawalsToday": "My withdrawals",
+    "newAccountsToday": "New accounts",
+    "premiumAccounts": "Premium accounts",
+    "depositVolume": "Deposit volume",
+    "withdrawalVolume": "Withdrawal volume",
+    "transferVolume": "Transfer volume",
+    "auditRecords30": "Audit records",
+    "distinctActors30": "Distinct operators",
+    "activeIdentities": "Active identities",
+    "disabledIdentities": "Disabled identities",
+    "linkedCustomers": "Linked customer logins",
+    "unlinkedCustomers": "Unlinked customer logins",
+    "linkCoverage": "Customer link coverage"
+  },
+  "actions": {
+    "transfer": "Transfer funds",
+    "viewAccounts": "View all accounts",
+    "findCustomer": "Find customer",
+    "findAccount": "Find account",
+    "quickActions": "Service actions",
+    "openAccount": "Open an account",
+    "customers": "Customer directory",
+    "accounts": "Account directory",
+    "viewAudit": "View banking audit",
+    "openAuditLog": "Open audit log",
+    "reviewCustomers": "Review customers",
+    "reviewAccounts": "Review accounts",
+    "manageAccess": "Manage access",
+    "securityAudit": "Security audit",
+    "viewAll": "View all"
+  },
+  "activity": {
+    "byActor": "By {{actor}}",
+    "system": "system"
+  },
+  "customer": {
+    "eyebrow": "Personal banking",
+    "title": "Welcome, {{name}}",
+    "description": "Your balances, accounts, and recent money movement in one clear view.",
+    "position": "Financial position",
+    "accountsTitle": "Your accounts",
+    "accountsDescription": "Balances are current as of this view.",
+    "recentTitle": "Recent activity",
+    "recentDescription": "Your latest deposits and withdrawals."
+  },
+  "teller": {
+    "eyebrow": "Service desk",
+    "title": "Good to see you, {{name}}",
+    "description": "Start with a customer or account, then complete the requested service.",
+    "searchTitle": "Find the banking relationship",
+    "searchDescription": "Search by customer name, email, or account identifier.",
+    "searchLabel": "Customer or account search",
+    "searchPlaceholder": "Name, email, or account ID",
+    "todaySnapshot": "My service activity today",
+    "recentTitle": "My recent operations",
+    "recentDescription": "Only banking operations completed by your authenticated identity are shown.",
+    "scopeNote": "Service directory: {{customers}} customers and {{accounts}} accounts."
+  },
+  "manager": {
+    "eyebrow": "Bank operations",
+    "title": "Operational overview",
+    "description": "Monitor money position, account mix, and recent banking activity.",
+    "bankPosition": "Bank position",
+    "movementSnapshot": "Money movement for the last 30 days",
+    "premiumDefinition": "Balance of $1,000 or more",
+    "accountMixTitle": "Account mix",
+    "accountMixDescription": "Current checking, savings, and premium-balance account counts.",
+    "checking": "Checking",
+    "savings": "Savings",
+    "premium": "Premium balance",
+    "recentTitle": "Recent banking operations",
+    "recentDescription": "The latest audited deposits, withdrawals, and transfers."
+  },
+  "auditor": {
+    "eyebrow": "Independent review",
+    "title": "Audit workspace",
+    "description": "Trace banking operations and the authenticated operators behind them.",
+    "readOnly": "Read-only workspace — no banking or access mutations are available.",
+    "coverage": "Audit coverage",
+    "breakdownTitle": "Action breakdown",
+    "breakdownDescription": "Audited operations recorded during the last 30 days.",
+    "reviewTitle": "Review paths",
+    "reviewDescription": "Move from the audit trail to the related read-only records.",
+    "recentTitle": "Recent audit activity",
+    "recentDescription": "Amounts, customers, accounts, and responsible operators."
+  },
+  "admin": {
+    "eyebrow": "Identity administration",
+    "title": "Access overview",
+    "description": "Monitor identity health, customer links, roles, and recent security changes.",
+    "identityHealth": "Identity health",
+    "roleDistribution": "Role distribution",
+    "roleDistributionDescription": "Effective primary roles, including legacy customer mappings.",
+    "bankOverview": "Banking footprint",
+    "bankOverviewDescription": "Context for access administration, not an operational performance view.",
+    "securityTitle": "Recent security changes",
+    "securityDescription": "Traceable identity and access administration.",
+    "bankingTitle": "Recent banking context",
+    "bankingDescription": "A concise operational reference alongside access governance."
+  },
+  "chart": {
+    "customerTitle": "Money movement",
+    "customerDescription": "Deposits and withdrawals for your accounts during the last 30 days.",
+    "managerTitle": "30-day money movement",
+    "managerDescription": "Audited deposit, withdrawal, and transfer volume by day.",
+    "deposits": "Deposits",
+    "withdrawals": "Withdrawals",
+    "transfers": "Transfers",
+    "accessibleLabel": "Line chart of money movement.",
+    "summaryTwo": "{{deposits}} deposited and {{withdrawals}} withdrawn in this period.",
+    "summaryThree": "{{deposits}} deposited, {{withdrawals}} withdrawn, and {{transfers}} transferred in this period."
+  },
+  "empty": {
+    "noAccounts": "No accounts yet",
+    "noAccountsBody": "Accounts linked to your banking profile will appear here.",
+    "noActivity": "No recent activity",
+    "customerActivityBody": "Your deposits and withdrawals will appear here.",
+    "tellerActivityBody": "Operations you complete will appear here.",
+    "managerActivityBody": "Audited banking operations will appear here.",
+    "auditorActivityBody": "There are no banking audit records in this period.",
+    "noSecurityActivity": "No recent security changes",
+    "securityActivityBody": "Identity and access changes will appear here.",
+    "noPeriodActivity": "No activity in this period",
+    "noPeriodActivityBody": "There is no money movement to chart for the last 30 days."
+  }
+}

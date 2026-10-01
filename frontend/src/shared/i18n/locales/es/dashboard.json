@@ -1,0 +1,143 @@
+{
+  "error": {
+    "title": "Panel no disponible"
+  },
+  "period": {
+    "last30Days": "Últimos 30 días · UTC",
+    "todayUtc": "Hoy · UTC"
+  },
+  "metrics": {
+    "totalBalance": "Saldo total",
+    "totalBankBalance": "Saldo total del banco",
+    "accounts": "Cuentas",
+    "customers": "Clientes",
+    "deposits30": "Depósitos",
+    "withdrawals30": "Retiros",
+    "myOperationsToday": "Mis operaciones",
+    "myDepositsToday": "Mis depósitos",
+    "myWithdrawalsToday": "Mis retiros",
+    "newAccountsToday": "Cuentas nuevas",
+    "premiumAccounts": "Cuentas premium",
+    "depositVolume": "Volumen de depósitos",
+    "withdrawalVolume": "Volumen de retiros",
+    "transferVolume": "Volumen de transferencias",
+    "auditRecords30": "Registros de auditoría",
+    "distinctActors30": "Operadores distintos",
+    "activeIdentities": "Identidades activas",
+    "disabledIdentities": "Identidades deshabilitadas",
+    "linkedCustomers": "Accesos de cliente vinculados",
+    "unlinkedCustomers": "Accesos de cliente sin vínculo",
+    "linkCoverage": "Cobertura de vínculos"
+  },
+  "actions": {
+    "transfer": "Transferir fondos",
+    "viewAccounts": "Ver todas las cuentas",
+    "findCustomer": "Buscar cliente",
+    "findAccount": "Buscar cuenta",
+    "quickActions": "Acciones de servicio",
+    "openAccount": "Abrir una cuenta",
+    "customers": "Directorio de clientes",
+    "accounts": "Directorio de cuentas",
+    "viewAudit": "Ver auditoría bancaria",
+    "openAuditLog": "Abrir registro de auditoría",
+    "reviewCustomers": "Revisar clientes",
+    "reviewAccounts": "Revisar cuentas",
+    "manageAccess": "Gestionar acceso",
+    "securityAudit": "Auditoría de seguridad",
+    "viewAll": "Ver todo"
+  },
+  "activity": {
+    "byActor": "Por {{actor}}",
+    "system": "sistema"
+  },
+  "customer": {
+    "eyebrow": "Banca personal",
+    "title": "Te damos la bienvenida, {{name}}",
+    "description": "Tus saldos, cuentas y movimientos recientes en una vista clara.",
+    "position": "Posición financiera",
+    "accountsTitle": "Tus cuentas",
+    "accountsDescription": "Los saldos corresponden a esta vista.",
+    "recentTitle": "Actividad reciente",
+    "recentDescription": "Tus depósitos y retiros más recientes."
+  },
+  "teller": {
+    "eyebrow": "Mesa de servicio",
+    "title": "Qué bueno verte, {{name}}",
+    "description": "Comienza con un cliente o una cuenta y completa el servicio solicitado.",
+    "searchTitle": "Encuentra la relación bancaria",
+    "searchDescription": "Busca por nombre, correo o identificador de cuenta.",
+    "searchLabel": "Buscar cliente o cuenta",
+    "searchPlaceholder": "Nombre, correo o ID de cuenta",
+    "todaySnapshot": "Mi actividad de servicio de hoy",
+    "recentTitle": "Mis operaciones recientes",
+    "recentDescription": "Solo se muestran las operaciones realizadas por tu identidad autenticada.",
+    "scopeNote": "Directorio de servicio: {{customers}} clientes y {{accounts}} cuentas."
+  },
+  "manager": {
+    "eyebrow": "Operaciones bancarias",
+    "title": "Resumen operativo",
+    "description": "Supervisa la posición monetaria, la mezcla de cuentas y la actividad reciente.",
+    "bankPosition": "Posición del banco",
+    "movementSnapshot": "Movimiento monetario de los últimos 30 días",
+    "premiumDefinition": "Saldo de $1,000 o más",
+    "accountMixTitle": "Mezcla de cuentas",
+    "accountMixDescription": "Conteos actuales de cuentas corrientes, de ahorro y con saldo premium.",
+    "checking": "Corriente",
+    "savings": "Ahorros",
+    "premium": "Saldo premium",
+    "recentTitle": "Operaciones bancarias recientes",
+    "recentDescription": "Los depósitos, retiros y transferencias auditados más recientes."
+  },
+  "auditor": {
+    "eyebrow": "Revisión independiente",
+    "title": "Espacio de auditoría",
+    "description": "Rastrea las operaciones bancarias y los operadores autenticados responsables.",
+    "readOnly": "Espacio de solo lectura: no hay cambios bancarios ni de acceso disponibles.",
+    "coverage": "Cobertura de auditoría",
+    "breakdownTitle": "Desglose por acción",
+    "breakdownDescription": "Operaciones auditadas registradas durante los últimos 30 días.",
+    "reviewTitle": "Rutas de revisión",
+    "reviewDescription": "Pasa del registro de auditoría a los registros relacionados de solo lectura.",
+    "recentTitle": "Actividad de auditoría reciente",
+    "recentDescription": "Importes, clientes, cuentas y operadores responsables."
+  },
+  "admin": {
+    "eyebrow": "Administración de identidades",
+    "title": "Resumen de acceso",
+    "description": "Supervisa la salud de identidades, vínculos de clientes, roles y cambios de seguridad.",
+    "identityHealth": "Salud de identidades",
+    "roleDistribution": "Distribución de roles",
+    "roleDistributionDescription": "Roles primarios efectivos, incluidos los vínculos heredados de clientes.",
+    "bankOverview": "Alcance bancario",
+    "bankOverviewDescription": "Contexto para administrar acceso, no una vista de rendimiento operativo.",
+    "securityTitle": "Cambios de seguridad recientes",
+    "securityDescription": "Administración rastreable de identidades y acceso.",
+    "bankingTitle": "Contexto bancario reciente",
+    "bankingDescription": "Una referencia operativa concisa junto al gobierno de acceso."
+  },
+  "chart": {
+    "customerTitle": "Movimiento de dinero",
+    "customerDescription": "Depósitos y retiros de tus cuentas durante los últimos 30 días.",
+    "managerTitle": "Movimiento de dinero en 30 días",
+    "managerDescription": "Volumen auditado de depósitos, retiros y transferencias por día.",
+    "deposits": "Depósitos",
+    "withdrawals": "Retiros",
+    "transfers": "Transferencias",
+    "accessibleLabel": "Gráfico de líneas del movimiento de dinero.",
+    "summaryTwo": "Se depositaron {{deposits}} y se retiraron {{withdrawals}} en este período.",
+    "summaryThree": "Se depositaron {{deposits}}, se retiraron {{withdrawals}} y se transfirieron {{transfers}} en este período."
+  },
+  "empty": {
+    "noAccounts": "Aún no hay cuentas",
+    "noAccountsBody": "Las cuentas vinculadas a tu perfil bancario aparecerán aquí.",
+    "noActivity": "No hay actividad reciente",
+    "customerActivityBody": "Tus depósitos y retiros aparecerán aquí.",
+    "tellerActivityBody": "Las operaciones que completes aparecerán aquí.",
+    "managerActivityBody": "Las operaciones bancarias auditadas aparecerán aquí.",
+    "auditorActivityBody": "No hay registros de auditoría bancaria en este período.",
+    "noSecurityActivity": "No hay cambios de seguridad recientes",
+    "securityActivityBody": "Los cambios de identidad y acceso aparecerán aquí.",
+    "noPeriodActivity": "No hay actividad en este período",
+    "noPeriodActivityBody": "No hay movimiento de dinero para graficar en los últimos 30 días."
+  }
+}

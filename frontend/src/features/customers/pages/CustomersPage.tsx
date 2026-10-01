@@ -3,7 +3,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { Plus, Search, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { usersApi } from '@/features/customers/api/usersApi';
 import { useAuth } from '@/shared/auth/useAuth';
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog';
@@ -25,7 +25,8 @@ export function CustomersPage() {
   const canManage = primaryRole === 'MANAGER' || primaryRole === 'ADMIN';
   const [users, setUsers] = useState<UserResponse[] | null>(null);
   const [error, setError] = useState('');
-  const [query, setQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const [query, setQuery] = useState(() => searchParams.get('query') || '');
   const [editing, setEditing] = useState<UserResponse | null>(null);
   const [deleting, setDeleting] = useState<UserResponse | null>(null);
   const [busy, setBusy] = useState(false);

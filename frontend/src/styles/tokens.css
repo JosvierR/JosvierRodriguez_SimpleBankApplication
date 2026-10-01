@@ -5,8 +5,21 @@
 @import '@radix-ui/colors/red.css';
 
 :root {
-  --app-bg: var(--slate-2);
-  --surface: #ffffff;
+  --bank-ink: var(--slate-12);
+  --bank-accent: var(--blue-9);
+  --bank-accent-hover: var(--blue-10);
+  --bank-accent-soft: var(--blue-3);
+  --surface-page: #f8fafc;
+  --surface-primary: #ffffff;
+  --surface-secondary: var(--slate-3);
+  --surface-raised: #ffffff;
+  --separator-strong: var(--slate-8);
+  --chart-deposit: var(--blue-9);
+  --chart-withdrawal: var(--amber-10);
+  --chart-transfer: var(--slate-11);
+  --shadow-raised: 0 16px 45px rgba(15, 23, 42, 0.08);
+  --app-bg: var(--surface-page);
+  --surface: var(--surface-primary);
   --surface-subtle: var(--slate-3);
   --surface-hover: var(--slate-4);
   --surface-selected: var(--blue-3);
@@ -29,7 +42,7 @@
   --surface-secondary: var(--surface-subtle);
   --border: var(--separator);
   --border-strong: var(--border-interactive);
-  --accent-soft: var(--accent-subtle);
+  --accent-soft: var(--bank-accent-soft);
   --success-soft: var(--success-subtle);
   --danger-soft: var(--danger-subtle);
   --warning-soft: var(--warning-subtle);
