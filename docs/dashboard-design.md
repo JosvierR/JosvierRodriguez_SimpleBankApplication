@@ -8,7 +8,7 @@ The dashboard asks one question: **what does this person need to know or do imme
 - “Today” and “last 30 days” use the backend UTC clock.
 - Currency totals are aggregated as `BigDecimal` on the backend and formatted for the selected locale in the browser.
 - Every view has a localized skeleton, retry state, and empty state.
-- Lists mask account identifiers as `•••• suffix` unless a technical detail view requires the full identifier.
+- Lists mask another person's account number as `••••` plus the last four digits. A customer sees the full number of accounts they own.
 - Recharts appears only where a time series answers a real money-movement question.
 - Chart totals are written in text near the chart. Deposit, withdrawal, and transfer lines also differ by stroke pattern, not color alone.
 
@@ -21,14 +21,14 @@ A customer is the authenticated owner of one explicitly linked bank-customer rec
 ### What do they need immediately?
 
 - Current total balance
-- Owned accounts and masked account numbers
+- Owned accounts, each with its full account number, type, and balance
 - Recent deposits, withdrawals, transfers in, and transfers out
 - Thirty-day movement that does not label transfers as spending
 - A direct path to transfer to an owned account or another Simple Bank account number
 
 ### What is shown?
 
-The view shows `totalBalance`, account count, owned account summaries, 30-day deposits, withdrawals, transfers in, and transfers out, an owned-account activity series, and recent owned transactions. Transfer rows name the counterparty with a limited display name and a masked account number.
+The view shows `totalBalance` as the primary metric, then account count, 30-day deposits, withdrawals, transfers in, and transfers out. Amounts stay fully readable instead of being clipped. Owned-account summaries show the type, balance, and full account number, with links to the account and to transfer. Recent transactions name a counterparty with a limited display name and a masked account number.
 
 ### What is deliberately not shown?
 

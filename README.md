@@ -425,6 +425,6 @@ Details are in `docs/demo-spike.md`.
 
 All protected requests use `Authorization: Bearer <token>`. IDs are strings. Amounts must be at least `0.01` with no more than two decimal places. Customer deletion conflicts while accounts exist; account deletion conflicts while transactions exist. Handled failures return a structured `ErrorResponse` without stack traces.
 
-Customer transfer preview and submit accept `sourceAccountId`, `destinationAccountNumber` (12 digits), and `amount`. The server derives the actor from the token. Staff `POST /api/accounts/transfer` still uses internal `fromAccountId` and `toAccountId`.
+Customer transfer preview and submit accept `sourceAccountId`, `destinationAccountNumber` (12 digits), and `amount`. The server derives the actor from the token. Staff `POST /api/accounts/transfer` still uses internal `fromAccountId` and `toAccountId`. A customer sees the full number of accounts they own. Another customer's number stays masked in preview, history, and the receipt.
 
 No screenshot or application claim implies a production bank, PCI compliance, SOC 2 compliance, or regulatory certification.

@@ -22,7 +22,7 @@ Each account receives a 12-digit public `accountNumber` when it is created. The 
 
 Demo accounts use deterministic numbers `100000000001` through `100000000021`.
 
-The interface shows `••••` plus the last four digits. The owner can still select the account from their own list. A full foreign account number is not displayed back as the primary label.
+The owner sees the full number of each account they own, including in the source selector. A destination that belongs to someone else is shown back as `••••` plus the last four digits, with a short name such as `Ethan P.` A full foreign account number is not displayed.
 
 ## Privacy choice
 
