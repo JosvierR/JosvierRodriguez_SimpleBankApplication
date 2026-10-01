@@ -68,6 +68,8 @@ MongoDB Atlas
 
 The React application calls relative `/api` URLs. Vite proxies those calls to `localhost:8080` during development; Nginx proxies them to the `backend` service over Docker's internal network in containers. No permissive Spring CORS configuration is required.
 
+Zoomed architecture diagrams, with an explanation of each part, are in [docs/c4/README.md](docs/c4/README.md). The layer overview in [docs/system-architecture.md](docs/system-architecture.md) stays the short companion.
+
 ## Technology
 
 Frontend:
