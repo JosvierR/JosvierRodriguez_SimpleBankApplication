@@ -1,0 +1,197 @@
+name: Promote Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Approved staging commit SHA
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  statuses: read
+
+jobs:
+  preflight:
+    name: Verify approved staging SHA
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.check.outputs.sha }}
+    steps:
+      - name: Checkout history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require fast-forward from successful staging
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_SHA: ${{ inputs.sha }}
+        run: |
+          sha=$(printf '%s' "$INPUT_SHA" | tr '[:upper:]' '[:lower:]')
+          if ! printf '%s' "$sha" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "SHA must be a 40-character hexadecimal commit id"
+            exit 1
+          fi
+          git fetch origin staging deploy/vercel-production
+          staging=$(git rev-parse origin/staging)
+          production=$(git rev-parse origin/deploy/vercel-production)
+          echo "staging=${staging}"
+          echo "production=${production}"
+          echo "requested=${sha}"
+          if [ "$staging" != "$sha" ]; then
+            echo "Requested SHA is not origin/staging"
+            exit 1
+          fi
+          if [ "$production" = "$sha" ]; then
+            echo "Production already points at this SHA"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$production" "$sha"; then
+            echo "Refusing a non-fast-forward production update"
+            exit 1
+          fi
+          deploy_state=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${sha}/statuses" --jq '[.[] | select(.context=="staging/deploy")][0].state // "missing"')
+          echo "staging/deploy=${deploy_state}"
+          if [ "$deploy_state" != "success" ]; then
+            echo "Staging deployment for this SHA has not succeeded"
+            exit 1
+          fi
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+
+  promote:
+    name: Promote approved SHA
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: production
+    permissions:
+      contents: write
+      actions: read
+      statuses: read
+    steps:
+      - name: Require production configuration
+        env:
+          PRODUCTION_API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
+          PRODUCTION_FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PRODUCTION_PROJECT_ID: ${{ secrets.VERCEL_PRODUCTION_PROJECT_ID }}
+          RENDER_PRODUCTION_DEPLOY_HOOK_URL: ${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK_URL }}
+          PRODUCTION_CUSTOMER_USERNAME: ${{ secrets.PRODUCTION_CUSTOMER_USERNAME }}
+          PRODUCTION_CUSTOMER_PASSWORD: ${{ secrets.PRODUCTION_CUSTOMER_PASSWORD }}
+        run: |
+          missing=0
+          for name in \
+            PRODUCTION_API_BASE_URL \
+            PRODUCTION_FRONTEND_URL \
+            VERCEL_TOKEN \
+            VERCEL_ORG_ID \
+            VERCEL_PRODUCTION_PROJECT_ID \
+            RENDER_PRODUCTION_DEPLOY_HOOK_URL \
+            PRODUCTION_CUSTOMER_USERNAME \
+            PRODUCTION_CUSTOMER_PASSWORD
+          do
+            if [ -z "${!name}" ]; then
+              echo "Missing production setting: ${name}"
+              missing=1
+            fi
+          done
+          if [ "$missing" != "0" ]; then
+            echo "Production promotion stopped before any branch update"
+            exit 1
+          fi
+
+      - name: Checkout history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fast-forward production branch
+        env:
+          DEPLOY_SHA: ${{ needs.preflight.outputs.sha }}
+        run: |
+          git fetch origin staging deploy/vercel-production
+          production=$(git rev-parse origin/deploy/vercel-production)
+          if ! git merge-base --is-ancestor "$production" "$DEPLOY_SHA"; then
+            echo "Refusing a non-fast-forward production update"
+            exit 1
+          fi
+          git push origin "${DEPLOY_SHA}:refs/heads/deploy/vercel-production"
+
+      - name: Request Render production deploy of exact SHA
+        env:
+          RENDER_PRODUCTION_DEPLOY_HOOK_URL: ${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK_URL }}
+          DEPLOY_SHA: ${{ needs.preflight.outputs.sha }}
+        run: |
+          hook="${RENDER_PRODUCTION_DEPLOY_HOOK_URL}"
+          case "$hook" in
+            *\?*) separator='&' ;;
+            *) separator='?' ;;
+          esac
+          code=$(curl --silent --output /dev/null --write-out "%{http_code}" --request POST "${hook}${separator}ref=${DEPLOY_SHA}" || true)
+          echo "Render production deploy hook HTTP ${code}"
+          case "$code" in
+            200|201|202) ;;
+            *) echo "Render production deploy request failed"; exit 1 ;;
+          esac
+
+      - name: Wait for production backend readiness
+        env:
+          PRODUCTION_API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
+          DEPLOY_SHA: ${{ needs.preflight.outputs.sha }}
+        run: |
+          api="${PRODUCTION_API_BASE_URL%/}"
+          deadline=$((SECONDS + 900))
+          ready=0
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            body=$(mktemp)
+            code=$(curl --silent --output "$body" --write-out "%{http_code}" "${api}/public/ready" || true)
+            status=$(jq -r '.status // empty' "$body" 2>/dev/null || true)
+            environment=$(jq -r '.environment // empty' "$body" 2>/dev/null || true)
+            revision=$(jq -r '.revision // empty' "$body" 2>/dev/null || true)
+            rm -f "$body"
+            echo "ready HTTP ${code} status=${status} environment=${environment} revision=${revision}"
+            if [ "$code" = "200" ] && [ "$status" = "UP" ] && [ "$environment" = "production" ] && [ "$revision" = "$DEPLOY_SHA" ]; then
+              ready=1
+              break
+            fi
+            sleep 20
+          done
+          if [ "$ready" != "1" ]; then
+            echo "Production backend readiness did not match ${DEPLOY_SHA}"
+            exit 1
+          fi
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+
+      - name: Deploy Vercel production project
+        working-directory: frontend
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PRODUCTION_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npm install --global vercel@58.9.1
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          vercel build --prod --token="$VERCEL_TOKEN"
+          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" > "$RUNNER_TEMP/vercel-production-url.txt"
+          echo "Vercel production deployment finished"
+
+      - name: Run production smoke
+        env:
+          STAGING_API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
+          STAGING_FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
+          STAGING_CUSTOMER_USERNAME: ${{ secrets.PRODUCTION_CUSTOMER_USERNAME }}
+          STAGING_CUSTOMER_PASSWORD: ${{ secrets.PRODUCTION_CUSTOMER_PASSWORD }}
+          EXPECTED_REVISION: ${{ needs.preflight.outputs.sha }}
+          EXPECTED_ENVIRONMENT: production
+          REQUIRE_ADMIN: "false"
+        run: node scripts/staging-smoke.mjs
