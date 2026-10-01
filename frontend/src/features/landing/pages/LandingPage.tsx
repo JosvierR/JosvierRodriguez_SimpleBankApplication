@@ -1,11 +1,11 @@
-import * as Dialog from '@radix-ui/react-dialog';
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Building2, Check, Menu, ShieldCheck, UsersRound, WalletCards, X } from 'lucide-react';
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Check, ShieldCheck, UsersRound, WalletCards } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { APP_HOME } from '@/app/routes';
+import { PublicFooter } from '@/features/landing/components/PublicFooter';
+import { PublicHeader } from '@/features/landing/components/PublicHeader';
 import { useAuth } from '@/shared/auth/useAuth';
-import { LanguageSwitcher } from '@/shared/components/LanguageSwitcher';
 
 interface PublicConfig {
   demoMode: boolean;
@@ -14,7 +14,8 @@ interface PublicConfig {
 }
 
 const credentialsUrl =
-  'https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/blob/FullStack-BankApp-Product-Spike-i18n-Demo/docs/demo-credentials.txt';
+  'https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/blob/ReactFrontend-BankApp-Making-RestCall-To-Backend/docs/demo-credentials.txt';
+const repositoryUrl = 'https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication';
 
 export function LandingPage() {
   const { t } = useTranslation(['landing', 'common', 'auth']);
@@ -33,27 +34,7 @@ export function LandingPage() {
 
   return (
     <div className="landing">
-      <header className="landing__header">
-        <a className="landing__brand" href="#top" aria-label="Simple Bank">
-          <span>
-            <Building2 size={18} aria-hidden="true" />
-          </span>
-          <strong>Simple Bank</strong>
-        </a>
-        <nav className="landing__desktop-nav" aria-label={t('landing:navigation')}>
-          <a href="#personal">{t('landing:personalBanking')}</a>
-          <a href="#operations">{t('landing:operations')}</a>
-          <a href="#security">{t('landing:security')}</a>
-          <a href="#demo">{t('landing:demo')}</a>
-        </nav>
-        <div className="landing__tools">
-          <LanguageSwitcher />
-          <Link className="button button--secondary landing__access" to={accessPath}>
-            {accessLabel}
-          </Link>
-          <MobileNavigation accessLabel={accessLabel} accessPath={accessPath} />
-        </div>
-      </header>
+      <PublicHeader isAuthenticated={isAuthenticated} />
 
       <main id="top">
         <section className="landing__hero" id="personal">
@@ -154,66 +135,8 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="landing__footer">
-        <div>
-          <a className="landing__brand" href="#top">
-            <span>
-              <Building2 size={16} aria-hidden="true" />
-            </span>
-            <strong>Simple Bank</strong>
-          </a>
-          <p>{t('landing:footer')}</p>
-        </div>
-        <div>
-          <LanguageSwitcher />
-          <a href={credentialsUrl}>{t('landing:demoAccounts')}</a>
-          <a href="https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication">{t('landing:repository')}</a>
-        </div>
-      </footer>
+      <PublicFooter credentialsUrl={credentialsUrl} repositoryUrl={repositoryUrl} />
     </div>
-  );
-}
-
-function MobileNavigation({ accessLabel, accessPath }: { accessLabel: string; accessPath: string }) {
-  const { t } = useTranslation('landing');
-  return (
-    <Dialog.Root>
-      <Dialog.Trigger asChild>
-        <button className="landing__menu-button" aria-label={t('openMenu')}>
-          <Menu size={21} />
-        </button>
-      </Dialog.Trigger>
-      <Dialog.Portal>
-        <Dialog.Overlay className="sheet-overlay" />
-        <Dialog.Content className="landing__mobile-menu">
-          <Dialog.Title>{t('navigation')}</Dialog.Title>
-          <Dialog.Close asChild>
-            <button className="icon-button" aria-label={t('closeMenu')}>
-              <X size={20} />
-            </button>
-          </Dialog.Close>
-          <nav aria-label={t('navigation')}>
-            <Dialog.Close asChild>
-              <a href="#personal">{t('personalBanking')}</a>
-            </Dialog.Close>
-            <Dialog.Close asChild>
-              <a href="#operations">{t('operations')}</a>
-            </Dialog.Close>
-            <Dialog.Close asChild>
-              <a href="#security">{t('security')}</a>
-            </Dialog.Close>
-            <Dialog.Close asChild>
-              <a href="#demo">{t('demo')}</a>
-            </Dialog.Close>
-          </nav>
-          <Dialog.Close asChild>
-            <Link className="button" to={accessPath}>
-              {accessLabel}
-            </Link>
-          </Dialog.Close>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
   );
 }
 
