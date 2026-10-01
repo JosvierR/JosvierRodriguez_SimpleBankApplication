@@ -10,7 +10,6 @@ import type { CustomerAccountResponse, CustomerTransferReceiptResponse, Transfer
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDateTime } from '@/shared/utils/dates';
 import { amountError, getErrorMessage } from '@/shared/utils/errors';
-import { maskAccountNumber } from '@/shared/utils/transfers';
 import { useTranslation } from 'react-i18next';
 
 type DestinationMode = 'mine' | 'other';
@@ -116,7 +115,7 @@ export function CustomerTransferPage() {
                   </div>
                   <div>
                     <dt>{t('fromAccount')}</dt>
-                    <dd>{receipt.sourceAccountNumberMasked}</dd>
+                    <dd className="account-number__value">{source?.accountNumber || receipt.sourceAccountNumberMasked}</dd>
                   </div>
                   <div>
                     <dt>{t('toAccount')}</dt>
@@ -154,7 +153,7 @@ export function CustomerTransferPage() {
                   </div>
                   <div>
                     <dt>{t('fromAccount')}</dt>
-                    <dd>{preview.sourceAccountNumberMasked}</dd>
+                    <dd className="account-number__value">{source?.accountNumber || preview.sourceAccountNumberMasked}</dd>
                   </div>
                   <div>
                     <dt>{t('toAccount')}</dt>
@@ -221,12 +220,14 @@ export function CustomerTransferPage() {
                     <input
                       inputMode="numeric"
                       autoComplete="off"
+                      aria-describedby="destination-account-hint"
                       value={otherNumber}
                       onChange={(event) => setOtherNumber(event.target.value.replace(/\D/g, '').slice(0, 12))}
                       required
                     />
                   </label>
                 )}
+                {mode === 'other' ? <small id="destination-account-hint">{t('accountNumberHint')}</small> : null}
                 <label htmlFor="customer-transfer-amount">{t('amountLabel')}</label>
                 <div className="currency-input">
                   <span>$</span>
@@ -248,8 +249,15 @@ export function CustomerTransferPage() {
           </article>
           <aside className="transfer-summary">
             <span>{t('fromAccount')}</span>
-            <strong>{source ? accountLabel(source, t) : t('selectAnAccount')}</strong>
-            {source && <small>{t('availableAmount', { amount: formatCurrency(Number(source.balance)) })}</small>}
+            {source ? (
+              <>
+                <strong>{t(`accountType.${source.accountType}`)}</strong>
+                {source.accountNumber ? <span className="account-number__value">{source.accountNumber}</span> : null}
+                <small>{t('availableAmount', { amount: formatCurrency(Number(source.balance)) })}</small>
+              </>
+            ) : (
+              <strong>{t('selectAnAccount')}</strong>
+            )}
           </aside>
         </section>
       )}
@@ -259,6 +267,6 @@ export function CustomerTransferPage() {
 
 function accountLabel(account: CustomerAccountResponse, translate: (key: string) => string) {
   const kind = translate(`accountType.${account.accountType}`);
-  const masked = maskAccountNumber(account.accountNumber || account.accountId);
-  return `${kind} ${masked}`;
+  const number = account.accountNumber || '';
+  return `${kind} · ${number} · ${formatCurrency(Number(account.balance))}`;
 }

@@ -203,5 +203,9 @@
   "transferInFrom": "Virement reçu de {{name}}",
   "noOwnedAccounts": "Aucun compte n’est encore disponible.",
   "backToTransfer": "Modifier le virement",
-  "postedOn": "Date"
+  "postedOn": "Date",
+  "accountNumber": "Numéro de compte",
+  "copyAccountNumber": "Copier le numéro de compte",
+  "accountNumberCopied": "Numéro de compte copié",
+  "accountNumberHint": "Saisissez le numéro de compte à 12 chiffres."
 }

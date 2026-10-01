@@ -43,10 +43,14 @@ describe('customer portal ownership boundaries', () => {
   it('loads customer accounts only through the /me client', async () => {
     const ownAccounts = vi
       .spyOn(meApi, 'accounts')
-      .mockResolvedValue([{ accountId: 'own-1', accountType: 'CHECKING', balance: 125, createdAt: customer.createdAt }]);
+      .mockResolvedValue([
+        { accountId: 'own-1', accountType: 'CHECKING', balance: 125, createdAt: customer.createdAt, accountNumber: '100000000001' },
+      ]);
     const globalAccounts = vi.spyOn(accountsApi, 'list');
     renderRoute(<MyAccountsPage />, '/my-accounts', '*', customerAuth);
     expect(await screen.findByText('$125.00')).toBeInTheDocument();
+    expect(screen.getByText('100000000001')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy account number' })).toBeInTheDocument();
     expect(ownAccounts).toHaveBeenCalledOnce();
     expect(globalAccounts).not.toHaveBeenCalled();
   });

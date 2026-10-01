@@ -203,5 +203,9 @@
   "transferInFrom": "Transfer in from {{name}}",
   "noOwnedAccounts": "No account is available yet.",
   "backToTransfer": "Edit transfer",
-  "postedOn": "Date"
+  "postedOn": "Date",
+  "accountNumber": "Account number",
+  "copyAccountNumber": "Copy account number",
+  "accountNumberCopied": "Account number copied",
+  "accountNumberHint": "Enter the 12-digit account number."
 }

@@ -27,10 +27,18 @@ describe('DashboardPage', () => {
       generatedAt,
       bankUserLinked: true,
       displayName: 'Sofia Rivera',
-      totalBalance: 1250,
+      totalBalance: 15199.5,
       accountCount: 1,
-      accounts: [{ accountId: 'account-2A91', accountType: 'CHECKING', balance: 1250, createdAt: generatedAt }],
-      last30DayDeposits: 400,
+      accounts: [
+        {
+          accountId: 'account-2A91',
+          accountType: 'CHECKING',
+          balance: 15199.5,
+          createdAt: generatedAt,
+          accountNumber: '100000000001',
+        },
+      ],
+      last30DayDeposits: 15700,
       last30DayWithdrawals: 100,
       last30DayTransfersIn: 0,
       last30DayTransfersOut: 0,
@@ -38,8 +46,10 @@ describe('DashboardPage', () => {
       recentTransactions: [{ type: 'DEPOSIT', accountSuffix: '2A91', amount: 400, createdAt: generatedAt }],
     });
     expect(await screen.findByRole('heading', { name: 'Welcome, Sofia Rivera' })).toBeInTheDocument();
-    expect(screen.getAllByText('$1,250.00')).toHaveLength(2);
-    expect(screen.getByRole('link', { name: 'Transfer funds' })).toBeInTheDocument();
+    expect(screen.getAllByText('$15,199.50').length).toBeGreaterThan(0);
+    expect(screen.getByText('$15,700.00')).toBeInTheDocument();
+    expect(screen.getByText('100000000001')).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Transfer funds' }).length).toBeGreaterThan(0);
     expect(screen.queryByRole('link', { name: 'Manage access' })).not.toBeInTheDocument();
     expect(dashboardApi.get).toHaveBeenCalledTimes(1);
   });

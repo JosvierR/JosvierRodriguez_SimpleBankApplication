@@ -10,14 +10,16 @@ export function DashboardMetric({
   value,
   detail,
   icon: Icon,
+  emphasis = false,
 }: {
   label: string;
   value: ReactNode;
   detail?: string;
   icon?: ComponentType<{ size?: number }>;
+  emphasis?: boolean;
 }) {
   return (
-    <article className="dashboard-metric">
+    <article className={emphasis ? 'dashboard-metric dashboard-metric--primary' : 'dashboard-metric'}>
       <span>
         {Icon ? <Icon size={16} /> : null}
         {label}

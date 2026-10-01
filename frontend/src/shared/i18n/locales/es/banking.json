@@ -203,5 +203,9 @@
   "transferInFrom": "Transferencia recibida de {{name}}",
   "noOwnedAccounts": "Todavía no hay una cuenta disponible.",
   "backToTransfer": "Editar transferencia",
-  "postedOn": "Fecha"
+  "postedOn": "Fecha",
+  "accountNumber": "Número de cuenta",
+  "copyAccountNumber": "Copiar número de cuenta",
+  "accountNumberCopied": "Número de cuenta copiado",
+  "accountNumberHint": "Introduce el número de cuenta de 12 dígitos."
 }

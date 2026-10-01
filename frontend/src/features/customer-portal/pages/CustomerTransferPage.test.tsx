@@ -47,9 +47,12 @@ describe('internal transfer flow', () => {
     await userEvent.type(screen.getByRole('textbox', { name: 'Amount' }), '25');
     await userEvent.click(screen.getByRole('button', { name: 'Preview transfer' }));
     expect(await screen.findByText('Ethan P.')).toBeInTheDocument();
+    expect(screen.getByText('•••• 0021')).toBeInTheDocument();
+    expect(screen.getAllByText('100000000001').length).toBeGreaterThan(0);
     await userEvent.click(screen.getByRole('button', { name: 'Confirm transfer' }));
     expect(await screen.findByText('Transfer complete')).toBeInTheDocument();
     expect(screen.getByText('TRF-ABC123')).toBeInTheDocument();
+    expect(screen.getByText('•••• 0021')).toBeInTheDocument();
     await waitFor(() => expect(meApi.transfer).toHaveBeenCalled());
   });
 });

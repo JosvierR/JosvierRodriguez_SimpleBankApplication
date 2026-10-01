@@ -28,7 +28,12 @@ export function CustomerDashboard({ data }: { data: CustomerDashboardData }) {
         }
       />
       <section className="dashboard-metrics dashboard-metrics--customer" aria-label={t('dashboard:customer.position')}>
-        <DashboardMetric label={t('dashboard:metrics.totalBalance')} value={formatCurrency(Number(data.totalBalance))} icon={Landmark} />
+        <DashboardMetric
+          label={t('dashboard:metrics.totalBalance')}
+          value={formatCurrency(Number(data.totalBalance))}
+          icon={Landmark}
+          emphasis
+        />
         <DashboardMetric label={t('dashboard:metrics.accounts')} value={data.accountCount} icon={WalletCards} />
         <DashboardMetric
           label={t('dashboard:metrics.deposits30')}
@@ -62,13 +67,17 @@ export function CustomerDashboard({ data }: { data: CustomerDashboardData }) {
           ) : (
             <div className="dashboard-account-list">
               {data.accounts.map((account) => (
-                <Link to={appPath(`/my-accounts/${account.accountId}`)} key={account.accountId} className="dashboard-account-row">
+                <article className="dashboard-account-row" key={account.accountId}>
                   <div>
                     <strong>{t(`banking:accountType.${account.accountType}`)}</strong>
-                    <span className="mono">•••• {account.accountId.slice(-4)}</span>
+                    {account.accountNumber ? <span className="account-number__value">{account.accountNumber}</span> : null}
                   </div>
                   <strong>{formatCurrency(Number(account.balance))}</strong>
-                </Link>
+                  <div className="dashboard-account-actions">
+                    <Link to={appPath(`/my-accounts/${account.accountId}`)}>{t('banking:viewAccount')}</Link>
+                    <Link to={appPath(`/my-transfer?from=${account.accountId}`)}>{t('dashboard:actions.transfer')}</Link>
+                  </div>
+                </article>
               ))}
             </div>
           )}

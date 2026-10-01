@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 import { meApi } from '@/features/customer-portal/api/meApi';
 import { useAuth } from '@/shared/auth/useAuth';
 import { PendingLinkState } from '@/features/customer-portal/components/PendingLinkState';
+import { AccountNumber } from '@/shared/components/AccountNumber';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { EmptyState, ErrorState, PageLoading } from '@/shared/components/States';
 import type { CustomerAccountResponse, CustomerTransactionResponse } from '@/shared/types/api';
@@ -41,14 +42,15 @@ export function MyAccountsPage() {
       ) : (
         <section className="customer-account-grid">
           {accounts.map((account) => (
-            <Link className="customer-account" to={appPath(`/my-accounts/${account.accountId}`)} key={account.accountId}>
+            <article className="customer-account" key={account.accountId}>
               <div>
                 <span>{t(`accountType.${account.accountType}`)}</span>
-                <small className="mono">•••• {account.accountId.slice(-4)}</small>
+                <Link to={appPath(`/my-accounts/${account.accountId}`)}>{t('viewAccount')}</Link>
               </div>
               <strong>{formatCurrency(Number(account.balance))}</strong>
+              {account.accountNumber ? <AccountNumber value={account.accountNumber} /> : null}
               <small>{t('openedOn', { date: formatDateTime(account.createdAt) })}</small>
-            </Link>
+            </article>
           ))}
         </section>
       )}
@@ -84,10 +86,8 @@ export function MyAccountDetailsPage() {
         <ArrowLeft size={16} />
         {t('common:nav.myAccounts')}
       </Link>
-      <PageHeader
-        title={data.account.accountType === 'CHECKING' ? t('checkingAccount') : t('savingsAccount')}
-        description={t('accountEnding', { id: (data.account.accountNumber || '').slice(-4) })}
-      />
+      <PageHeader title={data.account.accountType === 'CHECKING' ? t('checkingAccount') : t('savingsAccount')} />
+      {data.account.accountNumber ? <AccountNumber value={data.account.accountNumber} /> : null}
       <section className="customer-balance">
         <span>{t('balance')}</span>
         <strong>{formatCurrency(Number(data.account.balance))}</strong>
