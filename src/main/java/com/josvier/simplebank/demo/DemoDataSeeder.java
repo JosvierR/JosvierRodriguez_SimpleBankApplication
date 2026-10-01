@@ -54,6 +54,7 @@ public class DemoDataSeeder implements ApplicationRunner {
     private final SecurityAuditRepository securityAudits;
     private final PasswordEncoder passwordEncoder;
     private final MongoTemplate mongo;
+    private final DemoDatasetVerifier verifier;
     private final String databaseName;
     private final boolean reset;
     private final Path credentialsFile;
@@ -61,7 +62,7 @@ public class DemoDataSeeder implements ApplicationRunner {
     public DemoDataSeeder(AuthUserRepository authUsers, UserRepository bankUsers, AccountRepository accounts,
                           TransactionRepository transactions, AuditRepository audits,
                           SecurityAuditRepository securityAudits, PasswordEncoder passwordEncoder,
-                          MongoTemplate mongo,
+                          MongoTemplate mongo, DemoDatasetVerifier verifier,
                           @Value("${spring.mongodb.database}") String databaseName,
                           @Value("${demo.seed.reset:false}") boolean reset,
                           @Value("${demo.seed.credentials-file}") String credentialsFile) {
@@ -73,6 +74,7 @@ public class DemoDataSeeder implements ApplicationRunner {
         this.securityAudits = securityAudits;
         this.passwordEncoder = passwordEncoder;
         this.mongo = mongo;
+        this.verifier = verifier;
         this.databaseName = databaseName;
         this.reset = reset;
         this.credentialsFile = Path.of(credentialsFile);
@@ -84,9 +86,12 @@ public class DemoDataSeeder implements ApplicationRunner {
         List<DemoIdentity> identities = DemoCredentialsParser.parse(credentialsFile);
         if (reset) {
             COLLECTIONS.forEach(mongo::dropCollection);
-        } else if (authUsers.findByUsername("ava.admin").isPresent()) {
-            log.info("Demo dataset {} is already present", DATASET_VERSION);
+        } else if (isComplete()) {
+            verifier.verify();
+            log.info("Demo dataset {} is already complete", DATASET_VERSION);
             return;
+        } else if (!authUsers.findAll().isEmpty() || !bankUsers.findAll().isEmpty()) {
+            throw new IllegalStateException("Demo dataset integrity error: records exist without a COMPLETE marker. Set DEMO_SEED_RESET=true to rebuild simple_bank_demo.");
         }
         LocalDateTime cursor = LocalDateTime.of(2026, 9, 1, 9, 0);
         List<AuthUser> staff = new ArrayList<>();
@@ -160,8 +165,21 @@ public class DemoDataSeeder implements ApplicationRunner {
                 SecurityAuditAction.AUTH_USER_ENABLED, "false", "true", LocalDateTime.of(2026, 9, 3, 12, 0)));
         securityAudits.save(new SecurityAudit(admin.getId(), admin.getUsername(), sampleTeller.getId(),
                 SecurityAuditAction.ROLE_CHANGED, "AUDITOR", "TELLER", LocalDateTime.of(2026, 9, 4, 11, 0)));
-        mongo.insert(new org.bson.Document("datasetVersion", DATASET_VERSION), "demo_seed_metadata");
-        log.info("Demo dataset {} is ready", DATASET_VERSION);
+        verifier.verify();
+        mongo.insert(new org.bson.Document("datasetVersion", DATASET_VERSION)
+                .append("status", "COMPLETE")
+                .append("createdAt", java.time.Instant.now().toString()), "demo_seed_metadata");
+        log.info("Demo dataset {} is complete", DATASET_VERSION);
+    }
+
+    private boolean isComplete() {
+        org.bson.Document marker = mongo.findOne(
+                org.springframework.data.mongodb.core.query.Query.query(
+                        org.springframework.data.mongodb.core.query.Criteria.where("datasetVersion").is(DATASET_VERSION)
+                                .and("status").is("COMPLETE")),
+                org.bson.Document.class,
+                "demo_seed_metadata");
+        return marker != null;
     }
 
     private AuthUser saveAuth(DemoIdentity identity, String bankUserId, LocalDateTime createdAt) {
