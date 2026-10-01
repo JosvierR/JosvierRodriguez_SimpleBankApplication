@@ -49,5 +49,9 @@
   "customers_one": "{{count}} cliente",
   "customers_other": "{{count}} clientes",
   "accounts_one": "{{count}} cuenta",
-  "accounts_other": "{{count}} cuentas"
+  "accounts_other": "{{count}} cuentas",
+  "notifications": {
+    "regionLabel": "Notificaciones",
+    "dismiss": "Descartar notificación"
+  }
 }

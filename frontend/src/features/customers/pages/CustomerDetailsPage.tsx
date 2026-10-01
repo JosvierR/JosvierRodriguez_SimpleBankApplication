@@ -97,7 +97,7 @@ export function CustomerDetailsPage() {
               {data.accounts.map((account) => (
                 <Link to={appPath(`/accounts/${account.accountId}`)} className="account-card-row" key={account.accountId}>
                   <div>
-                    <span>{account.accountType === 'CHECKING' ? 'Checking' : 'Savings'}</span>
+                    <span>{t(`accountType.${account.accountType}`)}</span>
                     <strong className="mono">{account.accountId}</strong>
                   </div>
                   <div>

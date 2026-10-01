@@ -247,7 +247,7 @@ function StaffOverview({
                   <div>
                     <strong>{audit.action.replaceAll('_', ' ')}</strong>
                     <small>
-                      {audit.userName} · {audit.actorUsername || 'Legacy / unavailable'}
+                      {audit.userName} · {audit.actorUsername || t('legacyActor')}
                     </small>
                   </div>
                   <div>

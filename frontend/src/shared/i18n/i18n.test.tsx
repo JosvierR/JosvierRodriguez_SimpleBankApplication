@@ -2,10 +2,20 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { LanguageSwitcher } from '@/shared/components/LanguageSwitcher';
+import { ToastProvider, useToast } from '@/shared/components/Toast';
 import i18n from '@/shared/i18n/i18n';
 import { LANGUAGE_KEY, localeFor, normalizeLanguage } from '@/shared/i18n/language';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDateTime } from '@/shared/utils/dates';
+
+function ToastProbe() {
+  const { notify } = useToast();
+  return (
+    <button type="button" onClick={() => notify('Saved', 'success')}>
+      show toast
+    </button>
+  );
+}
 
 describe('language', () => {
   it('starts in English and switches to Spanish and French', async () => {
@@ -75,5 +85,32 @@ describe('language', () => {
     expect(i18n.t('banking:accountType.SAVINGS')).toBe('Épargne');
     expect(i18n.t('common:accounts', { count: 2 })).toBe('2 comptes');
     expect(i18n.t('errors:INSUFFICIENT_FUNDS')).toBe('Fonds insuffisants');
+  });
+
+  it('translates the premium filter and toast accessibility labels', async () => {
+    const user = userEvent.setup();
+    render(
+      <ToastProvider>
+        <ToastProbe />
+      </ToastProvider>,
+    );
+    await user.click(screen.getByRole('button', { name: 'show toast' }));
+    expect(screen.getByLabelText('Notifications')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Dismiss notification' })).toBeInTheDocument();
+    expect(i18n.t('banking:filters.premiumThresholdLabel')).toBe('Premium balance threshold');
+    expect(i18n.t('banking:filters.minimumBalancePlaceholder')).toBe('Minimum balance');
+
+    await i18n.changeLanguage('es');
+    expect(screen.getByLabelText('Notificaciones')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Descartar notificación' })).toBeInTheDocument();
+    expect(i18n.t('banking:filters.premiumThresholdLabel')).toBe('Umbral de saldo premium');
+    expect(i18n.t('banking:filters.minimumBalancePlaceholder')).toBe('Saldo mínimo');
+
+    await i18n.changeLanguage('fr');
+    expect(screen.getByLabelText('Notifications')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fermer la notification' })).toBeInTheDocument();
+    expect(i18n.t('banking:filters.premiumThresholdLabel')).toBe('Seuil de solde premium');
+    expect(i18n.t('banking:filters.minimumBalancePlaceholder')).toBe('Solde minimum');
+    await i18n.changeLanguage('en');
   });
 });

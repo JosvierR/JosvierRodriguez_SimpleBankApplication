@@ -151,12 +151,12 @@ export function AccountsPage() {
             <form className="premium-filter" onSubmit={premium}>
               <SlidersHorizontal size={16} />
               <label>
-                <span className="sr-only">Premium balance threshold</span>
+                <span className="sr-only">{t('filters.premiumThresholdLabel')}</span>
                 <input
                   inputMode="decimal"
                   value={threshold}
                   onChange={(event) => setThreshold(event.target.value)}
-                  placeholder="Minimum balance"
+                  placeholder={t('filters.minimumBalancePlaceholder')}
                 />
               </label>
               <button className="button button--secondary button--small">{t('common:apply')}</button>

@@ -50,12 +50,12 @@ export function CreateAccountPage() {
         } catch (cause) {
           setPartialUser(customer);
           setUserId(customer.id);
-          setError(`Customer was created, but the account could not be opened. ${getErrorMessage(cause)}`);
+          setError(`${t('customerCreatedAccountFailed')} ${getErrorMessage(cause)}`);
           return;
         }
       }
       if (!ownerId) {
-        setError('Select an existing customer.');
+        setError(t('selectExistingCustomer'));
         return;
       }
       const account = await accountsApi.create({ userId: ownerId, accountType });
@@ -77,7 +77,7 @@ export function CreateAccountPage() {
       <PageHeader title={t('openAccount')} />
       <section className="form-layout">
         <article className="panel form-panel">
-          <div className="segmented" role="group" aria-label="Customer type">
+          <div className="segmented" role="group" aria-label={t('customerType')}>
             <button
               type="button"
               className={mode === 'new' ? 'active' : ''}
@@ -88,7 +88,7 @@ export function CreateAccountPage() {
               }}
             >
               <UserPlus size={17} />
-              New customer
+              {t('newCustomer')}
             </button>
             <button
               type="button"
@@ -100,16 +100,16 @@ export function CreateAccountPage() {
               }}
             >
               <Users size={17} />
-              Existing customer
+              {t('existingCustomer')}
             </button>
           </div>
           {error && (
             <div className={`form-error ${partialUser ? 'form-error--recovery' : ''}`} role="alert">
-              <strong>{partialUser ? 'Account was not opened' : 'Unable to open account'}</strong>
+              <strong>{partialUser ? t('accountNotOpened') : t('unableToOpenAccount')}</strong>
               <span>{error}</span>
               {partialUser && (
                 <span>
-                  Customer ID: <code>{partialUser.id}</code>
+                  {t('customerIdLabel')}: <code>{partialUser.id}</code>
                 </span>
               )}
             </div>
@@ -134,7 +134,7 @@ export function CreateAccountPage() {
               </>
             ) : (
               <label>
-                Customer
+                {t('customer')}
                 <select value={userId} onChange={(e) => setUserId(e.target.value)} required autoFocus>
                   <option value="">{t('selectCustomer')}</option>
                   {users?.map((user) => (
@@ -179,7 +179,7 @@ export function CreateAccountPage() {
               </div>
             </fieldset>
             <button className="button" disabled={busy}>
-              {busy ? 'Opening account…' : partialUser ? 'Try opening account again' : 'Open account'}
+              {busy ? t('openingAccount') : partialUser ? t('retryOpen') : t('openAccount')}
             </button>
           </form>
           {partialUser && (

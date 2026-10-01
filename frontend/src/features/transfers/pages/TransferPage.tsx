@@ -35,11 +35,11 @@ export function TransferPage() {
     setError('');
     const validation = amountError(amount);
     if (!from || !to) {
-      setError('Select both a source and destination account.');
+      setError(t('selectSourceAndDestination'));
       return;
     }
     if (from === to) {
-      setError('Source and destination accounts must be different.');
+      setError(t('accountsMustDiffer'));
       return;
     }
     if (validation) {
@@ -66,10 +66,10 @@ export function TransferPage() {
           <article className="panel">
             <EmptyState
               title={t('twoAccounts')}
-              message="Open at least two accounts before creating a transfer."
+              message={t('openTwoAccounts')}
               action={
                 <Link className="button" to={appPath('/accounts/new')}>
-                  Open account
+                  {t('openAccount')}
                 </Link>
               }
             />
@@ -80,7 +80,7 @@ export function TransferPage() {
               <div className="success-state" role="status">
                 <CheckCircle2 size={34} />
                 <h2>{t('transferComplete')}</h2>
-                <p>{formatCurrency(Number(result.amount))} transferred successfully.</p>
+                <p>{t('amountTransferred', { amount: formatCurrency(Number(result.amount)) })}</p>
                 <dl className="transfer-result">
                   <div>
                     <dt>{t('sourceNewBalance')}</dt>

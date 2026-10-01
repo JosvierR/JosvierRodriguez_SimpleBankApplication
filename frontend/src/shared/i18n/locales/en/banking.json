@@ -168,5 +168,24 @@
   "emailPlaceholder": "customer@example.com",
   "customerAccountCount_one": "{{count}} account owned by this customer.",
   "customerAccountCount_other": "{{count}} accounts owned by this customer.",
-  "noCustomerAccounts": "This customer does not have an account yet."
+  "noCustomerAccounts": "This customer does not have an account yet.",
+  "filters": {
+    "premiumThresholdLabel": "Premium balance threshold",
+    "minimumBalancePlaceholder": "Minimum balance"
+  },
+  "customerType": "Customer type",
+  "newCustomer": "New customer",
+  "existingCustomer": "Existing customer",
+  "selectExistingCustomer": "Select an existing customer.",
+  "accountNotOpened": "Account was not opened",
+  "unableToOpenAccount": "Unable to open account",
+  "customerIdLabel": "Customer ID",
+  "openingAccount": "Opening account…",
+  "retryOpen": "Try opening account again",
+  "selectSourceAndDestination": "Select both a source and destination account.",
+  "accountsMustDiffer": "Source and destination accounts must be different.",
+  "openTwoAccounts": "Open at least two accounts before creating a transfer.",
+  "deleteAccountAction": "Delete account",
+  "deleteAccountBody": "This permanently removes the account. The backend prevents deletion when transaction history exists.",
+  "customerCreatedAccountFailed": "Customer was created, but the account could not be opened."
 }

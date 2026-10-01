@@ -184,6 +184,22 @@
     padding-top: 36px;
   }
 }
+@media (max-width: 640px) {
+  .landing__header {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    min-height: 0;
+    padding-block: 12px;
+  }
+  .landing__tools {
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+  }
+  .language-switcher {
+    flex-wrap: wrap;
+  }
+}
 @media (max-width: 360px) {
   .landing__header,
   .landing__hero,

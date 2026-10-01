@@ -19,7 +19,7 @@ The project evolved in six focused phases:
 
 The interface follows Apple Human Interface Guidelines as design principles, not as a copy of Apple. Color uses Radix Colors through semantic tokens. Interaction uses Radix primitives. Dense operational tables use TanStack Table. Styling is custom CSS. This project is not affiliated with Apple.
 
-Language preference is stored in `localStorage` under `simple-bank-language`. The access token stays in `sessionStorage`. The selector offers English, Español, and Français. The browser language is used when no preference is saved, and English is the fallback. Logout does not clear the language.
+Language preference is stored in `localStorage` under `simple-bank-language`. The access token stays in `sessionStorage`. The selector offers English, Español, and Français. Frontend-owned interface copy, including labels, empty states, dialogs, and accessibility text, is localized in those three languages. Backend API messages stay in the language the API returns. The browser language is used when no preference is saved, and English is the fallback. Logout does not clear the language.
 
 Desktop uses a light split view. Narrower widths replace the sidebar with an accessible sheet. Data tables become stacked records on small screens.
 

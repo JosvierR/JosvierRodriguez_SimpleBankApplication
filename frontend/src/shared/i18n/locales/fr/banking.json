@@ -168,5 +168,24 @@
   "emailPlaceholder": "client@exemple.com",
   "customerAccountCount_one": "{{count}} compte de ce client.",
   "customerAccountCount_other": "{{count}} comptes de ce client.",
-  "noCustomerAccounts": "Ce client n’a pas encore de compte."
+  "noCustomerAccounts": "Ce client n’a pas encore de compte.",
+  "filters": {
+    "premiumThresholdLabel": "Seuil de solde premium",
+    "minimumBalancePlaceholder": "Solde minimum"
+  },
+  "customerType": "Type de client",
+  "newCustomer": "Nouveau client",
+  "existingCustomer": "Client existant",
+  "selectExistingCustomer": "Choisissez un client existant.",
+  "accountNotOpened": "Le compte n’a pas été ouvert",
+  "unableToOpenAccount": "Impossible d’ouvrir le compte",
+  "customerIdLabel": "ID client",
+  "openingAccount": "Ouverture du compte…",
+  "retryOpen": "Réessayer l’ouverture du compte",
+  "selectSourceAndDestination": "Choisissez le compte source et le compte destinataire.",
+  "accountsMustDiffer": "Le compte source et le compte destinataire doivent être différents.",
+  "openTwoAccounts": "Ouvrez au moins deux comptes avant d’effectuer un virement.",
+  "deleteAccountAction": "Supprimer le compte",
+  "deleteAccountBody": "Cette action supprime définitivement le compte. La suppression est refusée lorsqu’un historique de mouvements existe.",
+  "customerCreatedAccountFailed": "Le client a été créé, mais le compte n’a pas pu être ouvert."
 }

@@ -168,5 +168,24 @@
   "emailPlaceholder": "cliente@ejemplo.com",
   "customerAccountCount_one": "{{count}} cuenta de este cliente.",
   "customerAccountCount_other": "{{count}} cuentas de este cliente.",
-  "noCustomerAccounts": "Este cliente todavía no tiene una cuenta."
+  "noCustomerAccounts": "Este cliente todavía no tiene una cuenta.",
+  "filters": {
+    "premiumThresholdLabel": "Umbral de saldo premium",
+    "minimumBalancePlaceholder": "Saldo mínimo"
+  },
+  "customerType": "Tipo de cliente",
+  "newCustomer": "Cliente nuevo",
+  "existingCustomer": "Cliente existente",
+  "selectExistingCustomer": "Seleccione un cliente existente.",
+  "accountNotOpened": "La cuenta no se abrió",
+  "unableToOpenAccount": "No se pudo abrir la cuenta",
+  "customerIdLabel": "ID de cliente",
+  "openingAccount": "Abriendo la cuenta…",
+  "retryOpen": "Intentar abrir la cuenta de nuevo",
+  "selectSourceAndDestination": "Seleccione la cuenta de origen y la de destino.",
+  "accountsMustDiffer": "La cuenta de origen y la de destino deben ser distintas.",
+  "openTwoAccounts": "Abra al menos dos cuentas antes de hacer una transferencia.",
+  "deleteAccountAction": "Eliminar cuenta",
+  "deleteAccountBody": "Esto elimina la cuenta de forma permanente. El sistema impide eliminarla si conserva historial de movimientos.",
+  "customerCreatedAccountFailed": "El cliente se creó, pero no se pudo abrir la cuenta."
 }

@@ -79,6 +79,8 @@ The live run authenticated 20/20 with the role counts above.
 ## Languages
 
 The interface supports English, Español, and Français.
+Frontend-owned interface copy is localized in all three languages, including accessibility labels.
+Backend API messages stay in the language the API returns.
 The choice is stored in `simple-bank-language` and survives reload.
 `document.documentElement.lang` follows that choice.
 Routes and API enum values stay in English.

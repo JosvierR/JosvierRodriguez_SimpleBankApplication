@@ -58,8 +58,7 @@ export function AccountDetailsPage() {
       notify(t('accountDeleted'));
       navigate(appPath('/accounts'));
     } catch (cause) {
-      const message =
-        cause instanceof ApiError && cause.status === 409 ? 'Accounts with transaction history cannot be deleted.' : getErrorMessage(cause);
+      const message = cause instanceof ApiError && cause.status === 409 ? t('historyDeleteNote') : getErrorMessage(cause);
       setError(message);
       notify(message, 'error');
       setConfirmDelete(false);
@@ -73,9 +72,9 @@ export function AccountDetailsPage() {
     <>
       <Link className="back-link" to={appPath('/accounts')}>
         <ArrowLeft size={16} />
-        Accounts
+        {t('accounts')}
       </Link>
-      <PageHeader title={account.userName} description={`Account ending ${account.accountId.slice(-6)}`} />
+      <PageHeader title={account.userName} description={t('accountEnding', { id: account.accountId.slice(-6) })} />
       <section className="balance-hero">
         <div>
           <span>{t('availableBalance')}</span>
@@ -86,23 +85,23 @@ export function AccountDetailsPage() {
             <>
               <Link className="button" to={appPath(`/accounts/${accountId}/deposit`)}>
                 <ArrowDownToLine size={17} />
-                Deposit
+                {t('depositTitle')}
               </Link>
               <Link className="button button--secondary" to={appPath(`/accounts/${accountId}/withdraw`)}>
                 <ArrowUpFromLine size={17} />
-                Withdraw
+                {t('withdrawTitle')}
               </Link>
             </>
           )}
           {canManage && (
             <Link className="button button--secondary" to={appPath(`/transfer?from=${accountId}`)}>
               <ArrowLeftRight size={17} />
-              Transfer
+              {t('common:nav.transfer')}
             </Link>
           )}
           <Link className="button button--secondary" to={appPath(`/accounts/${accountId}/transactions`)}>
             <History size={17} />
-            Transactions
+            {t('transactions')}
           </Link>
         </div>
       </section>
@@ -127,7 +126,7 @@ export function AccountDetailsPage() {
             </div>
             <div>
               <dt>{t('accountTypeLegend')}</dt>
-              <dd>{account.accountType === 'CHECKING' ? 'Checking' : 'Savings'}</dd>
+              <dd>{t(`accountType.${account.accountType}`)}</dd>
             </div>
             <div>
               <dt>{t('opened')}</dt>
@@ -139,7 +138,7 @@ export function AccountDetailsPage() {
           <article className="grouped-section">
             <h2>{t('accountSettings')}</h2>
             <label>
-              Account type
+              {t('accountTypeLegend')}
               <select
                 value={account.accountType}
                 onChange={(event) => void updateType(event.target.value as AccountType)}
@@ -154,7 +153,7 @@ export function AccountDetailsPage() {
               <p>{t('historyDeleteNote')}</p>
               <button className="button button--danger" onClick={() => setConfirmDelete(true)} disabled={updating}>
                 <Trash2 size={16} />
-                Delete account
+                {t('deleteAccountAction')}
               </button>
             </div>
           </article>
@@ -163,7 +162,7 @@ export function AccountDetailsPage() {
       <ConfirmDialog
         open={confirmDelete}
         title={t('deleteAccountTitle')}
-        description="This permanently removes the account. The backend prevents deletion when transaction history exists."
+        description={t('deleteAccountBody')}
         busy={updating}
         onCancel={() => setConfirmDelete(false)}
         onConfirm={() => void remove()}
