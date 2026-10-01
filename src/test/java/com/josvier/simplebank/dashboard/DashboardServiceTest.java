@@ -165,7 +165,7 @@ class DashboardServiceTest {
         when(authUsers.findAll()).thenReturn(identities);
         when(users.count()).thenReturn(12L);
         when(accounts.count()).thenReturn(21L);
-        when(securityAudits.findAll()).thenReturn(List.of(new SecurityAudit(
+        when(securityAudits.findRecent()).thenReturn(List.of(new SecurityAudit(
                 "admin-id", "admin", identities.get(0).getId(), SecurityAuditAction.CUSTOMER_LINKED,
                 null, "customer-a", NOW.minusMinutes(5))));
         when(audits.findByCreatedAtBetween(NOW.minusDays(30), NOW)).thenReturn(List.of());

@@ -24,6 +24,11 @@ public class MongoSecurityAuditRepositoryAdapter implements SecurityAuditReposit
         return audits.findAllByOrderByCreatedAtDescIdDesc().stream().map(this::toDomain).toList();
     }
 
+    @Override
+    public List<SecurityAudit> findRecent() {
+        return audits.findTop8ByOrderByCreatedAtDescIdDesc().stream().map(this::toDomain).toList();
+    }
+
     private SecurityAuditDocument toDocument(SecurityAudit audit) {
         SecurityAuditDocument document = new SecurityAuditDocument();
         document.setId(audit.getId());

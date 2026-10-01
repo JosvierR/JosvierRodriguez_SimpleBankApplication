@@ -138,7 +138,7 @@ class AuthorizationMatrixWebIntegrationTest {
             transaction.setId("68dc1234567890abcdef0" + ids.getAndIncrement());
             return transaction;
         });
-        when(securityAudits.findAll()).thenReturn(List.of());
+        when(securityAudits.findRecent()).thenReturn(List.of());
         when(audits.findByCreatedAtBetween(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(List.of());
         when(audits.findByActorAuthUserIdAndCreatedAtBetween(
                 anyString(), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(List.of());

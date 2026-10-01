@@ -209,8 +209,7 @@ public class DashboardService {
                 .count();
         Map<String, String> usernamesById = new HashMap<>();
         identities.forEach(identity -> usernamesById.put(identity.getId(), identity.getUsername()));
-        List<DashboardSecurityActivity> recentSecurity = securityAudits.findAll().stream()
-                .limit(RECENT_LIMIT)
+        List<DashboardSecurityActivity> recentSecurity = securityAudits.findRecent().stream()
                 .map(audit -> securityActivity(audit, usernamesById))
                 .toList();
         return new AdminDashboardResponse(

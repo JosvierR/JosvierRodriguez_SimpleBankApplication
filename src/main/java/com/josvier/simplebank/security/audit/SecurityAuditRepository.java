@@ -5,4 +5,5 @@ import java.util.List;
 public interface SecurityAuditRepository {
     SecurityAudit save(SecurityAudit audit);
     List<SecurityAudit> findAll();
+    List<SecurityAudit> findRecent();
 }
