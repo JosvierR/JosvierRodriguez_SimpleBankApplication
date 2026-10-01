@@ -180,16 +180,15 @@ jobs:
           fi
 
       - name: Deploy Vercel staging project
-        working-directory: frontend
         env:
           VERCEL_ORG_ID: team_JKrJa4sOTaNooio7czIdnEks
           VERCEL_PROJECT_ID: prj_hEwtdSNKmahdU5kKrcghZGsCwLoG
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          rm -rf .vercel
+          rm -rf .vercel frontend/.vercel
           npm install --global vercel@58.9.1
+          npm ci --prefix frontend
           vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-          npm ci
           vercel build --prod --token="$VERCEL_TOKEN"
           vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" > "$RUNNER_TEMP/vercel-deploy-url.txt"
           echo "Vercel staging deployment finished"
