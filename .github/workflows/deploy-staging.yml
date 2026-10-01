@@ -91,8 +91,6 @@ jobs:
           STAGING_FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
           STAGING_RECIPIENT_ACCOUNT_NUMBER: ${{ vars.STAGING_RECIPIENT_ACCOUNT_NUMBER }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_STAGING_PROJECT_ID: ${{ secrets.VERCEL_STAGING_PROJECT_ID }}
           RENDER_STAGING_DEPLOY_HOOK_URL: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
           STAGING_CUSTOMER_USERNAME: ${{ secrets.STAGING_CUSTOMER_USERNAME }}
           STAGING_CUSTOMER_PASSWORD: ${{ secrets.STAGING_CUSTOMER_PASSWORD }}
@@ -105,8 +103,6 @@ jobs:
             STAGING_FRONTEND_URL \
             STAGING_RECIPIENT_ACCOUNT_NUMBER \
             VERCEL_TOKEN \
-            VERCEL_ORG_ID \
-            VERCEL_STAGING_PROJECT_ID \
             RENDER_STAGING_DEPLOY_HOOK_URL \
             STAGING_CUSTOMER_USERNAME \
             STAGING_CUSTOMER_PASSWORD \
@@ -186,10 +182,11 @@ jobs:
       - name: Deploy Vercel staging project
         working-directory: frontend
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_STAGING_PROJECT_ID }}
+          VERCEL_ORG_ID: team_JKrJa4sOTaNooio7czIdnEks
+          VERCEL_PROJECT_ID: prj_hEwtdSNKmahdU5kKrcghZGsCwLoG
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
+          rm -rf .vercel
           npm install --global vercel@58.9.1
           vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
           vercel build --prod --token="$VERCEL_TOKEN"
