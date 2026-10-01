@@ -6,7 +6,11 @@ Canonical branch: `ReactFrontend-BankApp-Making-RestCall-To-Backend`
 
 GitHub Actions: https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/workflows/ci.yml?query=branch%3AReactFrontend-BankApp-Making-RestCall-To-Backend
 
-Staging frontend and backend URLs are recorded in [submission links](submission-links.md) after a real deploy. Until that page lists them, present the local Docker demo and say staging is prepared in GitHub but not promoted to a public host yet. Production is pending a separate approval. Do not open `deploy/vercel-production` as if it were live.
+Staging frontend: https://simple-bank-staging.vercel.app
+
+Staging backend: https://simple-bank-api-staging.onrender.com
+
+Production is not deployed and stays pending approval. Do not open `deploy/vercel-production` as if it were live.
 
 ## Order
 

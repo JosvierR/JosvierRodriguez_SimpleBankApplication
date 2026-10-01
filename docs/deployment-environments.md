@@ -45,7 +45,9 @@ simple_bank_staging
 
 `DEMO_SEED_ENABLED=false`
 
-`CORS_ALLOWED_ORIGINS` is the exact staging frontend origin, for example `https://simple-bank-staging.vercel.app`.
+`CORS_ALLOWED_ORIGINS` is the exact staging frontend origin `https://simple-bank-staging.vercel.app`.
+
+The live staging API is https://simple-bank-api-staging.onrender.com. The live staging frontend is https://simple-bank-staging.vercel.app. Auto-deploy on the Render service is off. The service is in Virginia on the free plan, and its health check is `/api/public/ready`.
 
 The Vercel project uses root directory `frontend`, production branch `staging`, `npm run build`, and output `dist`. Public variables are `VITE_API_BASE_URL` and `VITE_APP_ENV=staging`. Do not put `MONGODB_URI` or `JWT_SECRET` in Vercel.
 

@@ -44,23 +44,23 @@ On the deployed staging frontend, confirm English, Spanish, and French, a deskto
 | Item | Value |
 | --- | --- |
 | Date | 2026-10-01 |
-| STAGING_APPROVED_SHA | not approved |
-| Backend URL | not deployed |
-| Frontend URL | not deployed |
-| Health | not run against a host |
-| Ready | not run against a host |
-| Environment | not run against a host |
-| Revision | not run against a host |
-| Customer login | not run |
-| Admin login | not run |
-| Dashboard | not run |
-| Accounts | not run |
-| Transfer preview | not run |
-| Manual transfer | not run |
-| Ownership 404 | not run |
-| CORS | not run against a host |
-| EN / ES / FR | not run against a host |
-| Responsive | not run against a host |
-| Staging workflow run | not recorded |
+| STAGING_APPROVED_SHA | `f4e5471b8287413fab6037c7abc52640bced0d84` |
+| Backend URL | https://simple-bank-api-staging.onrender.com |
+| Frontend URL | https://simple-bank-staging.vercel.app |
+| Health | 200, environment `staging` |
+| Ready | 200, status `UP` |
+| Environment | `staging` |
+| Revision | `f4e5471b8287413fab6037c7abc52640bced0d84` |
+| Customer login | `stg.customer.sender` HTTP 200 |
+| Admin login | `stg.admin` HTTP 200, and still ADMIN after bootstrap was turned off |
+| Dashboard | HTTP 200 |
+| Accounts | sender checking `224892789540` and savings `242273814917`; recipient checking `121927304771` |
+| Transfer preview | HTTP 200, destination masked, ending in 4771 |
+| Manual transfer | `TRF-68A0F061680B` for 1.00; sender checking 3200.00 to 3199.00; recipient checking 2500.00 to 2501.00; `TRANSFER_OUT` and `TRANSFER_IN` share that reference |
+| Ownership 404 | customer read of the recipient account and its history returned 404 |
+| CORS | `https://simple-bank-staging.vercel.app` allowed; `https://evil.example` not allowed |
+| EN / ES / FR | not clicked in a browser during this run |
+| Responsive | not checked at 390px during this run |
+| Staging workflow run | not run; the branch has not been fast-forwarded |
 
-Staging acceptance stays blocked until Atlas `simple_bank_staging`, the Render service, and the Vercel staging project exist. Production branch `deploy/vercel-production` stays unchanged until this table names an approved SHA and a human runs the manual production workflow.
+`scripts/staging-smoke.mjs` passed against those URLs for revision `f4e5471b8287413fab6037c7abc52640bced0d84`. The Atlas user `simple-bank-staging-user` has `readWrite` on `simple_bank_staging` only and is scoped to cluster `Bank-Project`. Production branch `deploy/vercel-production` stays at `0bf185c6e1b875d98f30f20b7e9f7619d43d980d` until a human runs the manual production workflow.
