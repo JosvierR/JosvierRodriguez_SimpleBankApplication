@@ -25,7 +25,7 @@ Spring Boot API
 MongoDB Atlas
 ```
 
-The API needs its own HTTPS host. This repository does not select that host. Live staging and production stay blocked until `STAGING_API_BASE_URL` and `PRODUCTION_API_BASE_URL` exist.
+The API is hosted on Render. The staging service is `simple-bank-api-staging`. Production hosting is prepared and is not deployed by the staging workflow.
 
 ## Staging
 
@@ -88,9 +88,43 @@ One cluster is acceptable when those users cannot cross databases. Credentials s
 
 `GET /api/public/config` returns `demoMode`, `environment`, `registrationEnabled`, and `supportedLanguages`. `environment` is `local`, `demo`, `staging`, or `production`.
 
-`GET /api/public/health` returns `status` and `environment`. It is the deployment smoke check. Neither response includes a database URI, a database name, or a secret.
+`GET /api/public/health` is process liveness. It returns `status` and `environment` and does not ping MongoDB.
+
+`GET /api/public/ready` is deployment readiness. It pings MongoDB and returns `status`, `environment`, and `revision`. MongoDB down is HTTP 503 with `status` `DOWN`. A successful staging answer is HTTP 200:
+
+```json
+{"status":"UP","environment":"staging","revision":"<commit-sha>"}
+```
+
+`revision` comes from `APP_REVISION`, then Render's `RENDER_GIT_COMMIT`, then `local`. Neither public response includes a database URI, database name, host, username, password, or JWT secret.
+
+Render binds `PORT`. `server.port=${PORT:8080}` keeps local and Docker on 8080.
 
 The authenticated shell and the public header show a Staging badge only when `environment` is `staging`.
+
+## Promotion
+
+Canonical branch `ReactFrontend-BankApp-Making-RestCall-To-Backend` is the source of truth. `staging` is the tested promotion branch. `deploy/vercel-production` receives an approved staging SHA only.
+
+```text
+canonical
+  ↓ CI green, fast-forward
+staging
+  ↓ Staging Deploy workflow
+Render + Vercel staging
+  ↓ manual Promote Production workflow, after approval
+deploy/vercel-production
+```
+
+GitHub Actions workflow `CI` runs backend tests, frontend quality, and Docker image builds. The stable check name is `Required CI`.
+
+`Staging Deploy` runs only after CI succeeds on `staging`. It checks out that exact commit, calls the Render deploy hook with `ref=<sha>`, waits until `/api/public/ready` reports that SHA, deploys the separate Vercel project `simple-bank-staging`, and runs `scripts/staging-smoke.mjs`.
+
+`Promote Production` is `workflow_dispatch` only. It refuses to run unless the input SHA is `origin/staging`, that SHA has a successful `staging/deploy` status, and `deploy/vercel-production` can fast-forward to it. The production job uses the GitHub `production` environment so approval can stop the run before any branch update. This task does not execute that workflow.
+
+Demo seed stays off for staging and production. The twenty-user demo remains `simple_bank_demo` only.
+
+Rollback does not rewrite Git history. Redeploy the last known-good commit on Render and the last known-good deployment on Vercel, then fix canonical forward. See [staging-runbook.md](staging-runbook.md) and [staging-acceptance.md](staging-acceptance.md).
 
 ## Branch model
 

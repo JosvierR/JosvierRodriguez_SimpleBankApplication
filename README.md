@@ -72,7 +72,11 @@ The React application calls relative `/api` URLs in local development and Docker
 
 ## Environments / Deployment
 
-Local, demo, staging, and production share this source. They differ by Spring profile, database name, and frontend origin. The setup, including why Vercel hosts only the React app, is in [docs/deployment-environments.md](docs/deployment-environments.md).
+Local, demo, staging, and production share this source. They differ by Spring profile, database name, and frontend origin. Canonical is the source of truth. Staging is the tested promotion branch. Production is an approved staging SHA only.
+
+- [Environment model](docs/deployment-environments.md)
+- [Staging runbook](docs/staging-runbook.md)
+- [Staging acceptance](docs/staging-acceptance.md)
 
 Historical snapshots stay on `bankapp-Java-Springboot-Backend-API-MVC`, `SpringbootRESTApiBackend-With-DB-MongoDBCloudAtlas`, and `SpringbootRESTApiBackend-With-DB-MongoDBCloudAtlas-With-JWT`. The canonical application is `ReactFrontend-BankApp-Making-RestCall-To-Backend`. Release branches are `staging` and `deploy/vercel-production`.
 
