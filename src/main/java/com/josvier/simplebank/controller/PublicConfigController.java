@@ -1,5 +1,7 @@
 package com.josvier.simplebank.controller;
 
+import com.josvier.simplebank.config.RuntimeEnvironment;
+import com.josvier.simplebank.dto.response.HealthResponse;
 import com.josvier.simplebank.dto.response.PublicConfigResponse;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
@@ -22,6 +24,11 @@ public class PublicConfigController {
     @GetMapping("/config")
     public PublicConfigResponse config() {
         boolean demoMode = environment.acceptsProfiles(Profiles.of("demo"));
-        return new PublicConfigResponse(demoMode, true, List.of("en", "es", "fr"));
+        return new PublicConfigResponse(demoMode, RuntimeEnvironment.name(environment), true, List.of("en", "es", "fr"));
+    }
+
+    @GetMapping("/health")
+    public HealthResponse health() {
+        return new HealthResponse("UP", RuntimeEnvironment.name(environment));
     }
 }

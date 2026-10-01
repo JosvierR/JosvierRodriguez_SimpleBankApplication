@@ -20,6 +20,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.time.Clock;
 
@@ -52,10 +53,12 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                     JwtService jwtService,
                                                     UserDetailsService userDetailsService,
-                                                    SecurityErrorWriter errors) throws Exception {
+                                                    SecurityErrorWriter errors,
+                                                    CorsConfigurationSource corsConfigurationSource) throws Exception {
         JwtAuthenticationFilter jwtAuthenticationFilter =
                 new JwtAuthenticationFilter(jwtService, userDetailsService, errors);
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exceptions -> exceptions
@@ -67,7 +70,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/public/config").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/public/config", "/api/public/health").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll())
                 .addFilterAfter(jwtAuthenticationFilter, SecurityContextHolderFilter.class);
