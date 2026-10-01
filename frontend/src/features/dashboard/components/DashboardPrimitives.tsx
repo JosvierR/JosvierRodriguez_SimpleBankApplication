@@ -119,7 +119,7 @@ export function DistributionBars({ items }: { items: DashboardRoleCount[] }) {
   const { t } = useTranslation(['dashboard', 'common']);
   const largest = Math.max(1, ...items.map((item) => item.count));
   return (
-    <div className="distribution-list" aria-label={t('dashboard:admin.roleDistribution')}>
+    <div className="distribution-list">
       {items.map((item) => (
         <div className="distribution-row" key={item.role}>
           <div>

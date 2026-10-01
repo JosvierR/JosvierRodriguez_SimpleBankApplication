@@ -6,8 +6,8 @@
 
 :root {
   --bank-ink: var(--slate-12);
-  --bank-accent: var(--blue-9);
-  --bank-accent-hover: var(--blue-10);
+  --bank-accent: var(--blue-11);
+  --bank-accent-hover: var(--blue-12);
   --bank-accent-soft: var(--blue-3);
   --surface-page: #f8fafc;
   --surface-primary: #ffffff;
@@ -22,15 +22,15 @@
   --surface: var(--surface-primary);
   --surface-subtle: var(--slate-3);
   --surface-hover: var(--slate-4);
-  --surface-selected: var(--blue-3);
+  --surface-selected: var(--blue-1);
   --text-primary: var(--slate-12);
   --text-secondary: var(--slate-11);
-  --text-tertiary: var(--slate-10);
+  --text-tertiary: var(--slate-11);
   --separator: var(--slate-6);
   --border-interactive: var(--slate-8);
   --focus-ring: var(--blue-8);
-  --accent: var(--blue-9);
-  --accent-hover: var(--blue-10);
+  --accent: var(--bank-accent);
+  --accent-hover: var(--bank-accent-hover);
   --accent-subtle: var(--blue-3);
   --success: var(--green-11);
   --success-subtle: var(--green-3);

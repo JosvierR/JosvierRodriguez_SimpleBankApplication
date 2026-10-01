@@ -30,7 +30,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="toast-region" aria-live="polite" aria-label={t('notifications.regionLabel')}>
+      <div className="toast-region" role="region" aria-live="polite" aria-label={t('notifications.regionLabel')}>
         {items.map((item) => (
           <div className={`toast toast--${item.kind}`} key={item.id} role={item.kind === 'error' ? 'alert' : 'status'}>
             {item.kind === 'success' ? <CheckCircle2 size={18} /> : <CircleAlert size={18} />}
