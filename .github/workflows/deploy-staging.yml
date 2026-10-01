@@ -189,6 +189,7 @@ jobs:
           rm -rf .vercel
           npm install --global vercel@58.9.1
           vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          npm ci
           vercel build --prod --token="$VERCEL_TOKEN"
           vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" > "$RUNNER_TEMP/vercel-deploy-url.txt"
           echo "Vercel staging deployment finished"
