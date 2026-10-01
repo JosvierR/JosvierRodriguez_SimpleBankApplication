@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -106,6 +107,21 @@ class SecurityWebIntegrationTest {
         mockMvc.perform(get("/api/auth/verify").header("Authorization", "Bearer " + jwt))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("ada"));
+    }
+
+    @Test
+    void readiness_withoutJwt_reportsDownWhenMongoIsUnreachable() throws Exception {
+        String body = mockMvc.perform(get("/api/public/ready"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.status").value("DOWN"))
+                .andExpect(jsonPath("$.environment").value("local"))
+                .andExpect(jsonPath("$.revision").value("local"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertFalse(body.contains("mongodb"));
+        assertFalse(body.contains("127.0.0.1"));
+        assertFalse(body.contains("MDEyMzQ1"));
     }
 
     @Test
