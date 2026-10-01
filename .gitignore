@@ -35,6 +35,8 @@ build/
 ### Local secrets ###
 .env
 .env.local
+.env.production
+.env.staging
 application-local.properties
 
 ### React / Vite ###
@@ -44,3 +46,7 @@ frontend/coverage/
 frontend/.env
 frontend/.env.*
 !frontend/.env.example
+.vercel/
+frontend/.vercel/
+coverage/
+*.log
