@@ -9,8 +9,10 @@ import type { AccountResponse, TransactionResponse } from '@/shared/types/api';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDateTime } from '@/shared/utils/dates';
 import { getErrorMessage } from '@/shared/utils/errors';
+import { useTranslation } from 'react-i18next';
 
 export function TransactionHistoryPage() {
+  const { t } = useTranslation('banking');
   const { accountId = '' } = useParams();
   const [data, setData] = useState<{ account: AccountResponse; transactions: TransactionResponse[] } | null>(null);
   const [error, setError] = useState('');
@@ -26,36 +28,36 @@ export function TransactionHistoryPage() {
   useEffect(() => {
     void load();
   }, [load]);
-  if (error) return <ErrorState title="Transactions unavailable" message={error} onRetry={() => void load()} />;
+  if (error) return <ErrorState title={t('transactionsUnavailable')} message={error} onRetry={() => void load()} />;
   if (!data) return <PageLoading />;
   return (
     <>
       <Link className="back-link" to={appPath(`/accounts/${accountId}`)}>
         <ArrowLeft size={16} />
-        Back to account
+        {t('backToAccount')}
       </Link>
       <PageHeader
-        title="Transaction history"
+        title={t('transactionHistory')}
         description={`${data.account.userName} · ${accountId}`}
         actions={
           <span className="header-balance">
-            <small>Current balance</small>
+            <small>{t('currentBalance')}</small>
             <strong>{formatCurrency(Number(data.account.balance))}</strong>
           </span>
         }
       />
       <section className="grouped-section">
         {data.transactions.length === 0 ? (
-          <EmptyState title="No transactions yet" message="Deposits and withdrawals for this account will appear here." />
+          <EmptyState title={t('noTransactionsYet')} message={t('historyWillAppear')} />
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Transaction ID</th>
-                  <th>Type</th>
-                  <th className="money-cell">Amount</th>
-                  <th>Date</th>
+                  <th>{t('transactionId')}</th>
+                  <th>{t('type')}</th>
+                  <th className="money-cell">{t('amountLabel')}</th>
+                  <th>{t('created')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -68,7 +70,7 @@ export function TransactionHistoryPage() {
                       <td>
                         <span className={`transaction-type transaction-type--${deposit ? 'positive' : 'negative'}`}>
                           <Icon size={15} />
-                          {deposit ? 'Deposit' : 'Withdraw'}
+                          {deposit ? t('transaction.DEPOSIT') : t('transaction.WITHDRAW')}
                         </span>
                       </td>
                       <td className={`money-cell money ${deposit ? 'positive' : 'negative'}`}>

@@ -9,8 +9,10 @@ import { useToast } from '@/shared/components/Toast';
 import type { AccountResponse, TransferResponse } from '@/shared/types/api';
 import { formatCurrency } from '@/shared/utils/currency';
 import { amountError, getErrorMessage } from '@/shared/utils/errors';
+import { useTranslation } from 'react-i18next';
 
 export function TransferPage() {
+  const { t } = useTranslation(['banking', 'common']);
   const [params] = useSearchParams();
   const [accounts, setAccounts] = useState<AccountResponse[] | null>(null);
   const [from, setFrom] = useState(params.get('from') || '');
@@ -48,7 +50,7 @@ export function TransferPage() {
     try {
       const response = await accountsApi.transfer({ fromAccountId: from, toAccountId: to, amount: Number(amount) });
       setResult(response);
-      notify('Transfer complete.');
+      notify(t('transferComplete') + '.');
     } catch (cause) {
       setError(getErrorMessage(cause));
     } finally {
@@ -58,12 +60,12 @@ export function TransferPage() {
   if (!accounts && !error) return <PageLoading />;
   return (
     <>
-      <PageHeader title="Transfer" />
+      <PageHeader title={t('common:nav.transfers')} />
       <section className="money-layout">
         {accounts && accounts.length < 2 ? (
           <article className="panel">
             <EmptyState
-              title="Two accounts required"
+              title={t('twoAccounts')}
               message="Open at least two accounts before creating a transfer."
               action={
                 <Link className="button" to={appPath('/accounts/new')}>
@@ -77,19 +79,19 @@ export function TransferPage() {
             {result ? (
               <div className="success-state" role="status">
                 <CheckCircle2 size={34} />
-                <h2>Transfer complete</h2>
+                <h2>{t('transferComplete')}</h2>
                 <p>{formatCurrency(Number(result.amount))} transferred successfully.</p>
                 <dl className="transfer-result">
                   <div>
-                    <dt>Source new balance</dt>
+                    <dt>{t('sourceNewBalance')}</dt>
                     <dd>{formatCurrency(Number(result.fromBalance))}</dd>
                   </div>
                   <div>
-                    <dt>Destination new balance</dt>
+                    <dt>{t('destinationNewBalance')}</dt>
                     <dd>{formatCurrency(Number(result.toBalance))}</dd>
                   </div>
                   <div>
-                    <dt>Audit ID</dt>
+                    <dt>{t('auditId')}</dt>
                     <dd className="mono">{result.auditId}</dd>
                   </div>
                 </dl>
@@ -117,9 +119,9 @@ export function TransferPage() {
                   </div>
                 )}
                 <label>
-                  From account
+                  {t('fromAccount')}
                   <select value={from} onChange={(e) => setFrom(e.target.value)} required autoFocus>
-                    <option value="">Select source account</option>
+                    <option value="">{t('selectSource')}</option>
                     {accounts?.map((account) => (
                       <option key={account.accountId} value={account.accountId}>
                         {account.userName} · {account.accountType} · {formatCurrency(Number(account.balance))}
@@ -128,9 +130,9 @@ export function TransferPage() {
                   </select>
                 </label>
                 <label>
-                  To account
+                  {t('toAccount')}
                   <select value={to} onChange={(e) => setTo(e.target.value)} required>
-                    <option value="">Select destination account</option>
+                    <option value="">{t('selectDestination')}</option>
                     {accounts?.map((account) => (
                       <option key={account.accountId} value={account.accountId} disabled={account.accountId === from}>
                         {account.userName} · {account.accountType} · {formatCurrency(Number(account.balance))}
@@ -138,7 +140,7 @@ export function TransferPage() {
                     ))}
                   </select>
                 </label>
-                <label htmlFor="transfer-amount">Amount</label>
+                <label htmlFor="transfer-amount">{t('amountLabel')}</label>
                 <div className="currency-input">
                   <span>$</span>
                   <input
@@ -152,24 +154,24 @@ export function TransferPage() {
                 </div>
                 <button className="button" disabled={busy}>
                   <ArrowLeftRight size={17} />
-                  {busy ? 'Transferring…' : 'Transfer funds'}
+                  {busy ? t('transferring') : t('transferFunds')}
                 </button>
               </form>
             )}
           </article>
         )}
         <aside className="panel form-aside">
-          <p className="eyebrow">Transfer summary</p>
+          <p className="eyebrow">{t('transferSummary')}</p>
           <div className="transfer-visual">
             <div>
-              <small>From</small>
-              <strong>{source?.userName || 'Select source'}</strong>
+              <small>{t('fromShort')}</small>
+              <strong>{source?.userName || t('selectSourceShort')}</strong>
               {source && <span>{formatCurrency(Number(source.balance))}</span>}
             </div>
             <ArrowLeftRight size={22} />
             <div>
-              <small>To</small>
-              <strong>{destination?.userName || 'Select destination'}</strong>
+              <small>{t('toShort')}</small>
+              <strong>{destination?.userName || t('selectDestinationShort')}</strong>
               {destination && <span>{formatCurrency(Number(destination.balance))}</span>}
             </div>
           </div>

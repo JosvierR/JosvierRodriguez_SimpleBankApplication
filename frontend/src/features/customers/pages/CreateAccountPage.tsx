@@ -9,8 +9,10 @@ import { PageLoading } from '@/shared/components/States';
 import { useToast } from '@/shared/components/Toast';
 import type { AccountType, UserResponse } from '@/shared/types/api';
 import { getErrorMessage } from '@/shared/utils/errors';
+import { useTranslation } from 'react-i18next';
 
 export function CreateAccountPage() {
+  const { t } = useTranslation('banking');
   const [params] = useSearchParams();
   const presetUserId = params.get('userId') || '';
   const [mode, setMode] = useState<'new' | 'existing'>(presetUserId ? 'existing' : 'new');
@@ -42,7 +44,7 @@ export function CreateAccountPage() {
         ownerId = customer.id;
         try {
           const account = await accountsApi.create({ userId: ownerId, accountType });
-          notify('Customer created and account opened.');
+          notify(t('customerCreatedOpened'));
           navigate(appPath(`/accounts/${account.accountId}`));
           return;
         } catch (cause) {
@@ -57,7 +59,7 @@ export function CreateAccountPage() {
         return;
       }
       const account = await accountsApi.create({ userId: ownerId, accountType });
-      notify('Account opened.');
+      notify(t('accountOpenedNotice'));
       navigate(appPath(`/accounts/${account.accountId}`));
     } catch (cause) {
       setError(getErrorMessage(cause));
@@ -70,9 +72,9 @@ export function CreateAccountPage() {
     <>
       <Link className="back-link" to={appPath('/accounts')}>
         <ArrowLeft size={16} />
-        Accounts
+        {t('accounts')}
       </Link>
-      <PageHeader title="Open account" />
+      <PageHeader title={t('openAccount')} />
       <section className="form-layout">
         <article className="panel form-panel">
           <div className="segmented" role="group" aria-label="Customer type">
@@ -116,17 +118,17 @@ export function CreateAccountPage() {
             {mode === 'new' ? (
               <>
                 <label>
-                  Customer name
-                  <input value={name} onChange={(e) => setName(e.target.value)} required autoFocus placeholder="Full name" />
+                  {t('customerName')}
+                  <input value={name} onChange={(e) => setName(e.target.value)} required autoFocus placeholder={t('fullName')} />
                 </label>
                 <label>
-                  Email
+                  {t('email')}
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    placeholder="customer@example.com"
+                    placeholder={t('emailPlaceholder')}
                   />
                 </label>
               </>
@@ -134,7 +136,7 @@ export function CreateAccountPage() {
               <label>
                 Customer
                 <select value={userId} onChange={(e) => setUserId(e.target.value)} required autoFocus>
-                  <option value="">Select a customer</option>
+                  <option value="">{t('selectCustomer')}</option>
                   {users?.map((user) => (
                     <option value={user.id} key={user.id}>
                       {user.name} — {user.email}
@@ -144,7 +146,7 @@ export function CreateAccountPage() {
               </label>
             )}
             <fieldset>
-              <legend>Account type</legend>
+              <legend>{t('accountTypeLegend')}</legend>
               <div className="choice-grid">
                 <label className={accountType === 'CHECKING' ? 'choice-card active' : 'choice-card'}>
                   <input
@@ -155,8 +157,8 @@ export function CreateAccountPage() {
                     onChange={() => setAccountType('CHECKING')}
                   />
                   <span>
-                    <strong>Checking</strong>
-                    <small>Checking account</small>
+                    <strong>{t('accountType.CHECKING')}</strong>
+                    <small>{t('checkingAccount')}</small>
                   </span>
                   <CheckCircle2 size={18} />
                 </label>
@@ -169,8 +171,8 @@ export function CreateAccountPage() {
                     onChange={() => setAccountType('SAVINGS')}
                   />
                   <span>
-                    <strong>Savings</strong>
-                    <small>Savings account</small>
+                    <strong>{t('accountType.SAVINGS')}</strong>
+                    <small>{t('savingsAccount')}</small>
                   </span>
                   <CheckCircle2 size={18} />
                 </label>
@@ -191,7 +193,7 @@ export function CreateAccountPage() {
                 setPartialUser(null);
               }}
             >
-              Open account for this customer
+              {t('openForCustomer')}
             </button>
           )}
         </article>

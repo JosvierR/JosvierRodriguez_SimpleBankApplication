@@ -11,8 +11,10 @@ import type { CustomerAccountResponse, CustomerTransactionResponse } from '@/sha
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDateTime } from '@/shared/utils/dates';
 import { getErrorMessage } from '@/shared/utils/errors';
+import { useTranslation } from 'react-i18next';
 
 export function MyAccountsPage() {
+  const { t } = useTranslation(['banking', 'common']);
   const { bankUserLinked } = useAuth();
   const [accounts, setAccounts] = useState<CustomerAccountResponse[] | null>(null);
   const [error, setError] = useState('');
@@ -32,19 +34,19 @@ export function MyAccountsPage() {
   if (!accounts) return <PageLoading />;
   return (
     <>
-      <PageHeader title="My Accounts" />
+      <PageHeader title={t('common:nav.myAccounts')} />
       {accounts.length === 0 ? (
-        <EmptyState title="No accounts" message="No accounts are connected to your customer profile." />
+        <EmptyState title={t('noAccounts')} message={t('noAccountsBody')} />
       ) : (
         <section className="customer-account-grid">
           {accounts.map((account) => (
             <Link className="customer-account" to={appPath(`/my-accounts/${account.accountId}`)} key={account.accountId}>
               <div>
-                <span>{account.accountType === 'CHECKING' ? 'Checking' : 'Savings'}</span>
+                <span>{t(`accountType.${account.accountType}`)}</span>
                 <small className="mono">•••• {account.accountId.slice(-4)}</small>
               </div>
               <strong>{formatCurrency(Number(account.balance))}</strong>
-              <small>Opened {formatDateTime(account.createdAt)}</small>
+              <small>{t('openedOn', { date: formatDateTime(account.createdAt) })}</small>
             </Link>
           ))}
         </section>
@@ -54,6 +56,7 @@ export function MyAccountsPage() {
 }
 
 export function MyAccountDetailsPage() {
+  const { t } = useTranslation(['banking', 'common']);
   const { accountId = '' } = useParams();
   const { bankUserLinked } = useAuth();
   const [data, setData] = useState<{ account: CustomerAccountResponse; transactions: CustomerTransactionResponse[] } | null>(null);
@@ -71,40 +74,40 @@ export function MyAccountDetailsPage() {
     if (bankUserLinked) void load();
   }, [bankUserLinked, load]);
   if (!bankUserLinked) return <PendingLinkState />;
-  if (error) return <ErrorState title="Account unavailable" message={error} onRetry={() => void load()} />;
+  if (error) return <ErrorState title={t('accountUnavailable')} message={error} onRetry={() => void load()} />;
   if (!data) return <PageLoading />;
   const recent = [...data.transactions].reverse().slice(0, 5);
   return (
     <>
       <Link className="back-link" to={appPath('/my-accounts')}>
         <ArrowLeft size={16} />
-        My Accounts
+        {t('common:nav.myAccounts')}
       </Link>
       <PageHeader
-        title={data.account.accountType === 'CHECKING' ? 'Checking account' : 'Savings account'}
-        description={`Account ending ${data.account.accountId.slice(-4)}`}
+        title={data.account.accountType === 'CHECKING' ? t('checkingAccount') : t('savingsAccount')}
+        description={t('accountEnding', { id: data.account.accountId.slice(-4) })}
       />
       <section className="customer-balance">
-        <span>Available balance</span>
+        <span>{t('availableBalance')}</span>
         <strong>{formatCurrency(Number(data.account.balance))}</strong>
         <div>
           <Link className="button" to={appPath(`/my-transfer?from=${accountId}`)}>
             <ArrowLeftRight size={17} />
-            Transfer
+            {t('common:nav.transfer')}
           </Link>
           <Link className="button button--secondary" to={appPath(`/my-accounts/${accountId}/transactions`)}>
             <History size={17} />
-            Transactions
+            {t('transactions')}
           </Link>
         </div>
       </section>
       <section className="grouped-section">
         <div className="section-heading">
-          <h2>Recent activity</h2>
-          <Link to={appPath(`/my-accounts/${accountId}/transactions`)}>View all</Link>
+          <h2>{t('recentActivity')}</h2>
+          <Link to={appPath(`/my-accounts/${accountId}/transactions`)}>{t('viewAll')}</Link>
         </div>
         {recent.length === 0 ? (
-          <EmptyState title="No transactions" message="Account activity will appear here." />
+          <EmptyState title={t('noTransactions')} message={t('activityWillAppear')} />
         ) : (
           <TransactionRows transactions={recent} />
         )}
@@ -114,6 +117,7 @@ export function MyAccountDetailsPage() {
 }
 
 export function MyTransactionsPage() {
+  const { t } = useTranslation(['banking', 'common']);
   const { accountId = '' } = useParams();
   const { bankUserLinked } = useAuth();
   const [transactions, setTransactions] = useState<CustomerTransactionResponse[] | null>(null);
@@ -130,18 +134,18 @@ export function MyTransactionsPage() {
     if (bankUserLinked) void load();
   }, [bankUserLinked, load]);
   if (!bankUserLinked) return <PendingLinkState />;
-  if (error) return <ErrorState title="Transactions unavailable" message={error} onRetry={() => void load()} />;
+  if (error) return <ErrorState title={t('transactionsUnavailable')} message={error} onRetry={() => void load()} />;
   if (!transactions) return <PageLoading />;
   return (
     <>
       <Link className="back-link" to={appPath(`/my-accounts/${accountId}`)}>
         <ArrowLeft size={16} />
-        Back to account
+        {t('backToAccount')}
       </Link>
-      <PageHeader title="Transactions" description={`Account ending ${accountId.slice(-4)}`} />
+      <PageHeader title={t('transactions')} description={t('accountEnding', { id: accountId.slice(-4) })} />
       <section className="grouped-section">
         {transactions.length === 0 ? (
-          <EmptyState title="No transactions" message="Account activity will appear here." />
+          <EmptyState title={t('noTransactions')} message={t('activityWillAppear')} />
         ) : (
           <TransactionRows transactions={[...transactions].reverse()} />
         )}
@@ -151,6 +155,7 @@ export function MyTransactionsPage() {
 }
 
 function TransactionRows({ transactions }: { transactions: CustomerTransactionResponse[] }) {
+  const { t } = useTranslation('banking');
   return (
     <div className="customer-transactions">
       {transactions.map((transaction) => {
@@ -159,7 +164,7 @@ function TransactionRows({ transactions }: { transactions: CustomerTransactionRe
           <div key={transaction.transactionId}>
             <span className={`operation-dot operation-dot--${deposit ? 'deposit' : 'withdraw'}`} />
             <div>
-              <strong>{deposit ? 'Deposit' : 'Withdrawal'}</strong>
+              <strong>{deposit ? t('transaction.DEPOSIT') : t('transaction.WITHDRAW')}</strong>
               <small>{formatDateTime(transaction.createdAt)}</small>
             </div>
             <strong className={deposit ? 'positive' : 'negative'}>

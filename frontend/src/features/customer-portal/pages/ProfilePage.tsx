@@ -8,8 +8,10 @@ import { useToast } from '@/shared/components/Toast';
 import type { CustomerMeResponse } from '@/shared/types/api';
 import { formatDateTime } from '@/shared/utils/dates';
 import { getErrorMessage } from '@/shared/utils/errors';
+import { useTranslation } from 'react-i18next';
 
 export function ProfilePage() {
+  const { t } = useTranslation(['banking', 'common']);
   const { bankUserLinked } = useAuth();
   const { notify } = useToast();
   const [me, setMe] = useState<CustomerMeResponse | null>(null);
@@ -29,7 +31,7 @@ export function ProfilePage() {
     try {
       const profile = await meApi.updateProfile({ name: String(form.get('name')), email: String(form.get('email')) });
       setMe((current) => (current ? { ...current, profile } : current));
-      notify('Profile updated.');
+      notify(t('profileUpdated'));
     } catch (cause) {
       setError(getErrorMessage(cause));
     } finally {
@@ -40,7 +42,7 @@ export function ProfilePage() {
   if (!bankUserLinked || !me.profile) return <PendingLinkState />;
   return (
     <>
-      <PageHeader title="Profile" />
+      <PageHeader title={t('common:nav.profile')} />
       <section className="profile-layout">
         <form className="grouped-section" onSubmit={submit}>
           {error && (
@@ -49,21 +51,21 @@ export function ProfilePage() {
             </div>
           )}
           <label>
-            Name
+            {t('name')}
             <input name="name" defaultValue={me.profile.name} required />
           </label>
           <label>
-            Email
+            {t('email')}
             <input name="email" type="email" defaultValue={me.profile.email} required />
           </label>
           <button className="button" disabled={busy}>
-            {busy ? 'Saving…' : 'Save changes'}
+            {busy ? t('saving') : t('common:save')}
           </button>
         </form>
         <aside className="profile-meta">
-          <span>Access username</span>
+          <span>{t('accessUsername')}</span>
           <strong>{me.username}</strong>
-          <span>Customer since</span>
+          <span>{t('customerSince')}</span>
           <strong>{formatDateTime(me.profile.createdAt)}</strong>
         </aside>
       </section>

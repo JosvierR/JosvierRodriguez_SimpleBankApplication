@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import i18n from '@/shared/i18n/i18n';
 
 export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -15,10 +16,10 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
         <main className="fatal-state">
           <div>
             <p className="brand-mark">SB</p>
-            <h1>Something went wrong</h1>
-            <p>The application encountered an unexpected error.</p>
+            <h1>{i18n.t('banking:unexpectedTitle')}</h1>
+            <p>{i18n.t('banking:unexpectedBody')}</p>
             <button className="button" onClick={() => window.location.reload()}>
-              Reload
+              {i18n.t('common:retry')}
             </button>
           </div>
         </main>

@@ -9,8 +9,10 @@ import { EmptyState, PageLoading } from '@/shared/components/States';
 import type { CustomerAccountResponse, CustomerTransferResponse } from '@/shared/types/api';
 import { formatCurrency } from '@/shared/utils/currency';
 import { amountError, getErrorMessage } from '@/shared/utils/errors';
+import { useTranslation } from 'react-i18next';
 
 export function CustomerTransferPage() {
+  const { t } = useTranslation(['banking', 'common']);
   const { bankUserLinked } = useAuth();
   const [params] = useSearchParams();
   const [accounts, setAccounts] = useState<CustomerAccountResponse[] | null>(null);
@@ -32,8 +34,8 @@ export function CustomerTransferPage() {
     event.preventDefault();
     setError('');
     const validation = amountError(amount);
-    if (!from || !to) return setError('Select both accounts.');
-    if (from === to) return setError('Choose two different accounts.');
+    if (!from || !to) return setError(t('selectBoth'));
+    if (from === to) return setError(t('differentAccounts'));
     if (validation) return setError(validation);
     setBusy(true);
     try {
@@ -48,24 +50,24 @@ export function CustomerTransferPage() {
   if (!accounts && !error) return <PageLoading />;
   return (
     <>
-      <PageHeader title="Transfer" />
+      <PageHeader title={t('common:nav.transfer')} />
       {accounts && accounts.length < 2 ? (
-        <EmptyState title="Two accounts required" message="You need at least two linked accounts to make a transfer." />
+        <EmptyState title={t('twoAccounts')} message={t('twoAccountsBody')} />
       ) : (
         <section className="money-layout">
           <article className="grouped-section transfer-form">
             {result ? (
               <div className="success-state" role="status">
                 <CheckCircle2 size={32} />
-                <h2>Transfer complete</h2>
-                <p>{formatCurrency(Number(result.amount))} was transferred.</p>
+                <h2>{t('transferComplete')}</h2>
+                <p>{t('amountTransferred', { amount: formatCurrency(Number(result.amount)) })}</p>
                 <dl className="transfer-result">
                   <div>
-                    <dt>Source balance</dt>
+                    <dt>{t('sourceBalance')}</dt>
                     <dd>{formatCurrency(Number(result.fromBalance))}</dd>
                   </div>
                   <div>
-                    <dt>Destination balance</dt>
+                    <dt>{t('destinationBalance')}</dt>
                     <dd>{formatCurrency(Number(result.toBalance))}</dd>
                   </div>
                 </dl>
@@ -77,7 +79,7 @@ export function CustomerTransferPage() {
                     setAmount('');
                   }}
                 >
-                  Make another transfer
+                  {t('anotherTransfer')}
                 </button>
               </div>
             ) : (
@@ -88,28 +90,29 @@ export function CustomerTransferPage() {
                   </div>
                 )}
                 <label>
-                  From account
+                  {t('fromAccount')}
                   <select value={from} onChange={(event) => setFrom(event.target.value)} required>
-                    <option value="">Select account</option>
+                    <option value="">{t('selectAccount')}</option>
                     {accounts?.map((account) => (
                       <option value={account.accountId} key={account.accountId}>
-                        {account.accountType} •••• {account.accountId.slice(-4)} · {formatCurrency(Number(account.balance))}
+                        {t(`accountType.${account.accountType}`)} •••• {account.accountId.slice(-4)} ·{' '}
+                        {formatCurrency(Number(account.balance))}
                       </option>
                     ))}
                   </select>
                 </label>
                 <label>
-                  To account
+                  {t('toAccount')}
                   <select value={to} onChange={(event) => setTo(event.target.value)} required>
-                    <option value="">Select account</option>
+                    <option value="">{t('selectAccount')}</option>
                     {accounts?.map((account) => (
                       <option value={account.accountId} key={account.accountId} disabled={account.accountId === from}>
-                        {account.accountType} •••• {account.accountId.slice(-4)}
+                        {t(`accountType.${account.accountType}`)} •••• {account.accountId.slice(-4)}
                       </option>
                     ))}
                   </select>
                 </label>
-                <label htmlFor="customer-transfer-amount">Amount</label>
+                <label htmlFor="customer-transfer-amount">{t('amountLabel')}</label>
                 <div className="currency-input">
                   <span>$</span>
                   <input
@@ -123,15 +126,17 @@ export function CustomerTransferPage() {
                 </div>
                 <button className="button" disabled={busy}>
                   <ArrowLeftRight size={17} />
-                  {busy ? 'Transferring…' : 'Transfer funds'}
+                  {busy ? t('transferring') : t('transferFunds')}
                 </button>
               </form>
             )}
           </article>
           <aside className="transfer-summary">
-            <span>From</span>
-            <strong>{source ? `${source.accountType} •••• ${source.accountId.slice(-4)}` : 'Select an account'}</strong>
-            {source && <small>Available {formatCurrency(Number(source.balance))}</small>}
+            <span>{t('fromAccount')}</span>
+            <strong>
+              {source ? `${t(`accountType.${source.accountType}`)} •••• ${source.accountId.slice(-4)}` : t('selectAnAccount')}
+            </strong>
+            {source && <small>{t('availableAmount', { amount: formatCurrency(Number(source.balance)) })}</small>}
           </aside>
         </section>
       )}

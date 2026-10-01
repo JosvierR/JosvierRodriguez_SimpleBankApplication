@@ -5,8 +5,10 @@ import { PageHeader } from '@/shared/components/PageHeader';
 import { ErrorState, PageLoading } from '@/shared/components/States';
 import type { WhoAmIResponse } from '@/shared/types/api';
 import { getErrorMessage } from '@/shared/utils/errors';
+import { useTranslation } from 'react-i18next';
 
 export function AdminPage() {
+  const { t } = useTranslation('banking');
   const [identity, setIdentity] = useState<WhoAmIResponse | null>(null);
   const [error, setError] = useState('');
   useEffect(() => {
@@ -15,11 +17,11 @@ export function AdminPage() {
       .then(setIdentity)
       .catch((cause) => setError(getErrorMessage(cause)));
   }, []);
-  if (error) return <ErrorState title="Admin verification failed" message={error} />;
+  if (error) return <ErrorState title={t('adminFailed')} message={error} />;
   if (!identity) return <PageLoading />;
   return (
     <>
-      <PageHeader title="Administration" />
+      <PageHeader title={t('administration')} />
       <section className="grouped-section admin-card">
         <span className="admin-card__icon">
           <ShieldCheck size={28} />
@@ -29,7 +31,7 @@ export function AdminPage() {
         </div>
         <dl className="details-list">
           <div>
-            <dt>Roles</dt>
+            <dt>{t('roles')}</dt>
             <dd>
               {identity.roles.map((role) => (
                 <span className="badge" key={role}>

@@ -10,8 +10,10 @@ import type { AccountResponse, UserResponse } from '@/shared/types/api';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDateTime } from '@/shared/utils/dates';
 import { getErrorMessage } from '@/shared/utils/errors';
+import { useTranslation } from 'react-i18next';
 
 export function CustomerDetailsPage() {
+  const { t } = useTranslation('banking');
   const { primaryRole } = useAuth();
   const canOpen = primaryRole === 'TELLER' || primaryRole === 'MANAGER' || primaryRole === 'ADMIN';
   const { userId = '' } = useParams();
@@ -29,7 +31,7 @@ export function CustomerDetailsPage() {
   useEffect(() => {
     void load();
   }, [load]);
-  if (error) return <ErrorState title="Customer unavailable" message={error} onRetry={() => void load()} />;
+  if (error) return <ErrorState title={t('customerUnavailable')} message={error} onRetry={() => void load()} />;
   if (!data) return <PageLoading />;
   return (
     <>
@@ -51,22 +53,22 @@ export function CustomerDetailsPage() {
       />
       <section className="details-grid">
         <article className="grouped-section">
-          <h2>Customer details</h2>
+          <h2>{t('customerDetails')}</h2>
           <dl className="details-list">
             <div>
-              <dt>Customer ID</dt>
+              <dt>{t('customerId')}</dt>
               <dd className="mono">{data.user.id}</dd>
             </div>
             <div>
-              <dt>Name</dt>
+              <dt>{t('name')}</dt>
               <dd>{data.user.name}</dd>
             </div>
             <div>
-              <dt>Email</dt>
+              <dt>{t('email')}</dt>
               <dd>{data.user.email}</dd>
             </div>
             <div>
-              <dt>Created</dt>
+              <dt>{t('created')}</dt>
               <dd>{formatDateTime(data.user.createdAt)}</dd>
             </div>
           </dl>
@@ -74,20 +76,18 @@ export function CustomerDetailsPage() {
         <article className="grouped-section panel--wide">
           <div className="section-heading">
             <div>
-              <h2>Accounts</h2>
-              <p>
-                {data.accounts.length} account{data.accounts.length === 1 ? '' : 's'} owned by this customer.
-              </p>
+              <h2>{t('accounts')}</h2>
+              <p>{t('customerAccountCount', { count: data.accounts.length })}</p>
             </div>
           </div>
           {data.accounts.length === 0 ? (
             <EmptyState
-              title="No accounts"
-              message="This customer does not have an account yet."
+              title={t('noAccounts')}
+              message={t('noCustomerAccounts')}
               action={
                 canOpen && (
                   <Link className="button" to={appPath(`/accounts/new?userId=${data.user.id}`)}>
-                    Open account
+                    {t('openAccount')}
                   </Link>
                 )
               }
@@ -101,7 +101,7 @@ export function CustomerDetailsPage() {
                     <strong className="mono">{account.accountId}</strong>
                   </div>
                   <div>
-                    <small>Balance</small>
+                    <small>{t('balance')}</small>
                     <strong className="money">{formatCurrency(Number(account.balance))}</strong>
                   </div>
                 </Link>

@@ -23,6 +23,7 @@ import type {
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDateTime } from '@/shared/utils/dates';
 import { getErrorMessage } from '@/shared/utils/errors';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardData {
   users: UserResponse[];
@@ -91,40 +92,41 @@ function CustomerOverview({
   accounts: CustomerAccountResponse[];
   transactions: CustomerTransactionResponse[];
 }) {
+  const { t } = useTranslation(['banking', 'common']);
   const total = accounts.reduce((sum, account) => sum + Number(account.balance), 0);
   const recent = [...transactions].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).slice(0, 6);
   return (
     <>
-      <PageHeader title="Overview" />
+      <PageHeader title={t('common:nav.overview')} />
       <section className="overview-metrics">
         <div>
-          <span>Total balance</span>
+          <span>{t('totalBalance')}</span>
           <strong>{formatCurrency(total)}</strong>
         </div>
         <div>
-          <span>My accounts</span>
+          <span>{t('common:nav.myAccounts')}</span>
           <strong>{accounts.length}</strong>
         </div>
         <div>
-          <span>Recent transactions</span>
+          <span>{t('recentTransactions')}</span>
           <strong>{recent.length}</strong>
         </div>
       </section>
       <div className="overview-actions">
         <Link className="button" to={appPath('/my-transfer')}>
           <ArrowLeftRight size={17} />
-          Transfer
+          {t('common:nav.transfer')}
         </Link>
         <Link className="button button--secondary" to={appPath('/my-accounts')}>
-          View accounts
+          {t('viewAll')}
         </Link>
       </div>
       <section className="grouped-section">
         <div className="section-heading">
-          <h2>Recent activity</h2>
+          <h2>{t('recentActivity')}</h2>
         </div>
         {recent.length === 0 ? (
-          <EmptyState title="No recent activity" message="Your transactions will appear here." />
+          <EmptyState title={t('noRecent')} message={t('activityWillAppear')} />
         ) : (
           <div className="customer-transactions">
             {recent.map((transaction) => {
@@ -133,7 +135,7 @@ function CustomerOverview({
                 <div key={transaction.transactionId}>
                   <span className={`operation-dot operation-dot--${deposit ? 'deposit' : 'withdraw'}`} />
                   <div>
-                    <strong>{deposit ? 'Deposit' : 'Withdrawal'}</strong>
+                    <strong>{deposit ? t('transaction.DEPOSIT') : t('transaction.WITHDRAW')}</strong>
                     <small>{formatDateTime(transaction.createdAt)}</small>
                   </div>
                   <strong className={deposit ? 'positive' : 'negative'}>
@@ -157,31 +159,32 @@ function StaffOverview({
   role: Exclude<NonNullable<ReturnType<typeof useAuth>['primaryRole']>, 'CUSTOMER'>;
   data: DashboardData;
 }) {
+  const { t } = useTranslation(['banking', 'common']);
   const total = data.accounts.reduce((sum, account) => sum + Number(account.balance), 0);
   const recentAudits = [...data.audits].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).slice(0, 6);
   const metrics =
     role === 'ADMIN'
       ? [
-          { label: 'Customers', value: data.users.length, icon: Users },
-          { label: 'Accounts', value: data.accounts.length, icon: WalletCards },
-          { label: 'Active access', value: data.authUsers.filter((user) => user.enabled).length, icon: ShieldCheck },
-          { label: 'Disabled access', value: data.authUsers.filter((user) => !user.enabled).length, icon: ShieldCheck },
+          { label: t('customers'), value: data.users.length, icon: Users },
+          { label: t('accounts'), value: data.accounts.length, icon: WalletCards },
+          { label: t('activeAccess'), value: data.authUsers.filter((user) => user.enabled).length, icon: ShieldCheck },
+          { label: t('disabledAccess'), value: data.authUsers.filter((user) => !user.enabled).length, icon: ShieldCheck },
         ]
       : [
-          { label: 'Customers', value: data.users.length, icon: Users },
-          { label: 'Accounts', value: data.accounts.length, icon: WalletCards },
-          { label: 'Total balance', value: formatCurrency(total), icon: Landmark },
-          ...(role === 'TELLER' ? [] : [{ label: 'Audit records', value: data.audits.length, icon: ArrowLeftRight }]),
+          { label: t('customers'), value: data.users.length, icon: Users },
+          { label: t('accounts'), value: data.accounts.length, icon: WalletCards },
+          { label: t('totalBalance'), value: formatCurrency(total), icon: Landmark },
+          ...(role === 'TELLER' ? [] : [{ label: t('auditRecords'), value: data.audits.length, icon: ArrowLeftRight }]),
         ];
   const activity = role === 'ADMIN' ? data.securityAudits.slice(0, 6) : recentAudits;
   return (
     <>
       <PageHeader
-        title="Overview"
+        title={t('common:nav.overview')}
         actions={
           (role === 'TELLER' || role === 'MANAGER' || role === 'ADMIN') && (
             <Link className="button" to={appPath('/accounts/new')}>
-              Open account
+              {t('openAccount')}
             </Link>
           )
         }
@@ -199,30 +202,30 @@ function StaffOverview({
       </section>
       <div className="overview-actions">
         <Link className="button button--secondary" to={appPath('/customers')}>
-          Customers
+          {t('customers')}
         </Link>
         <Link className="button button--secondary" to={appPath('/accounts')}>
-          Accounts
+          {t('accounts')}
         </Link>
         {(role === 'MANAGER' || role === 'ADMIN') && (
           <Link className="button" to={appPath('/transfer')}>
-            Transfer funds
+            {t('transferFunds')}
           </Link>
         )}
         {role === 'ADMIN' && (
           <Link className="button button--secondary" to={appPath('/admin/access')}>
-            Manage access
+            {t('manageAccess')}
           </Link>
         )}
       </div>
       {role !== 'TELLER' && (
         <section className="grouped-section">
           <div className="section-heading">
-            <h2>{role === 'ADMIN' ? 'Recent security changes' : 'Recent activity'}</h2>
-            {role === 'ADMIN' && <Link to={appPath('/admin/security-audit')}>View all</Link>}
+            <h2>{role === 'ADMIN' ? t('recentSecurity') : t('recentActivity')}</h2>
+            {role === 'ADMIN' && <Link to={appPath('/admin/security-audit')}>{t('viewAll')}</Link>}
           </div>
           {activity.length === 0 ? (
-            <EmptyState title="No recent activity" message="Recorded activity will appear here." />
+            <EmptyState title={t('noRecent')} message={t('recordedActivity')} />
           ) : role === 'ADMIN' ? (
             <div className="activity-list">
               {data.securityAudits.slice(0, 6).map((audit) => (
