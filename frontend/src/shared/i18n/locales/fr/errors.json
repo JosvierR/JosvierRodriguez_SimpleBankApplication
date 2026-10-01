@@ -9,6 +9,7 @@
   "DUPLICATE_RESOURCE": "Cet enregistrement existe déjà.",
   "ACCOUNT_HAS_TRANSACTIONS": "Un compte avec un historique de mouvements ne peut pas être supprimé.",
   "CUSTOMER_HAS_ACCOUNTS": "Ce client ne peut pas être supprimé tant que des comptes existent.",
+  "RESERVED_USERNAME": "Ce nom d’utilisateur est réservé.",
   "LAST_ADMIN_PROTECTED": "Au moins un administrateur actif est requis.",
   "CUSTOMER_LINK_CONFLICT": "Ce client de la banque a déjà un accès lié.",
   "UNEXPECTED": "Une erreur s’est produite. Veuillez réessayer.",

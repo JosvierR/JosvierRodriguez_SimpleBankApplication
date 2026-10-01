@@ -3,6 +3,7 @@ package com.josvier.simplebank.repository.mongo.springdata;
 import com.josvier.simplebank.repository.mongo.document.UserDocument;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -14,4 +15,6 @@ import java.util.Optional;
 public interface SpringDataUserMongoRepository extends MongoRepository<UserDocument, String> {
 
     Optional<UserDocument> findByEmail(String email);
+
+    List<UserDocument> findByNameStartingWithIgnoreCase(String name);
 }

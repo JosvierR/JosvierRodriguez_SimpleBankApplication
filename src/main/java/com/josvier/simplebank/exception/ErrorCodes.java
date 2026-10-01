@@ -21,6 +21,7 @@ public final class ErrorCodes {
         if (text.contains("accounts still exist")) return "CUSTOMER_HAS_ACCOUNTS";
         if (text.contains("enabled administrator is required")) return "LAST_ADMIN_PROTECTED";
         if (text.contains("already has a linked login")) return "CUSTOMER_LINK_CONFLICT";
+        if (text.contains("username is reserved") || text.contains("username admin")) return "RESERVED_USERNAME";
         if (text.contains("already exists") || text.contains("already belongs")) return "DUPLICATE_RESOURCE";
         if (status == HttpStatus.NOT_FOUND) return "RESOURCE_NOT_FOUND";
         if (status == HttpStatus.CONFLICT) return "CONFLICT";

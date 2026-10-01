@@ -25,6 +25,13 @@ public interface UserService {
     List<UserResponse> getUsers();
 
     /**
+     * Case-insensitive prefix search of the customer's full name.
+     * The stored field is {@code name}, so {@code firstName=josvier} matches
+     * {@code Josvier Rodriguez}.
+     */
+    List<UserResponse> searchByFirstName(String firstName);
+
+    /**
      * Returns one user.
      *
      * @throws com.josvier.simplebank.exception.ResourceNotFoundException if the id does not exist

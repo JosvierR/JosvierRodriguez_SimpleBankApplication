@@ -1,5 +1,6 @@
 package com.josvier.simplebank.auth.service;
 
+import com.josvier.simplebank.auth.AuthIdentityPolicy;
 import com.josvier.simplebank.auth.model.AuthRole;
 import com.josvier.simplebank.auth.model.AuthUser;
 import com.josvier.simplebank.auth.repository.AuthUserRepository;
@@ -73,6 +74,20 @@ class AdminAuthUserServiceTest {
         assertEquals(SecurityAuditAction.ROLE_CHANGED, captor.getValue().getAction());
         assertEquals("TELLER", captor.getValue().getPreviousValue());
         assertEquals("MANAGER", captor.getValue().getNewValue());
+    }
+
+    @Test
+    void reservedAdminIdentityCannotBeDemoted() {
+        AuthUser target = new AuthUser("admin", "admin@example.com", "never-serialized-hash",
+                Set.of(AuthRole.ADMIN), true, LocalDateTime.now(CLOCK), null);
+        target.setId(AUTH_ID);
+        when(authUsers.findById(AUTH_ID)).thenReturn(Optional.of(target));
+
+        ResourceConflictException exception = assertThrows(
+                ResourceConflictException.class, () -> service.changeRole(AUTH_ID, AuthRole.TELLER));
+
+        assertEquals(AuthIdentityPolicy.RESERVED_USERNAME_MESSAGE, exception.getMessage());
+        verify(authUsers, never()).save(any());
     }
 
     @Test

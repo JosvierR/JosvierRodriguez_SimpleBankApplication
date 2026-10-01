@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -60,6 +61,14 @@ public class UserController {
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
         UserResponse response = userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @Operation(summary = "Search customers by the start of their name")
+    @ApiResponse(responseCode = "200", description = "Matching customers. The list can be empty")
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('TELLER','MANAGER','AUDITOR','ADMIN')")
+    public ResponseEntity<List<UserResponse>> searchByFirstName(@RequestParam String firstName) {
+        return ResponseEntity.ok(userService.searchByFirstName(firstName));
     }
 
     @Operation(summary = "List all users")

@@ -9,6 +9,7 @@
   "DUPLICATE_RESOURCE": "Ese registro ya existe.",
   "ACCOUNT_HAS_TRANSACTIONS": "No se puede eliminar una cuenta con historial de movimientos.",
   "CUSTOMER_HAS_ACCOUNTS": "Este cliente no se puede eliminar mientras tenga cuentas.",
+  "RESERVED_USERNAME": "Este nombre de usuario está reservado.",
   "LAST_ADMIN_PROTECTED": "Se requiere al menos un administrador activo.",
   "CUSTOMER_LINK_CONFLICT": "Este cliente del banco ya tiene un acceso vinculado.",
   "UNEXPECTED": "Algo salió mal. Inténtelo de nuevo.",

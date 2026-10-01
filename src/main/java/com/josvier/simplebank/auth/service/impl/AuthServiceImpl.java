@@ -1,6 +1,7 @@
 package com.josvier.simplebank.auth.service.impl;
 
 import com.josvier.simplebank.auth.AuthIdentityNormalizer;
+import com.josvier.simplebank.auth.AuthIdentityPolicy;
 import com.josvier.simplebank.auth.PasswordPolicy;
 import com.josvier.simplebank.auth.dto.request.LoginRequest;
 import com.josvier.simplebank.auth.dto.request.RegisterRequest;
@@ -58,6 +59,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse register(RegisterRequest request) {
         String username = AuthIdentityNormalizer.username(request.username());
         String email = AuthIdentityNormalizer.email(request.email());
+        AuthIdentityPolicy.requirePublicRegistrationAllowed(username);
         PasswordPolicy.requireWithinLimit(request.password());
         if (authUsers.existsByUsername(username)) {
             throw new DuplicateResourceException("Username already exists");

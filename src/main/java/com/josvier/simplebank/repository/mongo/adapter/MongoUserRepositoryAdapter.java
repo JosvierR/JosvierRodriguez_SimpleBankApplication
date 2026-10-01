@@ -54,6 +54,16 @@ public class MongoUserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public List<User> findByNameStartingWithIgnoreCase(String prefix) {
+        if (prefix == null || prefix.isBlank()) {
+            return List.of();
+        }
+        return users.findByNameStartingWithIgnoreCase(prefix).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<User> findAll() {
         return users.findAll().stream()
                 .map(this::toDomain)

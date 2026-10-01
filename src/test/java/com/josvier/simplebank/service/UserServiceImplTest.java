@@ -3,7 +3,9 @@ package com.josvier.simplebank.service;
 import com.josvier.simplebank.dto.request.CreateUserRequest;
 import com.josvier.simplebank.dto.request.UpdateUserRequest;
 import com.josvier.simplebank.dto.response.UserResponse;
+import com.josvier.simplebank.auth.model.AuthRole;
 import com.josvier.simplebank.exception.DuplicateResourceException;
+import com.josvier.simplebank.exception.InvalidTransactionException;
 import com.josvier.simplebank.exception.ResourceConflictException;
 import com.josvier.simplebank.exception.ResourceNotFoundException;
 import com.josvier.simplebank.model.Account;
@@ -11,7 +13,10 @@ import com.josvier.simplebank.model.AccountType;
 import com.josvier.simplebank.model.User;
 import com.josvier.simplebank.repository.AccountRepository;
 import com.josvier.simplebank.repository.UserRepository;
+import com.josvier.simplebank.security.actor.CurrentActor;
+import com.josvier.simplebank.security.authorization.BankAuthorizationService;
 import com.josvier.simplebank.service.impl.UserServiceImpl;
+import org.springframework.security.access.AccessDeniedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -183,6 +188,30 @@ class UserServiceImplTest {
 
         assertEquals(createdAt, response.createdAt());
         assertEquals(createdAt, user.getCreatedAt());
+    }
+
+    @Test
+    void searchByFirstName_usesRepositoryPrefixAndCanBeEmpty() {
+        when(userRepository.findByNameStartingWithIgnoreCase("josvier")).thenReturn(List.of(
+                storedUser("1", "Josvier Rodriguez", "a@example.com"),
+                storedUser("2", "Josvier Perez", "b@example.com")));
+        when(userRepository.findByNameStartingWithIgnoreCase("john")).thenReturn(List.of(
+                storedUser("3", "John Smith", "c@example.com")));
+        when(userRepository.findByNameStartingWithIgnoreCase("nobody")).thenReturn(List.of());
+
+        assertEquals(2, userService.searchByFirstName(" josvier ").size());
+        assertEquals(1, userService.searchByFirstName("john").size());
+        assertEquals(0, userService.searchByFirstName("nobody").size());
+        verify(userRepository).findByNameStartingWithIgnoreCase("josvier");
+    }
+
+    @Test
+    void searchByFirstName_rejectsBlankAndCustomers() {
+        assertThrows(InvalidTransactionException.class, () -> userService.searchByFirstName("  "));
+        UserService customerService = new UserServiceImpl(userRepository, accountRepository,
+                new BankAuthorizationService(() -> new CurrentActor("auth", "sofia", AuthRole.CUSTOMER, USER_ID)));
+        assertThrows(AccessDeniedException.class, () -> customerService.searchByFirstName("Josvier"));
+        verify(userRepository, never()).findByNameStartingWithIgnoreCase(any());
     }
 
     @Test

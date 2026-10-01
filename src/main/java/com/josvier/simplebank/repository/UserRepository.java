@@ -20,6 +20,8 @@ public interface UserRepository {
 
     Optional<User> findByEmail(String email);
 
+    List<User> findByNameStartingWithIgnoreCase(String prefix);
+
     List<User> findAll();
 
     long count();

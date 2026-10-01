@@ -249,9 +249,26 @@ class AuthorizationMatrixWebIntegrationTest {
     void customerCannotReadGlobalCollectionsOrAdministration() throws Exception {
         String token = token("customer-a", AuthRole.CUSTOMER, CUSTOMER_A);
         request(get("/api/users"), token).andExpect(status().isForbidden());
+        request(get("/api/users/search").param("firstName", "Josvier"), token).andExpect(status().isForbidden());
         request(get("/api/accounts"), token).andExpect(status().isForbidden());
         request(get("/api/audits"), token).andExpect(status().isForbidden());
         request(get("/api/admin/auth-users"), token).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void staffCanSearchCustomersByFirstNameIncludingAnEmptyResult() throws Exception {
+        when(users.findByNameStartingWithIgnoreCase("josvier")).thenReturn(List.of(customerA, customerB));
+        request(get("/api/users/search").param("firstName", "josvier"), token("teller", AuthRole.TELLER, null))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+        request(get("/api/users/search").param("firstName", "nobody"), token("manager", AuthRole.MANAGER, null))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
+        request(get("/api/users/search").param("firstName", " "), token("auditor", AuthRole.AUDITOR, null))
+                .andExpect(status().isBadRequest());
+        request(get("/api/users/search").param("firstName", "ava"), token("admin", AuthRole.ADMIN, null))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
     }
 
     @Test
@@ -326,8 +343,8 @@ class AuthorizationMatrixWebIntegrationTest {
 
     @Test
     void lastActiveAdminCannotRemoveOwnAdminRole() throws Exception {
-        AuthUser admin = authUser("admin", AuthRole.ADMIN, null);
-        when(authUsers.findByUsername("admin")).thenReturn(Optional.of(admin));
+        AuthUser admin = authUser("ava.admin", AuthRole.ADMIN, null);
+        when(authUsers.findByUsername("ava.admin")).thenReturn(Optional.of(admin));
         when(authUsers.findById(admin.getId())).thenReturn(Optional.of(admin));
         when(authUsers.countEnabledByRole(AuthRole.ADMIN)).thenReturn(1L);
         request(put("/api/admin/auth-users/" + admin.getId() + "/role")
@@ -335,6 +352,18 @@ class AuthorizationMatrixWebIntegrationTest {
                 jwtService.generateToken(userDetailsService.toUserDetails(admin)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("At least one enabled administrator is required"));
+    }
+
+    @Test
+    void reservedAdminUsernameCannotBeDemoted() throws Exception {
+        AuthUser admin = authUser("admin", AuthRole.ADMIN, null);
+        when(authUsers.findByUsername("admin")).thenReturn(Optional.of(admin));
+        when(authUsers.findById(admin.getId())).thenReturn(Optional.of(admin));
+        request(put("/api/admin/auth-users/" + admin.getId() + "/role")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"role\":\"TELLER\"}"),
+                jwtService.generateToken(userDetailsService.toUserDetails(admin)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("RESERVED_USERNAME"));
     }
 
     private org.springframework.test.web.servlet.ResultActions request(

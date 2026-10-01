@@ -1,5 +1,6 @@
 package com.josvier.simplebank.auth.service;
 
+import com.josvier.simplebank.auth.AuthIdentityPolicy;
 import com.josvier.simplebank.auth.dto.response.AdminAuthUserResponse;
 import com.josvier.simplebank.auth.dto.response.SecurityAuditResponse;
 import com.josvier.simplebank.auth.model.AuthRole;
@@ -62,6 +63,7 @@ public class AdminAuthUserService {
         if (previous == role) {
             return response(target);
         }
+        AuthIdentityPolicy.requireRoleCompatible(target.getUsername(), role);
         protectLastAdmin(target, role, target.isEnabled());
         String previousLink = target.getBankUserId();
         target.changePrimaryRole(role);

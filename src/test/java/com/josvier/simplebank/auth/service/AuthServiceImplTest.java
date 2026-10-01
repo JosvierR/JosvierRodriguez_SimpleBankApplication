@@ -9,7 +9,9 @@ import com.josvier.simplebank.auth.model.AuthRole;
 import com.josvier.simplebank.auth.model.AuthUser;
 import com.josvier.simplebank.auth.repository.AuthUserRepository;
 import com.josvier.simplebank.auth.service.impl.AuthServiceImpl;
+import com.josvier.simplebank.auth.AuthIdentityPolicy;
 import com.josvier.simplebank.exception.DuplicateResourceException;
+import com.josvier.simplebank.exception.ResourceConflictException;
 import com.josvier.simplebank.security.jwt.JwtService;
 import com.josvier.simplebank.security.service.CustomUserDetailsService;
 import org.junit.jupiter.api.BeforeEach;
@@ -115,6 +117,17 @@ class AuthServiceImplTest {
         assertTrue(Arrays.stream(RegisterRequest.class.getRecordComponents())
                 .map(RecordComponent::getName)
                 .noneMatch("roles"::equals));
+    }
+
+    @Test
+    void register_rejectsReservedAdminUsernameRegardlessOfCaseOrSpace() {
+        for (String username : List.of("admin", "Admin", "ADMIN", " admin ")) {
+            ResourceConflictException exception = assertThrows(
+                    ResourceConflictException.class,
+                    () -> service.register(new RegisterRequest(username, username.trim() + "@example.com", "password123")));
+            assertEquals(AuthIdentityPolicy.RESERVED_USERNAME_MESSAGE, exception.getMessage());
+        }
+        verify(authUsers, never()).save(any());
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.josvier.simplebank.dto.request.CreateUserRequest;
 import com.josvier.simplebank.dto.request.UpdateUserRequest;
 import com.josvier.simplebank.dto.response.UserResponse;
 import com.josvier.simplebank.exception.DuplicateResourceException;
+import com.josvier.simplebank.exception.InvalidTransactionException;
 import com.josvier.simplebank.exception.ResourceConflictException;
 import com.josvier.simplebank.exception.ResourceNotFoundException;
 import com.josvier.simplebank.model.User;
@@ -68,6 +69,18 @@ public class UserServiceImpl implements UserService {
         CurrentActor actor = authorization.currentActor();
         authorization.require(actor, BankPermission.CUSTOMER_ANY_READ);
         return userRepository.findAll().stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<UserResponse> searchByFirstName(String firstName) {
+        CurrentActor actor = authorization.currentActor();
+        authorization.require(actor, BankPermission.CUSTOMER_ANY_READ);
+        if (firstName == null || firstName.isBlank()) {
+            throw new InvalidTransactionException("First name is required");
+        }
+        return userRepository.findByNameStartingWithIgnoreCase(firstName.trim()).stream()
                 .map(this::toResponse)
                 .toList();
     }
