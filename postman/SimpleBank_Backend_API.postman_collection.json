@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Simple Bank Backend API",
-    "description": "Simple Bank API on MongoDB Atlas with JWT. Run JWT Authentication first so jwtToken is saved. Banking requests send Authorization: Bearer {{jwtToken}}. Register and login do not. Create User generates a new email so a previous run does not collide.",
+    "description": "Simple Bank API on MongoDB Atlas with JWT and role-based access. Fill customerUsername, customerPassword, adminUsername, and adminPassword locally from docs/demo-credentials.txt. Do not commit live passwords. Authentication > Admin Login stores adminToken and jwtToken. Staff folders use Bearer {{jwtToken}}. Authentication > Customer Login stores customerToken only. A customer token cannot list users or call /admin/whoami. Public registration creates CUSTOMER, never the reserved username admin.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -62,9 +62,282 @@
     {
       "key": "customer2AccountId",
       "value": ""
+    },
+    {
+      "key": "customerToken",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "customerUsername",
+      "value": ""
+    },
+    {
+      "key": "customerPassword",
+      "value": ""
+    },
+    {
+      "key": "adminUsername",
+      "value": ""
+    },
+    {
+      "key": "adminPassword",
+      "value": ""
     }
   ],
   "item": [
+    {
+      "name": "Authentication",
+      "description": "Customer Login stores customerToken. Admin Login stores adminToken and jwtToken so later staff requests keep working. Leave passwords blank in the committed collection and paste local demo values before running.",
+      "item": [
+        {
+          "name": "Customer Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('customerToken', body.token);",
+                  "pm.test('Token stored for later requests', function () {",
+                  "    pm.expect(pm.collectionVariables.get('customerToken')).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.tokenType).to.eql('Bearer');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customerUsername}}\",\n  \"password\": \"{{customerPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('adminToken', body.token);",
+                  "pm.collectionVariables.set('jwtToken', body.token);",
+                  "pm.test('Token stored for later requests', function () {",
+                  "    pm.expect(pm.collectionVariables.get('adminToken')).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.tokenType).to.eql('Bearer');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trainer JWT Authorization Demo",
+      "description": "Classroom sequence: customer login 200, customer portal 200, customer admin call 403, admin login 200, admin whoami 200. Fill the credential variables locally first.",
+      "item": [
+        {
+          "name": "1. Customer Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('customerToken', body.token);",
+                  "pm.test('Token stored for later requests', function () {",
+                  "    pm.expect(pm.collectionVariables.get('customerToken')).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.tokenType).to.eql('Bearer');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customerUsername}}\",\n  \"password\": \"{{customerPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "2. Customer Calls Customer Portal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Customer portal is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/me"
+          }
+        },
+        {
+          "name": "3. Customer Calls Admin Endpoint",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Customer is forbidden', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/admin/whoami"
+          }
+        },
+        {
+          "name": "4. Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('adminToken', body.token);",
+                  "pm.collectionVariables.set('jwtToken', body.token);",
+                  "pm.test('Token stored for later requests', function () {",
+                  "    pm.expect(pm.collectionVariables.get('adminToken')).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.tokenType).to.eql('Bearer');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "5. Admin Calls Admin Endpoint",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin whoami is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/admin/whoami"
+          }
+        }
+      ]
+    },
     {
       "name": "Users",
       "item": [
@@ -138,6 +411,78 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Search Customer By First Name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Result is an array', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/search?firstName=Josvier",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "firstName",
+                  "value": "Josvier"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search First Name With No Match",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing name is an empty list, not an error', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.eql([]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/search?firstName=zzzz-no-match",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "firstName",
+                  "value": "zzzz-no-match"
+                }
+              ]
+            }
           }
         }
       ]
@@ -680,8 +1025,16 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Customer One\",\n  \"email\": \"{{customer1Email}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Customer One\",\n  \"email\": \"{{customer1Email}}\"\n}"
+            },
             "url": "{{baseUrl}}/users"
           }
         },
@@ -712,8 +1065,16 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Customer Two\",\n  \"email\": \"{{customer2Email}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Customer Two\",\n  \"email\": \"{{customer2Email}}\"\n}"
+            },
             "url": "{{baseUrl}}/users"
           }
         },
@@ -743,8 +1104,16 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Customer Three\",\n  \"email\": \"{{customer3Email}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Customer Three\",\n  \"email\": \"{{customer3Email}}\"\n}"
+            },
             "url": "{{baseUrl}}/users"
           }
         },
@@ -765,7 +1134,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users"
+          }
         },
         {
           "name": "Get Customer 1",
@@ -785,7 +1158,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users/{{customer1Id}}" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users/{{customer1Id}}"
+          }
         },
         {
           "name": "Update Customer 1",
@@ -819,8 +1196,16 @@
           ],
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Customer One Updated\",\n  \"email\": \"{{customer1UpdatedEmail}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Customer One Updated\",\n  \"email\": \"{{customer1UpdatedEmail}}\"\n}"
+            },
             "url": "{{baseUrl}}/users/{{customer1Id}}"
           }
         },
@@ -844,7 +1229,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users/{{customer1Id}}" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users/{{customer1Id}}"
+          }
         },
         {
           "name": "Update Customer 1 To Customer 2 Email",
@@ -861,8 +1250,16 @@
           ],
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Customer One Updated\",\n  \"email\": \"{{customer2Email}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Customer One Updated\",\n  \"email\": \"{{customer2Email}}\"\n}"
+            },
             "url": "{{baseUrl}}/users/{{customer1Id}}"
           }
         },
@@ -884,7 +1281,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users/{{customer1Id}}" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users/{{customer1Id}}"
+          }
         },
         {
           "name": "Delete Customer 3",
@@ -899,7 +1300,11 @@
               }
             }
           ],
-          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/users/{{customer3Id}}" }
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/users/{{customer3Id}}"
+          }
         },
         {
           "name": "Get Deleted Customer 3",
@@ -914,7 +1319,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users/{{customer3Id}}" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users/{{customer3Id}}"
+          }
         },
         {
           "name": "Create Account For Customer 2",
@@ -932,8 +1341,16 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{customer2Id}}\",\n  \"accountType\": \"SAVINGS\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{customer2Id}}\",\n  \"accountType\": \"SAVINGS\"\n}"
+            },
             "url": "{{baseUrl}}/accounts"
           }
         },
@@ -953,7 +1370,11 @@
               }
             }
           ],
-          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/users/{{customer2Id}}" }
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/users/{{customer2Id}}"
+          }
         },
         {
           "name": "Customer 2 Still Exists",
@@ -969,7 +1390,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users/{{customer2Id}}" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users/{{customer2Id}}"
+          }
         },
         {
           "name": "Customer 2 Account Still Exists",
@@ -985,7 +1410,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/accounts/{{customer2AccountId}}" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/accounts/{{customer2AccountId}}"
+          }
         },
         {
           "name": "List All Accounts Contains Customer 2 Account",
@@ -1002,7 +1431,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/accounts" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/accounts"
+          }
         },
         {
           "name": "List Accounts For Customer 2",
@@ -1023,7 +1456,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users/{{customer2Id}}/accounts" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users/{{customer2Id}}/accounts"
+          }
         }
       ]
     },
@@ -1056,8 +1493,16 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Transfer Customer\",\n  \"email\": \"{{transferEmail}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Transfer Customer\",\n  \"email\": \"{{transferEmail}}\"\n}"
+            },
             "url": "{{baseUrl}}/users"
           }
         },
@@ -1077,8 +1522,16 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{transferUserId}}\",\n  \"accountType\": \"SAVINGS\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{transferUserId}}\",\n  \"accountType\": \"SAVINGS\"\n}"
+            },
             "url": "{{baseUrl}}/accounts"
           }
         },
@@ -1098,8 +1551,16 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{transferUserId}}\",\n  \"accountType\": \"SAVINGS\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{transferUserId}}\",\n  \"accountType\": \"SAVINGS\"\n}"
+            },
             "url": "{{baseUrl}}/accounts"
           }
         },
@@ -1119,8 +1580,16 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{transferUserId}}\",\n  \"accountType\": \"CHECKING\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{transferUserId}}\",\n  \"accountType\": \"CHECKING\"\n}"
+            },
             "url": "{{baseUrl}}/accounts"
           }
         },
@@ -1140,8 +1609,16 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"amount\": 500.00\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500.00\n}"
+            },
             "url": "{{baseUrl}}/accounts/{{fromAccountId}}/deposit"
           }
         },
@@ -1163,7 +1640,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/accounts/premium?threshold=100.00" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/accounts/premium?threshold=100.00"
+          }
         },
         {
           "name": "PUT Update Destination Account Type",
@@ -1186,8 +1667,16 @@
           ],
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"accountType\": \"CHECKING\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountType\": \"CHECKING\"\n}"
+            },
             "url": "{{baseUrl}}/accounts/{{toAccountId}}"
           }
         },
@@ -1213,8 +1702,16 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"fromAccountId\": \"{{fromAccountId}}\",\n  \"toAccountId\": \"{{toAccountId}}\",\n  \"amount\": 100.00\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": \"{{fromAccountId}}\",\n  \"toAccountId\": \"{{toAccountId}}\",\n  \"amount\": 100.00\n}"
+            },
             "url": "{{baseUrl}}/accounts/transfer"
           }
         },
@@ -1240,7 +1737,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/audits/{{auditId}}" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/audits/{{auditId}}"
+          }
         },
         {
           "name": "DELETE Account With Transactions",
@@ -1258,7 +1759,11 @@
               }
             }
           ],
-          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/accounts/{{fromAccountId}}" }
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/accounts/{{fromAccountId}}"
+          }
         },
         {
           "name": "DELETE Empty Account",
@@ -1273,7 +1778,11 @@
               }
             }
           ],
-          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/accounts/{{emptyAccountId}}" }
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/accounts/{{emptyAccountId}}"
+          }
         }
       ]
     },
@@ -1302,10 +1811,10 @@
                 "exec": [
                   "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
                   "const body = pm.response.json();",
-                  "pm.test('Token is a bearer USER login', function () {",
+                  "pm.test('Token is a bearer CUSTOMER login', function () {",
                   "    pm.expect(body.token).to.be.a('string').and.not.empty;",
                   "    pm.expect(body.tokenType).to.eql('Bearer');",
-                  "    pm.expect(body.roles).to.include('USER');",
+                  "    pm.expect(body.roles).to.include('CUSTOMER');",
                   "    pm.expect(body.password).to.be.undefined;",
                   "    pm.expect(body.passwordHash).to.be.undefined;",
                   "});"
@@ -1314,10 +1823,20 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{authUsername}}\",\n  \"email\": \"{{authEmail}}\",\n  \"password\": \"{{authPassword}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{authUsername}}\",\n  \"email\": \"{{authEmail}}\",\n  \"password\": \"{{authPassword}}\"\n}"
+            },
             "url": "{{baseUrl}}/auth/register"
           }
         },
@@ -1331,20 +1850,32 @@
                 "exec": [
                   "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
                   "const body = pm.response.json();",
+                  "pm.collectionVariables.set('customerToken', body.token);",
                   "pm.collectionVariables.set('jwtToken', body.token);",
-                  "pm.test('JWT was saved', function () {",
-                  "    pm.expect(pm.collectionVariables.get('jwtToken')).to.be.a('string').and.not.empty;",
+                  "pm.test('Customer JWT was saved without printing it', function () {",
+                  "    pm.expect(pm.collectionVariables.get('customerToken')).to.be.a('string').and.not.empty;",
                   "    pm.expect(body.tokenType).to.eql('Bearer');",
+                  "    pm.expect(body.roles).to.include('CUSTOMER');",
                   "});"
                 ]
               }
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{authUsername}}\",\n  \"password\": \"{{authPassword}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{authUsername}}\",\n  \"password\": \"{{authPassword}}\"\n}"
+            },
             "url": "{{baseUrl}}/auth/login"
           }
         },
@@ -1364,7 +1895,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/auth/verify" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/verify"
+          }
         },
         {
           "name": "Unauthorized Request",
@@ -1380,7 +1915,9 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/accounts"
@@ -1403,9 +1940,16 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer not-a-token" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer not-a-token"
+              }
+            ],
             "url": "{{baseUrl}}/accounts"
           }
         },
@@ -1422,7 +1966,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/admin/whoami" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/admin/whoami"
+          }
         }
       ]
     },
@@ -1456,10 +2004,20 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{jwtDemoUsername}}\",\n  \"email\": \"{{jwtDemoEmail}}\",\n  \"password\": \"{{jwtDemoPassword}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{jwtDemoUsername}}\",\n  \"email\": \"{{jwtDemoEmail}}\",\n  \"password\": \"{{jwtDemoPassword}}\"\n}"
+            },
             "url": "{{baseUrl}}/auth/register"
           }
         },
@@ -1472,33 +2030,92 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.collectionVariables.set('jwtToken', pm.response.json().token);"
+                  "pm.collectionVariables.set('customerToken', pm.response.json().token);",
+                  "pm.test('Customer token stored', function () {",
+                  "    pm.expect(pm.collectionVariables.get('customerToken')).to.be.a('string').and.not.empty;",
+                  "});"
                 ]
               }
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{jwtDemoUsername}}\",\n  \"password\": \"{{jwtDemoPassword}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{jwtDemoUsername}}\",\n  \"password\": \"{{jwtDemoPassword}}\"\n}"
+            },
             "url": "{{baseUrl}}/auth/login"
           }
         },
         {
-          "name": "List Users With Token",
+          "name": "Customer Reads Own Profile",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+                  "pm.test('Customer portal is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Profile belongs to the logged-in customer', function () {",
+                  "    pm.expect(pm.response.json().username).to.eql(pm.collectionVariables.get('jwtDemoUsername'));",
+                  "});"
                 ]
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users" }
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/me"
+          }
+        },
+        {
+          "name": "Customer Cannot List Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Customer is forbidden from the staff list', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users"
+          }
         },
         {
           "name": "Create Bank Customer",
@@ -1516,9 +2133,27 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"JWT Demo Customer\",\n  \"email\": \"{{jwtDemoCustomerEmail}}\"\n}" },
-            "url": "{{baseUrl}}/users"
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"JWT Demo Customer\",\n  \"email\": \"{{jwtDemoCustomerEmail}}\"\n}"
+            },
+            "url": "{{baseUrl}}/users",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
           }
         },
         {
@@ -1537,9 +2172,27 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{jwtDemoUserId}}\",\n  \"accountType\": \"CHECKING\"\n}" },
-            "url": "{{baseUrl}}/accounts"
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{jwtDemoUserId}}\",\n  \"accountType\": \"CHECKING\"\n}"
+            },
+            "url": "{{baseUrl}}/accounts",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
           }
         },
         {
@@ -1558,9 +2211,27 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"amount\": 500.00\n}" },
-            "url": "{{baseUrl}}/accounts/{{jwtDemoAccountId}}/deposit"
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500.00\n}"
+            },
+            "url": "{{baseUrl}}/accounts/{{jwtDemoAccountId}}/deposit",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
           }
         },
         {
@@ -1579,9 +2250,27 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"amount\": 200.00\n}" },
-            "url": "{{baseUrl}}/accounts/{{jwtDemoAccountId}}/withdraw"
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 200.00\n}"
+            },
+            "url": "{{baseUrl}}/accounts/{{jwtDemoAccountId}}/withdraw",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
           }
         },
         {
@@ -1603,7 +2292,21 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/accounts/{{jwtDemoAccountId}}/transactions" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/accounts/{{jwtDemoAccountId}}/transactions",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
         },
         {
           "name": "Get Audits",
@@ -1626,7 +2329,21 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/audits" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/audits",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
         },
         {
           "name": "List Accounts Without Token",
@@ -1642,7 +2359,9 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/accounts"
