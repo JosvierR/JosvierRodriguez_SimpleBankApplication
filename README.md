@@ -1,12 +1,12 @@
 # Simple Bank Application
 
-Simple Bank is an educational full-stack banking application. The product-experience spike adds a public landing page, a calmer interface, English, Spanish, and French, and an isolated twenty-user demo dataset. Role-based authorization and customer ownership stay in place.
+Simple Bank is an educational full-stack banking application. It combines a modern public banking homepage, five role-specific authenticated dashboards, English/Spanish/French localization, and an isolated twenty-user demo dataset. Role-based authorization and customer ownership remain authoritative on the backend.
 
 ## Current Phase
 
-**Product experience: public landing, responsive workspace, localization, and an isolated demo**
+**Banking experience: executive public home, server-aggregated dashboards, responsive workflows, and an isolated demo**
 
-The project evolved in six focused phases:
+The project evolved in seven focused phases:
 
 1. Phase 1 — in-memory customers, accounts, balances, and transactions.
 2. Phase 2 — MongoDB Atlas persistence with ObjectId identifiers, Decimal128 money, indexes, and transactional money movement.
@@ -14,6 +14,7 @@ The project evolved in six focused phases:
 4. Phase 4 — React operations UI, real API integration, and full-stack Docker support.
 5. Phase 5 — CUSTOMER, TELLER, MANAGER, AUDITOR, and ADMIN permissions, customer-owned data, security audit, and role-specific workspaces.
 6. Phase 6 — public landing at `/`, authenticated product under `/app`, adaptive tables, and en/es/fr.
+7. Phase 7 — premium banking homepage, `GET /api/dashboard`, role-specific experiences, real money-movement charts, and architecture documentation.
 
 `docs/demo-credentials.txt` contains intentionally public synthetic credentials. Never reuse them. They are valid only in the isolated `simple_bank_demo` dataset. See `docs/demo-spike.md`.
 
@@ -66,6 +67,7 @@ The React application calls relative `/api` URLs. Vite proxies those calls to `l
 Frontend:
 
 - React 19, TypeScript, Vite, and React Router
+- Recharts for customer and manager money-movement charts, loaded only with the lazy dashboard route
 - Handcrafted CSS design system and a small Lucide icon set
 - Vitest, React Testing Library, user-event, and jsdom
 - Nginx static runtime and reverse proxy
@@ -80,17 +82,19 @@ Backend:
 
 ## Frontend Experience
 
-Each verified role sees only its own navigation. Inaccessible areas are hidden, and the API still enforces the same limits.
+Each verified role sees its own navigation and a dashboard shaped around its immediate work. `GET /api/dashboard` derives the role from the current persisted actor and returns a minimal role-specific DTO; the browser does not choose a role or assemble broad collections.
 
-- Customer: Overview, My Accounts, Transfer, and Profile, using `/api/me` only
-- Teller: customers, accounts, deposits, and withdrawals
-- Manager: teller work, plus transfers, customer and account changes, and the banking audit
-- Auditor: read-only customers, accounts, histories, and the banking audit
-- Admin: operational banking, Access management, and Security audit
+- Customer: personal balance, owned accounts, recent activity, 30-day deposits/withdrawals, and transfers
+- Teller: customer/account search, today’s personal operation totals, account opening, and actor-scoped recent work
+- Manager: total bank position, account mix, 30-day money movement, transfer access, and banking audit activity
+- Auditor: read-only audit counts, actor visibility, action breakdown, and investigation paths
+- Admin: identity health, role distribution, customer links, security changes, and concise banking context
 
 The visual system uses system typography, a light split-view navigation, a restrained blue accent, low-shadow grouped surfaces, and Radix accessibility primitives. The layout is responsive on desktop and in a mobile navigation sheet. This is Apple-like restraint. It is not affiliated with Apple.
 
-Balances, customers, accounts, transactions, and audits come from the Spring API. Production components contain no demo financial data.
+Balances, customers, accounts, transactions, and audits come from the Spring API. Charts use only persisted 30-day data and always include a textual summary. The public product preview is structural and uses neutral values; production components contain no demo financial data.
+
+Deep architecture and product rationale are documented in [docs/system-architecture.md](docs/system-architecture.md) and [docs/dashboard-design.md](docs/dashboard-design.md).
 
 ## Authentication and Authorization
 
@@ -168,7 +172,7 @@ A production design could add step-up authentication, fraud and risk checks, tra
 ## UI Workflows
 
 - **Login / Register** — authenticate or create a standard API access account.
-- **Dashboard** — view the real customer count, account count, total balance, recent-operation count, quick actions, and latest audits.
+- **Dashboard** — receive one server-authorized role DTO and open a customer, teller, manager, auditor, or administrator experience designed for that role’s immediate work.
 - **Create account** — choose New Customer to create `users` then `accounts`, or Existing Customer to add another account. A partial failure preserves the newly created customer and offers recovery.
 - **Customer details** — inspect the profile and every account owned by that customer.
 - **Account details** — view the current balance and protected metadata, change only the account type, or navigate to money operations.
@@ -223,6 +227,7 @@ frontend/
   nginx.conf
 src/main/java/com/josvier/simplebank/
   auth/
+  dashboard/       role-derived aggregation and minimal dashboard DTOs
   security/
   controller/
   service/
@@ -301,6 +306,8 @@ Frontend:
 
 ```powershell
 cd frontend
+npm run format:check
+npm run i18n:check
 npm run lint
 npm run test
 npm run build
@@ -313,9 +320,33 @@ docker compose config
 docker compose build
 ```
 
-The automated frontend suite mocks API modules and never connects to Atlas. The backend tests mock persistence boundaries and also do not connect to Atlas. A live end-to-end and restart-persistence check requires valid local Atlas and JWT environment values.
+The automated frontend suite mocks API modules and never connects to Atlas. The backend tests mock persistence boundaries and also do not connect to Atlas. Dashboard tests cover all five roles, cross-customer isolation, actor-scoped teller activity, exact monetary aggregates, absent forbidden actions, charts, empty states, and public-home behavior. A live end-to-end and restart-persistence check requires valid local Atlas and JWT environment values.
 
 ## UI Screenshots
+
+### Banking experience evidence
+
+Captured from the isolated `simple_bank_demo` dataset after live login and responsive QA. The set covers the public homepage, every role-specific dashboard, the analytical chart, and access governance without exposing credentials or tokens.
+
+| English home | Spanish phone home | French customer phone |
+| --- | --- | --- |
+| ![English desktop banking homepage](docs/screenshots/banking-experience/01-home-desktop-en.png) | ![Spanish mobile banking homepage](docs/screenshots/banking-experience/02-home-mobile-es.png) | ![French mobile customer dashboard](docs/screenshots/banking-experience/04-customer-dashboard-mobile-fr.png) |
+
+| Customer | Teller | Manager |
+| --- | --- | --- |
+| ![Customer dashboard](docs/screenshots/banking-experience/03-customer-dashboard.png) | ![Teller dashboard](docs/screenshots/banking-experience/05-teller-dashboard.png) | ![Manager dashboard](docs/screenshots/banking-experience/06-manager-dashboard.png) |
+
+| Auditor | Administrator |
+| --- | --- |
+| ![Read-only auditor dashboard](docs/screenshots/banking-experience/07-auditor-dashboard.png) | ![Administrator dashboard](docs/screenshots/banking-experience/08-admin-dashboard.png) |
+
+| Manager activity chart | Administrator access overview |
+| --- | --- |
+| ![Manager 30-day activity chart](docs/screenshots/banking-experience/09-manager-activity-chart.png) | ![Administrator access overview](docs/screenshots/banking-experience/10-admin-access-overview.png) |
+
+Live checks on 2026-09-30 covered 1440, 1280, 1024, 834, 768, 430, 390, and 360 pixels; English, Spanish, and French; all five authenticated roles; and a zero-violation axe scan of the administrator dashboard.
+
+### Earlier workflow evidence
 
 Captured from `http://localhost:3000` against the Dockerized API and Atlas. No tokens or credentials are shown.
 
@@ -365,6 +396,7 @@ Details are in `docs/demo-spike.md`.
 | Area | Endpoints |
 | --- | --- |
 | Auth | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/verify` |
+| Dashboard | `GET /api/dashboard` (authenticated role is derived server-side) |
 | Customer portal | `GET /api/me`, `GET /api/me/accounts`, `GET /api/me/accounts/{id}`, `GET /api/me/accounts/{id}/transactions`, `PUT /api/me/profile`, `POST /api/me/transfers` |
 | Customers | `POST/GET /api/users`, `GET/PUT/DELETE /api/users/{id}`, `GET /api/users/{id}/accounts` |
 | Accounts | `POST/GET /api/accounts`, `GET/PUT/DELETE /api/accounts/{id}`, `GET /api/accounts/premium` |
