@@ -173,13 +173,14 @@ jobs:
           node-version: "24.x"
 
       - name: Deploy Vercel production project
-        working-directory: frontend
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PRODUCTION_PROJECT_ID }}
+          VERCEL_ORG_ID: team_JKrJa4sOTaNooio7czIdnEks
+          VERCEL_PROJECT_ID: prj_WrGbS4OOJBKAyuryDfoXj54TgSLx
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
+          rm -rf .vercel frontend/.vercel
           npm install --global vercel@58.9.1
+          npm ci --prefix frontend
           vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
           vercel build --prod --token="$VERCEL_TOKEN"
           vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" > "$RUNNER_TEMP/vercel-production-url.txt"
