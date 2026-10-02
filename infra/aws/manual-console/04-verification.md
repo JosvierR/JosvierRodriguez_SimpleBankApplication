@@ -73,4 +73,4 @@ Wait until `https://DISTRIBUTION_DOMAIN/api/public/ready` is `UP` again. Sign in
 | Admin bootstrap | `BOOTSTRAP_ADMIN_ENABLED=false` and blank username |
 | Release | `/api/public/ready` revision `dafc89b4b804cddaa2f443a55b05d48ffa3bd921` |
 
-When these pass, record the instance id, CloudFront distribution id, and CloudFront URL in `docs/aws-deployment.md`. Until then the status remains prepared, not deployed.
+The QuickLabs console deployment that passed these checks is https://d1sh3vurxc4laf.cloudfront.net. Release hardening does not change that distribution. A future normal-account Terraform deployment is a separate path and stays unapplied until remote state and approval exist.
