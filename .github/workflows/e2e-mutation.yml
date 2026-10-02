@@ -1,0 +1,39 @@
+name: Mutation E2E
+
+on:
+  workflow_dispatch:
+    inputs:
+      account_id:
+        description: Dedicated synthetic account id. This workflow moves 0.01 and withdraws it back.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    name: Isolated banking mutation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Run the opt-in mutation
+        env:
+          E2E_BASE_URL: ${{ vars.STAGING_FRONTEND_URL }}
+          E2E_API_BASE_URL: ${{ vars.STAGING_API_BASE_URL }}
+          E2E_ADMIN_USERNAME: ${{ secrets.STAGING_ADMIN_USERNAME }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.STAGING_ADMIN_PASSWORD }}
+          E2E_ALLOW_MUTATION: "true"
+          E2E_MUTATION_ACCOUNT_ID: ${{ inputs.account_id }}
+          E2E_REQUIRE_AUTH: "true"
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npm run e2e:mutation

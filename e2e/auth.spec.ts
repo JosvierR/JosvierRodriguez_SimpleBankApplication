@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { credential, signIn } from './support';
 
-test('invalid login is rejected', async ({ page }) => {
+test('invalid login is rejected @readonly', async ({ page }) => {
   await page.goto('/login');
   await page.locator('input[autocomplete="username"]').fill('missing-user');
   await page.locator('input[type="password"]').fill('not-a-real-password');
@@ -10,7 +10,7 @@ test('invalid login is rejected', async ({ page }) => {
   await expect(page).toHaveURL(/\/login/);
 });
 
-test('valid customer login and logout work', async ({ page }) => {
+test('valid customer login and logout work @readonly', async ({ page }) => {
   const username = credential('E2E_CUSTOMER_USERNAME');
   const password = credential('E2E_CUSTOMER_PASSWORD');
   await signIn(page, username, password);
@@ -19,7 +19,7 @@ test('valid customer login and logout work', async ({ page }) => {
   await expect(page).toHaveURL(/\/login/);
 });
 
-test('a protected route redirects when signed out', async ({ page }) => {
+test('a protected route redirects when signed out @readonly', async ({ page }) => {
   await page.goto('/app');
   await expect(page).toHaveURL(/\/login/);
 });

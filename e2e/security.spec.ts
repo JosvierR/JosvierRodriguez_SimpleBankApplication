@@ -13,7 +13,7 @@ test('a wrong password is rejected @readonly', async ({ request }) => {
   expect(response.status()).toBe(401);
 });
 
-test('a customer token cannot call the admin API', async ({ request }) => {
+test('a customer token cannot call the admin API @readonly', async ({ request }) => {
   const username = credential('E2E_CUSTOMER_USERNAME');
   const password = credential('E2E_CUSTOMER_PASSWORD');
   const token = await loginToken(request, username, password);
