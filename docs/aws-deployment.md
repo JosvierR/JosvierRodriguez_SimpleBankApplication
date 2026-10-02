@@ -1,32 +1,32 @@
 # AWS deployment
 
-Status: not deployed from this workstation.
+STATUS: PREPARED FOR MANUAL AWS CONSOLE DEPLOYMENT
 
-The AWS CLI is not installed here, and there is no local AWS credential file. The QuickLabs console password is not stored and is not converted into access keys. Deploy from CloudShell with `infra/aws/deploy.sh`. That script overwrites this page with the live resource identifiers.
+CloudShell is not available in the QuickLabs account. No AWS resources have been created for this package yet. Do not record an instance id or a CloudFront URL until the console steps are finished.
 
 | Item | Value |
 | --- | --- |
 | FINAL_SOURCE_SHA | dafc89b4b804cddaa2f443a55b05d48ffa3bd921 |
 | AWS account | 279249498881 |
 | Region | us-east-1 |
-| ECR repository | josvier-simple-bank-api |
-| Image tag | dafc89b4 and submission-final |
-| App Runner service | josvier-simple-bank-api |
-| S3 bucket | josvier-simple-bank-web-279249498881 |
-| CloudFront comment | Josvier Simple Bank AWS Submission |
+| Console guide | [infra/aws/manual-console/03-aws-console-steps.md](../infra/aws/manual-console/03-aws-console-steps.md) |
+| EC2 user data | [infra/aws/manual-console/01-ec2-user-data.sh](../infra/aws/manual-console/01-ec2-user-data.sh) |
+| CloudFront function | [infra/aws/manual-console/02-cloudfront-spa-function.js](../infra/aws/manual-console/02-cloudfront-spa-function.js) |
+| S3 bucket name | josvier-simple-bank-aws-web-279249498881 |
+| EC2 name | josvier-simple-bank-aws |
+| Security group | josvier-simple-bank-aws-sg |
 | Database name | simple_bank_aws |
-| Database user | simple-bank-aws-user, readWrite on simple_bank_aws only |
+| Database user | simplebank_app, readWrite on simple_bank_aws only |
+| Frontend package | artifacts/simple-bank-aws-frontend.zip (local, not committed) |
 | Health | not run |
 | Readiness | not run |
-| CORS | not run |
+| CORS | same origin through CloudFront; no external origin configured |
 | EN / ES / FR | not run |
 | Responsive | not run |
-| Lab 01 bucket | student-josvier-rodriguez-uploads |
-| Lab 01 function | student-s3-logger |
 
-Existing production stays on:
+Existing production remains:
 
 - https://simple-bank-production.vercel.app
 - https://simple-bank-api-production.onrender.com/api
 
-The Atlas CLI session on this workstation is expired, so this repository does not contain a Mongo URI. Export `SIMPLE_BANK_AWS_MONGODB_URI` inside CloudShell before running the script. Do not paste that URI into chat.
+MongoDB is not given a public port. Port 27017 must not be added to the security group.

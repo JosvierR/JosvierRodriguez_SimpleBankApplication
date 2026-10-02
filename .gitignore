@@ -47,6 +47,7 @@ __pycache__/
 frontend/node_modules/
 scripts/spike/node_modules/
 frontend/dist/
+artifacts/
 frontend/coverage/
 frontend/.env
 frontend/.env.*

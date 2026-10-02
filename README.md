@@ -72,14 +72,13 @@ Production frontend: https://simple-bank-production.vercel.app
 
 Production backend: https://simple-bank-api-production.onrender.com/api
 
-The course site is published by `infra/aws/deploy.sh` from AWS CloudShell in us-east-1. After that script succeeds, the public link is the CloudFront URL in [docs/aws-deployment.md](docs/aws-deployment.md).
+The course site is prepared for the AWS Console because CloudShell is not available. Follow [the manual steps](infra/aws/manual-console/03-aws-console-steps.md). The public link is recorded in [docs/aws-deployment.md](docs/aws-deployment.md) only after CloudFront is deployed.
 
 ```text
 CloudFront
   -> private S3 frontend
-browser
-  -> App Runner backend
-  -> managed MongoDB
+  -> /api/* to EC2 :8080 Spring Boot
+  -> MongoDB on the same Docker network
 ```
 
 ## Architecture
