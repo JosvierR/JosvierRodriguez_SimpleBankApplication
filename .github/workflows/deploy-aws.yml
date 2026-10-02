@@ -4,24 +4,50 @@ on:
   workflow_dispatch:
     inputs:
       sha:
-        description: Exact release SHA to build and deploy
+        description: Exact production SHA already on deploy/vercel-production
         required: true
         type: string
 
 permissions:
   id-token: write
   contents: read
+  statuses: read
 
 jobs:
   deploy:
     name: Deploy exact SHA
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
+    environment: aws-production
     steps:
       - name: Checkout exact SHA
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.sha }}
+          fetch-depth: 0
+
+      - name: Require the production release SHA
+        env:
+          INPUT_SHA: ${{ inputs.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha=$(printf '%s' "$INPUT_SHA" | tr '[:upper:]' '[:lower:]')
+          if ! printf '%s' "$sha" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "SHA must be 40 hexadecimal characters"
+            exit 1
+          fi
+          git fetch origin deploy/vercel-production
+          production=$(git rev-parse origin/deploy/vercel-production)
+          if [ "$production" != "$sha" ]; then
+            echo "Refusing an AWS deploy that is not origin/deploy/vercel-production"
+            exit 1
+          fi
+          state=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${sha}/statuses" --jq '[.[] | select(.context=="production/deploy")][0].state // "missing"')
+          if [ "$state" != "success" ]; then
+            echo "production/deploy is ${state}"
+            exit 1
+          fi
+          echo "RELEASE_SHA=${sha}" >> "$GITHUB_ENV"
 
       - name: Set up Node 24
         uses: actions/setup-node@v4
@@ -44,20 +70,31 @@ jobs:
         with:
           terraform_version: "1.9.8"
 
-      - name: Terraform format, init, and validate
+      - name: Terraform format and validate
         run: |
           terraform fmt -check -recursive infra/terraform
           terraform -chdir=infra/terraform/environments/production init -backend=false
           terraform -chdir=infra/terraform/environments/production validate
 
-      - name: Require AWS role
+      - name: Require remote AWS automation
         env:
           AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+          AWS_TF_STATE_BUCKET: ${{ vars.AWS_TF_STATE_BUCKET }}
+          AWS_TF_STATE_REGION: ${{ vars.AWS_TF_STATE_REGION }}
+          AWS_TF_LOCK_TABLE: ${{ vars.AWS_TF_LOCK_TABLE }}
+          AWS_FRONTEND_BUCKET: ${{ vars.AWS_FRONTEND_BUCKET }}
         run: |
-          if [ -z "${AWS_ROLE_ARN}" ]; then
+          missing=0
+          for name in AWS_ROLE_ARN AWS_TF_STATE_BUCKET AWS_TF_STATE_REGION AWS_TF_LOCK_TABLE AWS_FRONTEND_BUCKET; do
+            if [ -z "${!name}" ]; then
+              echo "Missing ${name}"
+              missing=1
+            fi
+          done
+          if [ "$missing" != "0" ]; then
             echo "AWS_AUTOMATION_UNAVAILABLE"
-            echo "Configure GitHub OIDC and the AWS_ROLE_ARN secret, then rerun this workflow."
-            echo "Manual fallback: infra/aws/manual-console/03-aws-console-steps.md"
+            echo "Remote state is required. Local state is not used."
+            echo "Bootstrap: infra/terraform/bootstrap-state/README.md"
             exit 1
           fi
 
@@ -65,26 +102,35 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1
+          aws-region: ${{ vars.AWS_TF_STATE_REGION }}
 
-      - name: Terraform plan and apply
+      - name: Terraform plan and apply with remote state
         working-directory: infra/terraform/environments/production
         env:
-          TF_VAR_application_revision: ${{ inputs.sha }}
           TF_VAR_bucket_name: ${{ vars.AWS_FRONTEND_BUCKET }}
+          TF_VAR_application_revision: ${{ env.RELEASE_SHA }}
+          AWS_TF_STATE_BUCKET: ${{ vars.AWS_TF_STATE_BUCKET }}
+          AWS_TF_STATE_REGION: ${{ vars.AWS_TF_STATE_REGION }}
+          AWS_TF_LOCK_TABLE: ${{ vars.AWS_TF_LOCK_TABLE }}
         run: |
-          if [ -z "${TF_VAR_bucket_name}" ]; then
-            echo "AWS_AUTOMATION_UNAVAILABLE"
-            echo "Set the AWS_FRONTEND_BUCKET variable before apply."
-            exit 1
-          fi
-          terraform init
+          rm -rf .terraform
+          terraform init -input=false -reconfigure \
+            -backend-config="bucket=${AWS_TF_STATE_BUCKET}" \
+            -backend-config="key=production/terraform.tfstate" \
+            -backend-config="region=${AWS_TF_STATE_REGION}" \
+            -backend-config="dynamodb_table=${AWS_TF_LOCK_TABLE}" \
+            -backend-config="encrypt=true"
           terraform plan -input=false -out=tfplan
           terraform apply -input=false tfplan
 
+      - name: Deploy the release through Systems Manager
+        env:
+          RELEASE_SHA: ${{ env.RELEASE_SHA }}
+        run: bash scripts/aws-ssm-release.sh
+
       - name: Publish frontend and verify
         env:
-          RELEASE_SHA: ${{ inputs.sha }}
+          RELEASE_SHA: ${{ env.RELEASE_SHA }}
         run: |
           bucket=$(terraform -chdir=infra/terraform/environments/production output -raw bucket_name)
           distribution=$(terraform -chdir=infra/terraform/environments/production output -raw cloudfront_distribution_id)
