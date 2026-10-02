@@ -40,6 +40,8 @@ build/
 application-local.properties
 .simple-bank-aws-identities.json
 .simple-bank-aws-state.env
+__pycache__/
+*.pyc
 
 ### React / Vite ###
 frontend/node_modules/
