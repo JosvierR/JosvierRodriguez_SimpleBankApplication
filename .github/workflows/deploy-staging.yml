@@ -78,7 +78,7 @@ jobs:
     name: Deploy staging
     needs: gate
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     environment:
       name: staging
       url: ${{ vars.STAGING_FRONTEND_URL }}
@@ -206,6 +206,22 @@ jobs:
           EXPECTED_ENVIRONMENT: staging
           REQUIRE_ADMIN: "true"
         run: node scripts/staging-smoke.mjs
+
+      - name: Run staging Playwright
+        env:
+          E2E_BASE_URL: ${{ vars.STAGING_FRONTEND_URL }}
+          E2E_API_BASE_URL: ${{ vars.STAGING_API_BASE_URL }}
+          E2E_CUSTOMER_USERNAME: ${{ secrets.STAGING_CUSTOMER_USERNAME }}
+          E2E_CUSTOMER_PASSWORD: ${{ secrets.STAGING_CUSTOMER_PASSWORD }}
+          E2E_ADMIN_USERNAME: ${{ secrets.STAGING_ADMIN_USERNAME }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.STAGING_ADMIN_PASSWORD }}
+          E2E_EXPECTED_REVISION: ${{ needs.gate.outputs.deploy_sha }}
+          E2E_EXPECTED_ENVIRONMENT: staging
+          E2E_REQUIRE_AUTH: "true"
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npm run e2e:staging
 
       - name: Record staging deploy status
         if: always()

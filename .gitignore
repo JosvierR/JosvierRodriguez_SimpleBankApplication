@@ -56,3 +56,15 @@ frontend/.env.*
 frontend/.vercel/
 coverage/
 *.log
+
+### Platform automation ###
+node_modules/
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+!*.tfvars.example
+playwright-report/
+test-results/
+playwright/.auth/
+infra/observability/grafana/secrets/

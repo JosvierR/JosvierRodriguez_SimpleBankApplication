@@ -66,7 +66,7 @@ jobs:
     name: Promote approved SHA
     needs: preflight
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     environment:
       name: production
     permissions:
@@ -196,3 +196,14 @@ jobs:
           EXPECTED_ENVIRONMENT: production
           REQUIRE_ADMIN: "false"
         run: node scripts/staging-smoke.mjs
+
+      - name: Run production read-only Playwright
+        env:
+          E2E_BASE_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
+          E2E_API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
+          E2E_EXPECTED_REVISION: ${{ needs.preflight.outputs.sha }}
+          E2E_EXPECTED_ENVIRONMENT: production
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npm run e2e:production

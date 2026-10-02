@@ -4,11 +4,13 @@ on:
   pull_request:
     branches:
       - ReactFrontend-BankApp-Making-RestCall-To-Backend
+      - devops/platform-automation
       - staging
       - deploy/vercel-production
   push:
     branches:
       - ReactFrontend-BankApp-Making-RestCall-To-Backend
+      - devops/platform-automation
       - staging
       - deploy/vercel-production
   workflow_dispatch:
@@ -95,6 +97,64 @@ jobs:
       - name: Build frontend image
         run: docker build -t simple-bank-frontend-ci ./frontend
 
+  terraform:
+    name: Terraform
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Format and validate
+        run: |
+          terraform fmt -check -recursive infra/terraform
+          terraform -chdir=infra/terraform/environments/staging init -backend=false
+          terraform -chdir=infra/terraform/environments/staging validate
+          terraform -chdir=infra/terraform/environments/production init -backend=false
+          terraform -chdir=infra/terraform/environments/production validate
+
+  playwright:
+    name: Playwright
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install and list tests
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npx playwright test --list
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+
+      - name: Scan tracked files
+        run: node scripts/secret-scan.mjs
+
   required:
     name: Required CI
     runs-on: ubuntu-latest
@@ -102,17 +162,26 @@ jobs:
       - backend
       - frontend
       - docker
+      - terraform
+      - playwright
+      - secrets
     if: ${{ !cancelled() }}
     steps:
-      - name: Require backend, frontend, and Docker
+      - name: Require every quality gate
         run: |
           backend="${{ needs.backend.result }}"
           frontend="${{ needs.frontend.result }}"
           docker="${{ needs.docker.result }}"
+          terraform="${{ needs.terraform.result }}"
+          playwright="${{ needs.playwright.result }}"
+          secrets="${{ needs.secrets.result }}"
           echo "backend=${backend}"
           echo "frontend=${frontend}"
           echo "docker=${docker}"
-          if [ "$backend" != "success" ] || [ "$frontend" != "success" ] || [ "$docker" != "success" ]; then
+          echo "terraform=${terraform}"
+          echo "playwright=${playwright}"
+          echo "secrets=${secrets}"
+          if [ "$backend" != "success" ] || [ "$frontend" != "success" ] || [ "$docker" != "success" ] || [ "$terraform" != "success" ] || [ "$playwright" != "success" ] || [ "$secrets" != "success" ]; then
             echo "Required CI failed"
             exit 1
           fi

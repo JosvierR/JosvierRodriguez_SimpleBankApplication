@@ -1,0 +1,113 @@
+name: Deploy AWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Exact release SHA to build and deploy
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy exact SHA
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.sha }}
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend for same-origin /api
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: /api
+          VITE_APP_ENV: production
+        run: |
+          npm ci
+          npm run build
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Terraform format, init, and validate
+        run: |
+          terraform fmt -check -recursive infra/terraform
+          terraform -chdir=infra/terraform/environments/production init -backend=false
+          terraform -chdir=infra/terraform/environments/production validate
+
+      - name: Require AWS role
+        env:
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+        run: |
+          if [ -z "${AWS_ROLE_ARN}" ]; then
+            echo "AWS_AUTOMATION_UNAVAILABLE"
+            echo "Configure GitHub OIDC and the AWS_ROLE_ARN secret, then rerun this workflow."
+            echo "Manual fallback: infra/aws/manual-console/03-aws-console-steps.md"
+            exit 1
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Terraform plan and apply
+        working-directory: infra/terraform/environments/production
+        env:
+          TF_VAR_application_revision: ${{ inputs.sha }}
+          TF_VAR_bucket_name: ${{ vars.AWS_FRONTEND_BUCKET }}
+        run: |
+          if [ -z "${TF_VAR_bucket_name}" ]; then
+            echo "AWS_AUTOMATION_UNAVAILABLE"
+            echo "Set the AWS_FRONTEND_BUCKET variable before apply."
+            exit 1
+          fi
+          terraform init
+          terraform plan -input=false -out=tfplan
+          terraform apply -input=false tfplan
+
+      - name: Publish frontend and verify
+        env:
+          RELEASE_SHA: ${{ inputs.sha }}
+        run: |
+          bucket=$(terraform -chdir=infra/terraform/environments/production output -raw bucket_name)
+          distribution=$(terraform -chdir=infra/terraform/environments/production output -raw cloudfront_distribution_id)
+          domain=$(terraform -chdir=infra/terraform/environments/production output -raw cloudfront_domain)
+          aws s3 sync frontend/dist/ "s3://${bucket}" --delete
+          aws cloudfront create-invalidation --distribution-id "${distribution}" --paths "/*"
+          deadline=$((SECONDS + 300))
+          ready=0
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            body=$(mktemp)
+            code=$(curl --silent --output "$body" --write-out "%{http_code}" "https://${domain}/api/public/ready" || true)
+            status=$(jq -r '.status // empty' "$body" 2>/dev/null || true)
+            environment=$(jq -r '.environment // empty' "$body" 2>/dev/null || true)
+            revision=$(jq -r '.revision // empty' "$body" 2>/dev/null || true)
+            rm -f "$body"
+            echo "ready HTTP ${code} status=${status} environment=${environment} revision=${revision}"
+            if [ "$code" = "200" ] && [ "$status" = "UP" ] && [ "$environment" = "production" ] && [ "$revision" = "$RELEASE_SHA" ]; then
+              ready=1
+              break
+            fi
+            sleep 20
+          done
+          test "$ready" = "1"
+          config=$(curl --silent --fail "https://${domain}/api/public/config")
+          test "$(echo "$config" | jq -r '.demoMode')" = "false"
+          curl --silent --fail "https://${domain}/api/public/health" | jq -e '.status == "UP"' >/dev/null
