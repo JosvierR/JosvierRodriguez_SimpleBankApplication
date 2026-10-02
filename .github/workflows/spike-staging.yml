@@ -1,0 +1,77 @@
+name: Spike Staging
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  spike:
+    name: Run staging product spike
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment:
+      name: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+
+      - name: Install browser
+        run: |
+          npm install --prefix scripts/spike
+          npx --prefix scripts/spike playwright install --with-deps chromium
+
+      - name: Provision and verify staging spike
+        env:
+          API_BASE_URL: ${{ vars.STAGING_API_BASE_URL }}
+          FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
+          SPIKE_ADMIN_USERNAME: ${{ secrets.STAGING_ADMIN_USERNAME }}
+          SPIKE_ADMIN_PASSWORD: ${{ secrets.STAGING_ADMIN_PASSWORD }}
+          SPIKE_CORS_ALLOW: https://simple-bank-staging.vercel.app
+          SPIKE_CORS_DENY: https://simple-bank-production.vercel.app,https://evil.example
+        run: |
+          node --input-type=module <<'NODE'
+          import { randomBytes } from "node:crypto";
+          import { readFileSync, writeFileSync } from "node:fs";
+          import { spawnSync } from "node:child_process";
+
+          const manifest = JSON.parse(readFileSync("scripts/spike/product-spike-manifest.json", "utf8"));
+          const passwords = {};
+          for (const identity of manifest.identities) {
+            passwords[identity.username] = `${randomBytes(18).toString("base64url")}Aa1!`;
+          }
+          const file = `${process.env.RUNNER_TEMP}/spike-passwords.json`;
+          writeFileSync(file, JSON.stringify(passwords));
+          const base = {
+            ...process.env,
+            ENV_NAME: "staging",
+            SPIKE_PASSWORDS_FILE: file,
+          };
+          function run(script, extra) {
+            const result = spawnSync(process.execPath, [script], {
+              env: { ...base, ...extra },
+              encoding: "utf8",
+            });
+            process.stdout.write(result.stdout || "");
+            process.stderr.write(result.stderr || "");
+            if (result.status !== 0) process.exit(result.status ?? 1);
+          }
+          run("scripts/spike/provision-spike.mjs", { ALLOW_SPIKE_MUTATION: "false" });
+          run("scripts/spike/verify-spike.mjs", { ALLOW_SPIKE_MUTATION: "false" });
+          run("scripts/spike/verify-spike.mjs", { ALLOW_SPIKE_MUTATION: "true" });
+          run("scripts/spike/browser-spike.mjs", {
+            ALLOW_SPIKE_MUTATION: "false",
+            SPIKE_BROWSER_RESPONSIVE: "true",
+            SPIKE_CAPTURE_LEDGER: "true",
+          });
+          NODE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: staging-spike-screenshots
+          path: docs/screenshots/cross-environment-spike/
+          if-no-files-found: error

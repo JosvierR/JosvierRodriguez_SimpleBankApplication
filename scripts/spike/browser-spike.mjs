@@ -158,10 +158,9 @@ async function main() {
   record("Customer pages", "PASS");
 
   await page.goto(`${frontendUrl}/app/my-transfer`, { waitUntil: "networkidle" });
-  await page.locator("select").first().selectOption({ label: new RegExp(checking.accountNumber) }).catch(async () => {
-    const option = page.locator("option", { hasText: checking.accountNumber });
-    await page.locator("select").first().selectOption(await option.getAttribute("value"));
-  });
+  const source = page.locator("select").first();
+  const sourceValue = await source.locator("option", { hasText: checking.accountNumber }).getAttribute("value");
+  await source.selectOption(sourceValue);
   await page.getByText("Another Simple Bank account", { exact: false }).click();
   await page.locator('input[inputmode="numeric"]').fill(recipientAccount.accountNumber);
   await page.locator("#customer-transfer-amount").fill("1.00");
@@ -179,6 +178,7 @@ async function main() {
     record("Ledger page", "PASS");
   }
 
+  await page.goto(`${frontendUrl}/app`, { waitUntil: "networkidle" });
   await switchLanguage(page, "Español", "Saldo total");
   record("ES browser", "PASS");
   await switchLanguage(page, "Français", "Solde total");
@@ -208,11 +208,11 @@ async function main() {
       await login(page, sender.username, passwords[sender.username]);
       await page.goto(`${frontendUrl}/app/my-accounts`, { waitUntil: "networkidle" });
       await page.getByText(checking.accountNumber).first().waitFor();
-      if (viewport.width < 800) {
-        const menu = page.locator(".mobile-menu");
-        if (await menu.isVisible()) await menu.click();
-        await page.locator(".mobile-sheet nav, .sidebar nav").first().waitFor();
-        if (await page.locator(".sidebar__close").isVisible()) await page.locator(".sidebar__close").click();
+      if (viewport.width <= 900) {
+        await page.locator(".mobile-menu").click();
+        await page.locator(".mobile-sheet").waitFor({ state: "visible" });
+        await page.locator(".sidebar__close").click();
+        await page.locator(".mobile-sheet").waitFor({ state: "hidden" });
       }
       await assertNoOverflow(page);
       if (viewport.width === 390 && names.mobile) await shot(page, names.mobile);
