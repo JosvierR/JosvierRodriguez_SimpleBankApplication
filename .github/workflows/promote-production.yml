@@ -72,7 +72,7 @@ jobs:
     permissions:
       contents: write
       actions: read
-      statuses: read
+      statuses: write
     steps:
       - name: Require production configuration
         env:
