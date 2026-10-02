@@ -97,6 +97,16 @@ jobs:
       - name: Build frontend image
         run: docker build -t simple-bank-frontend-ci ./frontend
 
+      - name: Validate compose files
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/dummy
+          JWT_SECRET: dummy-not-a-secret
+          GRAFANA_ADMIN_PASSWORD: local-dev-only
+        run: |
+          docker compose -f docker-compose.yml config --quiet
+          docker compose -f docker-compose.yml -f docker-compose.demo.yml config --quiet
+          docker compose -f infra/observability/docker-compose.observability.yml --project-directory infra/observability config --quiet
+
   terraform:
     name: Terraform
     runs-on: ubuntu-latest
@@ -154,6 +164,11 @@ jobs:
 
       - name: Scan tracked files
         run: node scripts/secret-scan.mjs
+
+      - name: Gitleaks
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v8.24.2/gitleaks_8.24.2_linux_x64.tar.gz" | tar -xz -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" detect --source . --redact --no-banner --config .gitleaks.toml
 
   required:
     name: Required CI

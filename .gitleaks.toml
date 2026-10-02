@@ -4,7 +4,16 @@ title = "Simple Bank"
 useDefault = true
 
 [allowlist]
+description = "Published placeholders and the isolated demo password file"
 paths = [
   '''\.env\.example''',
-  '''docs/.*''',
+  '''docs/demo-credentials\.txt''',
+  '''src/test/resources/application\.properties''',
+  '''src/test/java/com/josvier/simplebank/auth/service/AdminAuthUserServiceTest\.java''',
+  '''src/test/java/com/josvier/simplebank/auth/service/AuthServiceImplTest\.java''',
+  '''src/test/java/com/josvier/simplebank/auth/repository/mongo/adapter/MongoAuthUserRepositoryAdapterTest\.java''',
+  '''src/test/java/com/josvier/simplebank/security/jwt/JwtServiceTest\.java''',
+]
+regexes = [
+  '''mongodb\+srv://<username>:<url-encoded-password>@''',
 ]

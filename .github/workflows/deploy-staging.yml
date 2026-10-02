@@ -91,6 +91,8 @@ jobs:
           STAGING_FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
           STAGING_RECIPIENT_ACCOUNT_NUMBER: ${{ vars.STAGING_RECIPIENT_ACCOUNT_NUMBER }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_STAGING_PROJECT_ID: ${{ secrets.VERCEL_STAGING_PROJECT_ID }}
           RENDER_STAGING_DEPLOY_HOOK_URL: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
           STAGING_CUSTOMER_USERNAME: ${{ secrets.STAGING_CUSTOMER_USERNAME }}
           STAGING_CUSTOMER_PASSWORD: ${{ secrets.STAGING_CUSTOMER_PASSWORD }}
@@ -103,6 +105,8 @@ jobs:
             STAGING_FRONTEND_URL \
             STAGING_RECIPIENT_ACCOUNT_NUMBER \
             VERCEL_TOKEN \
+            VERCEL_ORG_ID \
+            VERCEL_STAGING_PROJECT_ID \
             RENDER_STAGING_DEPLOY_HOOK_URL \
             STAGING_CUSTOMER_USERNAME \
             STAGING_CUSTOMER_PASSWORD \
@@ -181,8 +185,8 @@ jobs:
 
       - name: Deploy Vercel staging project
         env:
-          VERCEL_ORG_ID: team_JKrJa4sOTaNooio7czIdnEks
-          VERCEL_PROJECT_ID: prj_hEwtdSNKmahdU5kKrcghZGsCwLoG
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_STAGING_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           rm -rf .vercel frontend/.vercel
@@ -195,17 +199,17 @@ jobs:
 
       - name: Run staging smoke and acceptance
         env:
-          STAGING_API_BASE_URL: ${{ vars.STAGING_API_BASE_URL }}
-          STAGING_FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
-          STAGING_RECIPIENT_ACCOUNT_NUMBER: ${{ vars.STAGING_RECIPIENT_ACCOUNT_NUMBER }}
-          STAGING_CUSTOMER_USERNAME: ${{ secrets.STAGING_CUSTOMER_USERNAME }}
-          STAGING_CUSTOMER_PASSWORD: ${{ secrets.STAGING_CUSTOMER_PASSWORD }}
-          STAGING_ADMIN_USERNAME: ${{ secrets.STAGING_ADMIN_USERNAME }}
-          STAGING_ADMIN_PASSWORD: ${{ secrets.STAGING_ADMIN_PASSWORD }}
+          API_BASE_URL: ${{ vars.STAGING_API_BASE_URL }}
+          FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
+          RECIPIENT_ACCOUNT_NUMBER: ${{ vars.STAGING_RECIPIENT_ACCOUNT_NUMBER }}
+          CUSTOMER_USERNAME: ${{ secrets.STAGING_CUSTOMER_USERNAME }}
+          CUSTOMER_PASSWORD: ${{ secrets.STAGING_CUSTOMER_PASSWORD }}
+          ADMIN_USERNAME: ${{ secrets.STAGING_ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.STAGING_ADMIN_PASSWORD }}
           EXPECTED_REVISION: ${{ needs.gate.outputs.deploy_sha }}
           EXPECTED_ENVIRONMENT: staging
           REQUIRE_ADMIN: "true"
-        run: node scripts/staging-smoke.mjs
+        run: node scripts/environment-smoke.mjs
 
       - name: Run staging Playwright
         env:

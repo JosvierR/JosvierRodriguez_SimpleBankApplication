@@ -106,22 +106,11 @@ jobs:
             exit 1
           fi
 
-      - name: Checkout history
+      - name: Checkout exact SHA
         uses: actions/checkout@v4
         with:
+          ref: ${{ needs.preflight.outputs.sha }}
           fetch-depth: 0
-
-      - name: Fast-forward production branch
-        env:
-          DEPLOY_SHA: ${{ needs.preflight.outputs.sha }}
-        run: |
-          git fetch origin staging deploy/vercel-production
-          production=$(git rev-parse origin/deploy/vercel-production)
-          if ! git merge-base --is-ancestor "$production" "$DEPLOY_SHA"; then
-            echo "Refusing a non-fast-forward production update"
-            exit 1
-          fi
-          git push origin "${DEPLOY_SHA}:refs/heads/deploy/vercel-production"
 
       - name: Request Render production deploy of exact SHA
         env:
@@ -174,8 +163,8 @@ jobs:
 
       - name: Deploy Vercel production project
         env:
-          VERCEL_ORG_ID: team_JKrJa4sOTaNooio7czIdnEks
-          VERCEL_PROJECT_ID: prj_WrGbS4OOJBKAyuryDfoXj54TgSLx
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PRODUCTION_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           rm -rf .vercel frontend/.vercel
@@ -188,22 +177,63 @@ jobs:
 
       - name: Run production smoke
         env:
-          STAGING_API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
-          STAGING_FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
-          STAGING_CUSTOMER_USERNAME: ${{ secrets.PRODUCTION_CUSTOMER_USERNAME }}
-          STAGING_CUSTOMER_PASSWORD: ${{ secrets.PRODUCTION_CUSTOMER_PASSWORD }}
+          API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
+          FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
+          CUSTOMER_USERNAME: ${{ secrets.PRODUCTION_CUSTOMER_USERNAME }}
+          CUSTOMER_PASSWORD: ${{ secrets.PRODUCTION_CUSTOMER_PASSWORD }}
           EXPECTED_REVISION: ${{ needs.preflight.outputs.sha }}
           EXPECTED_ENVIRONMENT: production
           REQUIRE_ADMIN: "false"
-        run: node scripts/staging-smoke.mjs
+        run: node scripts/environment-smoke.mjs
 
       - name: Run production read-only Playwright
         env:
           E2E_BASE_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
           E2E_API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
+          E2E_CUSTOMER_USERNAME: ${{ secrets.PRODUCTION_CUSTOMER_USERNAME }}
+          E2E_CUSTOMER_PASSWORD: ${{ secrets.PRODUCTION_CUSTOMER_PASSWORD }}
           E2E_EXPECTED_REVISION: ${{ needs.preflight.outputs.sha }}
           E2E_EXPECTED_ENVIRONMENT: production
+          E2E_REQUIRE_AUTH: "true"
         run: |
           npm ci
           npx playwright install --with-deps chromium
           npm run e2e:production
+
+      - name: Fast-forward production branch
+        env:
+          DEPLOY_SHA: ${{ needs.preflight.outputs.sha }}
+        run: |
+          git fetch origin deploy/vercel-production
+          production=$(git rev-parse origin/deploy/vercel-production)
+          if [ "$production" = "$DEPLOY_SHA" ]; then
+            echo "Production branch already points at the verified SHA"
+            exit 0
+          fi
+          if ! git merge-base --is-ancestor "$production" "$DEPLOY_SHA"; then
+            echo "Refusing a non-fast-forward production update"
+            exit 1
+          fi
+          git push origin "${DEPLOY_SHA}:refs/heads/deploy/vercel-production"
+
+      - name: Record production deploy status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOY_SHA: ${{ needs.preflight.outputs.sha }}
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            state="success"
+            description="Production deploy succeeded"
+          else
+            state="failure"
+            description="Production deploy failed"
+          fi
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${DEPLOY_SHA}" \
+            -f state="$state" \
+            -f context="production/deploy" \
+            -f description="$description" \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [ "$state" != "success" ]; then
+            exit 1
+          fi
