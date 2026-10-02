@@ -1,0 +1,310 @@
+{
+  "version": "product-spike-v1",
+  "source": "development demo identities, logical fields only",
+  "transfer": {
+    "sender": "sofia.rivera",
+    "senderAccount": "CHECKING",
+    "recipient": "ethan.parker",
+    "recipientAccount": "CHECKING",
+    "amount": "1.00"
+  },
+  "identities": [
+    {
+      "key": "ava.admin",
+      "username": "ava.admin",
+      "displayName": "Ava Morgan",
+      "email": "ava.admin@demo.simplebank.test",
+      "role": "ADMIN",
+      "kind": "staff",
+      "accounts": []
+    },
+    {
+      "key": "marcus.manager",
+      "username": "marcus.manager",
+      "displayName": "Marcus Reed",
+      "email": "marcus.manager@demo.simplebank.test",
+      "role": "MANAGER",
+      "kind": "staff",
+      "accounts": []
+    },
+    {
+      "key": "claire.manager",
+      "username": "claire.manager",
+      "displayName": "Claire Foster",
+      "email": "claire.manager@demo.simplebank.test",
+      "role": "MANAGER",
+      "kind": "staff",
+      "accounts": []
+    },
+    {
+      "key": "mia.teller",
+      "username": "mia.teller",
+      "displayName": "Mia Collins",
+      "email": "mia.teller@demo.simplebank.test",
+      "role": "TELLER",
+      "kind": "staff",
+      "accounts": []
+    },
+    {
+      "key": "noah.teller",
+      "username": "noah.teller",
+      "displayName": "Noah Price",
+      "email": "noah.teller@demo.simplebank.test",
+      "role": "TELLER",
+      "kind": "staff",
+      "accounts": []
+    },
+    {
+      "key": "zoe.teller",
+      "username": "zoe.teller",
+      "displayName": "Zoe Turner",
+      "email": "zoe.teller@demo.simplebank.test",
+      "role": "TELLER",
+      "kind": "staff",
+      "accounts": []
+    },
+    {
+      "key": "leo.auditor",
+      "username": "leo.auditor",
+      "displayName": "Leo Harrison",
+      "email": "leo.auditor@demo.simplebank.test",
+      "role": "AUDITOR",
+      "kind": "staff",
+      "accounts": []
+    },
+    {
+      "key": "nina.auditor",
+      "username": "nina.auditor",
+      "displayName": "Nina Walsh",
+      "email": "nina.auditor@demo.simplebank.test",
+      "role": "AUDITOR",
+      "kind": "staff",
+      "accounts": []
+    },
+    {
+      "key": "sofia.rivera",
+      "username": "sofia.rivera",
+      "displayName": "Sofia Rivera",
+      "email": "sofia.rivera@demo.simplebank.test",
+      "role": "CUSTOMER",
+      "kind": "customer",
+      "accounts": [
+        {
+          "key": "CHECKING",
+          "type": "CHECKING",
+          "startingBalance": "3200.00"
+        },
+        {
+          "key": "SAVINGS",
+          "type": "SAVINGS",
+          "startingBalance": "12000.00"
+        }
+      ]
+    },
+    {
+      "key": "ethan.parker",
+      "username": "ethan.parker",
+      "displayName": "Ethan Parker",
+      "email": "ethan.parker@demo.simplebank.test",
+      "role": "CUSTOMER",
+      "kind": "customer",
+      "accounts": [
+        {
+          "key": "CHECKING",
+          "type": "CHECKING",
+          "startingBalance": "1850.00"
+        }
+      ]
+    },
+    {
+      "key": "chloe.martin",
+      "username": "chloe.martin",
+      "displayName": "Chloe Martin",
+      "email": "chloe.martin@demo.simplebank.test",
+      "role": "CUSTOMER",
+      "kind": "customer",
+      "accounts": [
+        {
+          "key": "CHECKING",
+          "type": "CHECKING",
+          "startingBalance": "4600.00"
+        },
+        {
+          "key": "SAVINGS",
+          "type": "SAVINGS",
+          "startingBalance": "7400.00"
+        }
+      ]
+    },
+    {
+      "key": "mateo.alvarez",
+      "username": "mateo.alvarez",
+      "displayName": "Mateo Alvarez",
+      "email": "mateo.alvarez@demo.simplebank.test",
+      "role": "CUSTOMER",
+      "kind": "customer",
+      "accounts": [
+        {
+          "key": "CHECKING",
+          "type": "CHECKING",
+          "startingBalance": "900.00"
+        },
+        {
+          "key": "SAVINGS",
+          "type": "SAVINGS",
+          "startingBalance": "2500.00"
+        }
+      ]
+    },
+    {
+      "key": "camille.laurent",
+      "username": "camille.laurent",
+      "displayName": "Camille Laurent",
+      "email": "camille.laurent@demo.simplebank.test",
+      "role": "CUSTOMER",
+      "kind": "customer",
+      "accounts": [
+        {
+          "key": "CHECKING",
+          "type": "CHECKING",
+          "startingBalance": "6200.00"
+        }
+      ]
+    },
+    {
+      "key": "daniel.kim",
+      "username": "daniel.kim",
+      "displayName": "Daniel Kim",
+      "email": "daniel.kim@demo.simplebank.test",
+      "role": "CUSTOMER",
+      "kind": "customer",
+      "accounts": [
+        {
+          "key": "CHECKING",
+          "type": "CHECKING",
+          "startingBalance": "3050.00"
+        },
+        {
+          "key": "SAVINGS",
+          "type": "SAVINGS",
+          "startingBalance": "15800.00"
+        }
+      ]
+    },
+    {
+      "key": "isabella.romano",
+      "username": "isabella.romano",
+      "displayName": "Isabella Romano",
+      "email": "isabella.romano@demo.simplebank.test",
+      "role": "CUSTOMER",
+      "kind": "customer",
+      "accounts": [
+        {
+          "key": "CHECKING",
+          "type": "CHECKING",
+          "startingBalance": "7800.00"
+        },
+        {
+          "key": "SAVINGS",
+          "type": "SAVINGS",
+          "startingBalance": "22100.00"
+        }
+      ]
+    },
+    {
+      "key": "lucas.bennett",
+      "username": "lucas.bennett",
+      "displayName": "Lucas Bennett",
+      "email": "lucas.bennett@demo.simplebank.test",
+      "role": "CUSTOMER",
+      "kind": "customer",
+      "accounts": [
+        {
+          "key": "CHECKING",
+          "type": "CHECKING",
+          "startingBalance": "1250.00"
+        }
+      ]
+    },
+    {
+      "key": "amelie.dubois",
+      "username": "amelie.dubois",
+      "displayName": "Amelie Dubois",
+      "email": "amelie.dubois@demo.simplebank.test",
+      "role": "CUSTOMER",
+      "kind": "customer",
+      "accounts": [
+        {
+          "key": "CHECKING",
+          "type": "CHECKING",
+          "startingBalance": "5400.00"
+        },
+        {
+          "key": "SAVINGS",
+          "type": "SAVINGS",
+          "startingBalance": "9100.00"
+        }
+      ]
+    },
+    {
+      "key": "gabriel.torres",
+      "username": "gabriel.torres",
+      "displayName": "Gabriel Torres",
+      "email": "gabriel.torres@demo.simplebank.test",
+      "role": "CUSTOMER",
+      "kind": "customer",
+      "accounts": [
+        {
+          "key": "CHECKING",
+          "type": "CHECKING",
+          "startingBalance": "2100.00"
+        },
+        {
+          "key": "SAVINGS",
+          "type": "SAVINGS",
+          "startingBalance": "6300.00"
+        }
+      ]
+    },
+    {
+      "key": "olivia.chen",
+      "username": "olivia.chen",
+      "displayName": "Olivia Chen",
+      "email": "olivia.chen@demo.simplebank.test",
+      "role": "CUSTOMER",
+      "kind": "customer",
+      "accounts": [
+        {
+          "key": "CHECKING",
+          "type": "CHECKING",
+          "startingBalance": "8900.00"
+        },
+        {
+          "key": "SAVINGS",
+          "type": "SAVINGS",
+          "startingBalance": "17500.00"
+        }
+      ]
+    },
+    {
+      "key": "hugo.bernard",
+      "username": "hugo.bernard",
+      "displayName": "Hugo Bernard",
+      "email": "hugo.bernard@demo.simplebank.test",
+      "role": "CUSTOMER",
+      "kind": "customer",
+      "accounts": [
+        {
+          "key": "CHECKING",
+          "type": "CHECKING",
+          "startingBalance": "3600.00"
+        },
+        {
+          "key": "SAVINGS",
+          "type": "SAVINGS",
+          "startingBalance": "4300.00"
+        }
+      ]
+    }
+  ]
+}
