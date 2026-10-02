@@ -54,6 +54,13 @@ The verifier is read-only unless `ALLOW_SPIKE_MUTATION=true`.
 Without that flag it still runs login, dashboard, account reads, ownership checks, and transfer preview.
 It does not submit deposit, withdraw, or transfer.
 
+Mutation mode stops unless Sofia checking is `3200.00` and Ethan checking is `1850.00`.
+It then deposits and withdraws `1.00`, `10.25`, and `100.10`, which net to zero, and submits one `1.00` transfer.
+A later mutation run refuses because those accounts are no longer at the pristine targets.
+`SPIKE_KNOWN_POST_SPIKE=true` lets the provisioner leave the known post-transfer balances untouched. It does not move money back to the original target.
+
+`scripts/spike/browser-spike.mjs` drives Chromium, switches English, Spanish, and French in the page, and checks the staged widths when `SPIKE_BROWSER_RESPONSIVE=true`.
+
 `ENV_NAME=development` expects public environment `local` or `demo`.
 `staging` and `production` must report that environment and `demoMode=false`.
 

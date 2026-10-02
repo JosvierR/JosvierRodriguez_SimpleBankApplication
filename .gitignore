@@ -41,6 +41,7 @@ application-local.properties
 
 ### React / Vite ###
 frontend/node_modules/
+scripts/spike/node_modules/
 frontend/dist/
 frontend/coverage/
 frontend/.env
