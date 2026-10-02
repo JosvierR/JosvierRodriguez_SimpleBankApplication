@@ -3,8 +3,10 @@ package com.josvier.simplebank.security.config;
 import com.josvier.simplebank.security.filter.JwtAuthenticationFilter;
 import com.josvier.simplebank.security.filter.SecurityErrorWriter;
 import com.josvier.simplebank.security.jwt.JwtService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -49,7 +51,27 @@ public class SecurityConfiguration {
                 .build();
     }
 
+    /**
+     * Health and Prometheus are served only on the private management port.
+     * The application port keeps {@code /actuator/**} denied.
+     */
     @Bean
+    @Order(1)
+    public SecurityFilterChain managementSecurityFilterChain(HttpSecurity http,
+                                                             @Value("${management.server.port:0}") int managementPort) throws Exception {
+        http
+                .securityMatcher(request -> managementPort > 0
+                        && request.getLocalPort() == managementPort)
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/prometheus").permitAll()
+                        .anyRequest().denyAll());
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                     JwtService jwtService,
                                                     UserDetailsService userDetailsService,

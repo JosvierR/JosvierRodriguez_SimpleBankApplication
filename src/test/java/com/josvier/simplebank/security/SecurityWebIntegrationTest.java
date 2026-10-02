@@ -125,6 +125,14 @@ class SecurityWebIntegrationTest {
     }
 
     @Test
+    void actuatorOnApplicationPort_isNotPublic() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/actuator/prometheus"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void swagger_isAccessibleWithoutJwt() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk());
