@@ -70,7 +70,7 @@ If that prefix list is missing, or saving the rule returns an authorization erro
 1. In the EC2 console, choose **Launch instance**.
 2. Name: `josvier-simple-bank-aws`.
 3. Application and OS Images: **Amazon Linux 2023 AMI**, architecture **64-bit (x86)**.
-4. Instance type: **t3.small**. If t3.small is unavailable, choose **t3.micro**. The user-data script adds swap when memory is 1 GB or less.
+4. Instance type: **t3.small**. If t3.small is unavailable, choose **t3.micro**. The user-data script creates 2 GB of swap when memory is 2 GB or less and no swap file is already active.
 5. Key pair: **Proceed without a key pair**. Permanent SSH is not required.
 6. Network settings: choose **Edit**.
 7. VPC: default VPC. Subnet: a default public subnet.
@@ -98,6 +98,10 @@ SIMPLE BANK AWS BACKEND READY
 ```
 
 The same line is stored on the instance at `/opt/simple-bank/aws-status.txt`. The log must not contain a Mongo URI, a JWT, or a password. If it does, stop and treat that as a failure.
+
+Do not open CloudFront until the system log contains `SIMPLE BANK AWS BACKEND READY`. A line that says `BOOTSTRAP FAILED` means this instance is not ready. The first boot can take 15 to 25 minutes because it builds the application image.
+
+Amazon Linux 2023 already provides the `curl` command through `curl-minimal`. The bootstrap does not install the full `curl` package, because that package conflicts with `curl-minimal`. A failure that mentions `curl-minimal conflicts with curl` is from an older user-data script. Terminate that instance and launch again with the current `01-ec2-user-data.sh`.
 
 Use **Connect**, **EC2 Instance Connect** only when the system log shows a bootstrap failure. Before connecting, add a temporary inbound TCP `22` rule whose source is **My IP**. Remove that rule as soon as you disconnect. Do not leave SSH open.
 

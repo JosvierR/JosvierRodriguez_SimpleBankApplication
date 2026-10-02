@@ -3,28 +3,88 @@
 set -euo pipefail
 umask 077
 exec > >(tee -a /var/log/simple-bank-bootstrap.log) 2>&1
-trap 'echo "BOOTSTRAP FAILED at line ${LINENO}"' ERR
 
+PHASE=start
+RESTORED=0
 APP_SHA="dafc89b4b804cddaa2f443a55b05d48ffa3bd921"
 APP_DIR="/opt/simple-bank/app"
 IMAGE="josvier-simple-bank-api:dafc89b4"
 
-echo "STEP packages"
-dnf install -y docker git curl jq python3 openssl
-systemctl enable --now docker
+restore_bootstrap() {
+  [ "${RESTORED}" -eq 1 ] && return 0
+  RESTORED=1
+  [ -f /opt/simple-bank/backend.env ] || return 0
+  grep -q '^BOOTSTRAP_ADMIN_ENABLED=true' /opt/simple-bank/backend.env || return 0
+  declare -F set_bootstrap >/dev/null 2>&1 || return 0
+  set_bootstrap false "" || return 0
+  declare -F start_api >/dev/null 2>&1 || return 0
+  start_api >/dev/null 2>&1 || true
+}
 
+on_error() {
+  echo "BOOTSTRAP FAILED"
+  echo "phase=${PHASE}"
+  echo "line=${2}"
+  echo "exit=${1}"
+  restore_bootstrap || true
+}
+trap 'ec=$?; on_error "${ec}" "${LINENO}"' ERR
+
+echo "BOOTSTRAP START"
+os_name="$(awk -F= '/^PRETTY_NAME=/{gsub(/"/,"",$2); print $2}' /etc/os-release)"
+echo "OS ${os_name}"
+arch="$(uname -m)"
+echo "architecture ${arch}"
 mem_kb="$(awk '/MemTotal/ {print $2}' /proc/meminfo)"
-if [ "${mem_kb}" -le 1048576 ] && ! swapon --show | grep -q /swapfile; then
-  echo "STEP swap"
-  dd if=/dev/zero of=/swapfile bs=1M count=2048 status=none
-  chmod 600 /swapfile
-  mkswap /swapfile >/dev/null
-  swapon /swapfile
-  grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+echo "memory MB $((mem_kb / 1024))"
+free_mb="$(df -Pm / | awk 'NR==2 {print $4}')"
+echo "disk free ${free_mb} MB"
+if [ "${arch}" != "x86_64" ]; then
+  echo "This bootstrap requires x86_64."
+  exit 1
+fi
+if [ "${free_mb}" -lt 8192 ]; then
+  echo "Need at least 8192 MB free on / for Mongo, the Maven build, and the API image."
+  exit 1
+fi
+
+PHASE=packages
+dnf install -y docker git jq python3 openssl
+PHASE=curl
+if ! command -v curl >/dev/null 2>&1; then
+  dnf install -y curl-minimal
+fi
+command -v curl >/dev/null
+PHASE=docker
+systemctl enable --now docker
+docker info >/dev/null
+echo "Docker version $(docker version --format '{{.Server.Version}}')"
+echo "Git version $(git --version)"
+echo "Python version $(python3 --version)"
+echo "curl version $(curl --version | awk 'NR==1 {print $1, $2}')"
+
+PHASE=swap
+if [ "${mem_kb}" -le 2097152 ]; then
+  if swapon --show 2>/dev/null | grep -q '/swapfile'; then
+    echo "swap already active"
+  elif [ -f /swapfile ]; then
+    chmod 600 /swapfile
+    swapon /swapfile || mkswap /swapfile >/dev/null
+    swapon /swapfile
+    grep -q '[[:space:]]/swapfile[[:space:]]' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+    echo "swap activated"
+  else
+    dd if=/dev/zero of=/swapfile bs=1M count=2048 status=none
+    chmod 600 /swapfile
+    mkswap /swapfile >/dev/null
+    swapon /swapfile
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+    echo "swap created"
+  fi
 fi
 
 install -d -m 700 /opt/simple-bank
-echo "STEP source"
+PHASE=source
 if [ ! -d "${APP_DIR}/.git" ]; then
   rm -rf "${APP_DIR}"
   git clone --quiet https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication.git "${APP_DIR}"
@@ -33,7 +93,7 @@ git -C "${APP_DIR}" fetch --quiet origin
 git -C "${APP_DIR}" checkout --quiet --detach "${APP_SHA}"
 test "$(git -C "${APP_DIR}" rev-parse HEAD)" = "${APP_SHA}"
 
-echo "STEP secrets"
+PHASE=secrets
 if [ ! -s /opt/simple-bank/runtime.env ]; then
   mongo_root="$(openssl rand -hex 24)"
   mongo_app="$(openssl rand -hex 24)"
@@ -56,9 +116,18 @@ if len(base64.b64decode(os.environ["JWT_SECRET"])) < 32:
     raise SystemExit("jwt material is too short")
 PY
 
-echo "STEP mongo"
+PHASE=mongo
 docker network inspect simple-bank-net >/dev/null 2>&1 || docker network create simple-bank-net >/dev/null
 docker volume inspect simple-bank-mongo-data >/dev/null 2>&1 || docker volume create simple-bank-mongo-data >/dev/null
+pulled=0
+for _ in 1 2 3 4 5; do
+  if docker pull mongo:7; then
+    pulled=1
+    break
+  fi
+  sleep 10
+done
+test "${pulled}" -eq 1
 if ! docker ps -a --format '{{.Names}}' | grep -qx simple-bank-mongo; then
   docker run -d --name simple-bank-mongo \
     --network simple-bank-net \
@@ -69,6 +138,7 @@ if ! docker ps -a --format '{{.Names}}' | grep -qx simple-bank-mongo; then
     mongo:7 >/dev/null
 fi
 docker start simple-bank-mongo >/dev/null
+umask 077
 cat > /opt/simple-bank/create-user.js <<EOF
 const appDb = db.getSiblingDB("simple_bank_aws");
 if (appDb.getUser("simplebank_app") == null) {
@@ -95,7 +165,7 @@ rm -f /opt/simple-bank/create-user.js
 test "${mongo_ready}" -eq 1
 echo "mongo=PASS"
 
-echo "STEP backend-env"
+PHASE=backend-env
 db_name="simple_bank_aws"
 mongo_scheme="mongodb"
 mongo_uri="${mongo_scheme}://simplebank_app:${MONGO_APP_PASSWORD}@simple-bank-mongo:27017/${db_name}?authSource=${db_name}"
@@ -115,11 +185,12 @@ EOF
 chmod 600 /opt/simple-bank/backend.env
 unset mongo_uri
 
-echo "STEP image"
+PHASE=image
 if ! docker image inspect "${IMAGE}" >/dev/null 2>&1; then
   docker build -t "${IMAGE}" "${APP_DIR}"
 fi
 docker image inspect "${IMAGE}" >/dev/null
+echo "image=PASS"
 
 start_api() {
   docker rm -f simple-bank-api >/dev/null 2>&1 || true
@@ -134,18 +205,22 @@ start_api() {
 wait_healthy() {
   local ready
   for _ in $(seq 1 90); do
-    ready="$(curl --silent --show-error --fail http://127.0.0.1:8080/api/public/ready || true)"
+    ready="$(curl --silent --show-error --fail --max-time 15 http://127.0.0.1:8080/api/public/ready || true)"
     if printf '%s' "${ready}" | grep -q '"status":"UP"' \
       && printf '%s' "${ready}" | grep -q '"environment":"production"' \
       && printf '%s' "${ready}" | grep -q "${APP_SHA}" \
-      && curl --silent --show-error --fail http://127.0.0.1:8080/api/public/health | grep -q '"status":"UP"' \
-      && curl --silent --show-error --fail http://127.0.0.1:8080/api/public/config | grep -q '"demoMode":false'; then
+      && curl --silent --show-error --fail --max-time 15 http://127.0.0.1:8080/api/public/health | grep -q '"status":"UP"' \
+      && curl --silent --show-error --fail --max-time 15 http://127.0.0.1:8080/api/public/config | grep -q '"demoMode":false'; then
       echo "health=PASS ready=PASS"
       return 0
     fi
     sleep 10
   done
   echo "health=FAIL"
+  docker ps --format '{{.Names}} {{.Status}} {{.Ports}}' || true
+  if docker ps -a --format '{{.Names}}' | grep -qx simple-bank-api; then
+    docker logs --tail 60 simple-bank-api 2>&1 | grep -Eiv 'mongodb(\+srv)?://|password|jwt|authorization:|bearer ' || true
+  fi
   return 1
 }
 
@@ -174,11 +249,9 @@ API = "http://127.0.0.1:8080/api"
 IDENTITY = "/opt/simple-bank/aws-identities.json"
 ADMIN = "aws.admin"
 CUSTOMER = "aws.customer.sender"
-
 def fail(message):
     print(message, file=sys.stderr)
     sys.exit(1)
-
 def passwords():
     data = {}
     if os.path.exists(IDENTITY):
@@ -198,7 +271,6 @@ def passwords():
         os.replace(temporary, IDENTITY)
         os.chmod(IDENTITY, 0o600)
     return data
-
 def request(method, path, body=None, token=None):
     payload = None if body is None else json.dumps(body).encode("utf-8")
     headers = {"Accept": "application/json"}
@@ -218,7 +290,6 @@ def request(method, path, body=None, token=None):
         except json.JSONDecodeError:
             parsed = {}
         return error.code, parsed
-
 def register(username, password):
     status, _body = request("POST", "/auth/register", {
         "username": username,
@@ -227,18 +298,15 @@ def register(username, password):
     })
     if status not in (201, 409):
         fail("register " + username + " HTTP " + str(status))
-
 def login(username, password):
     status, body = request("POST", "/auth/login", {"username": username, "password": password})
     token = body.get("token") if isinstance(body, dict) else None
     if status != 200 or not token:
         fail("login " + username + " HTTP " + str(status))
     return token
-
 def is_admin(body):
     roles = body.get("roles") if isinstance(body, dict) else None
     return isinstance(roles, list) and "ADMIN" in roles
-
 def prepare():
     data = passwords()
     register(ADMIN, data[ADMIN])
@@ -252,14 +320,12 @@ def prepare():
         print("BOOTSTRAP_REQUIRED")
         sys.exit(10)
     fail("admin whoami HTTP " + str(status))
-
 def confirm_admin():
     token = login(ADMIN, passwords()[ADMIN])
     status, body = request("GET", "/admin/whoami", token=token)
     if status != 200 or not is_admin(body):
         fail("admin confirmation HTTP " + str(status))
     print("ADMIN_CONFIRMED")
-
 def provision_customer():
     data = passwords()
     admin = login(ADMIN, data[ADMIN])
@@ -303,13 +369,12 @@ def provision_customer():
         status, body = request("GET", path, token=customer_token)
         if status != 200:
             fail("customer " + path + " HTTP " + str(status))
-        if path == "/me/accounts" and not isinstance(body, list):
+        if path == "/me/accounts" and (not isinstance(body, list) or not body):
             fail("customer accounts payload")
     status, _denied = request("GET", "/admin/whoami", token=customer_token)
     if status != 403:
         fail("customer admin whoami HTTP " + str(status))
     print("CUSTOMER_READY")
-
 if __name__ == "__main__":
     phase = sys.argv[1] if len(sys.argv) == 2 else ""
     if phase == "prepare":
@@ -323,7 +388,7 @@ if __name__ == "__main__":
 PY
 chmod 700 /opt/simple-bank/provision.py
 
-echo "STEP api"
+PHASE=api
 start_api
 wait_healthy
 set +e
@@ -331,34 +396,46 @@ python3 /opt/simple-bank/provision.py prepare
 prepare_status=$?
 set -e
 if [ "${prepare_status}" -eq 10 ]; then
-  echo "STEP bootstrap-on"
+  PHASE=bootstrap-admin
   set_bootstrap true aws.admin
   start_api
   wait_healthy
   python3 /opt/simple-bank/provision.py confirm-admin
-  echo "STEP bootstrap-off"
   set_bootstrap false ""
   start_api
   wait_healthy
 elif [ "${prepare_status}" -ne 0 ]; then
   echo "identity preparation failed"
-  exit 1
+  false
 fi
 python3 /opt/simple-bank/provision.py confirm-admin
 if grep -q '^BOOTSTRAP_ADMIN_ENABLED=true' /opt/simple-bank/backend.env; then
+  PHASE=bootstrap-admin
   set_bootstrap false ""
   start_api
   wait_healthy
 fi
 grep -q '^BOOTSTRAP_ADMIN_ENABLED=false' /opt/simple-bank/backend.env
+PHASE=customer
 python3 /opt/simple-bank/provision.py provision-customer
 echo "admin=PASS customer=PASS bootstrap=OFF demo_seed=OFF"
+
+PHASE=persistence
+docker restart simple-bank-mongo >/dev/null
+docker restart simple-bank-api >/dev/null
+wait_healthy
+python3 /opt/simple-bank/provision.py confirm-admin
+python3 /opt/simple-bank/provision.py provision-customer
+grep -q '^BOOTSTRAP_ADMIN_ENABLED=false' /opt/simple-bank/backend.env
+grep -q '^DEMO_SEED_ENABLED=false' /opt/simple-bank/backend.env
+echo "mongo_persistence=PASS"
 
 cat > /opt/simple-bank/aws-status.txt <<EOF
 SIMPLE BANK AWS BACKEND READY
 source=${APP_SHA}
 database=simple_bank_aws
 mongo=PASS
+mongo_persistence=PASS
 health=PASS
 ready=PASS
 admin=PASS
