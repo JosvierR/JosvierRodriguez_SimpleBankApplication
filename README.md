@@ -16,8 +16,9 @@ React, Spring Boot, and MongoDB Atlas. Sign-in uses a JWT. Passwords are BCrypt 
 | Trainer mapping | [Requirements](docs/trainer-requirements.md), [answers](docs/trainer-qa.md), [12-minute order](docs/trainer-demo-runbook.md) |
 | API calls | [Postman collection](postman/SimpleBank_Backend_API.postman_collection.json) |
 | Links to paste | [Submission links](docs/submission-links.md) |
+| AWS course submission | [AWS deployment](docs/aws-deployment.md), [CloudShell script](infra/aws/README.md) |
 
-Canonical branch: `ReactFrontend-BankApp-Making-RestCall-To-Backend`. Staging receives that same commit after CI. Production stays on an approved staging SHA only and is not deployed yet.
+Canonical branch: `ReactFrontend-BankApp-Making-RestCall-To-Backend`. Staging and production stay on an approved SHA. Existing production remains https://simple-bank-production.vercel.app with the API at https://simple-bank-api-production.onrender.com/api. The AWS course deployment is separate and does not replace it.
 
 ## Current Phase
 
@@ -62,6 +63,24 @@ The classroom checklist is mapped in [docs/trainer-requirements.md](docs/trainer
 The Postman collection is [postman/SimpleBank_Backend_API.postman_collection.json](postman/SimpleBank_Backend_API.postman_collection.json). The local environment file leaves passwords blank. Copy demo usernames and passwords from `docs/demo-credentials.txt` into Postman on your machine. The submission branch to paste after push is `ReactFrontend-BankApp-Making-RestCall-To-Backend`. See [docs/submission-links.md](docs/submission-links.md).
 
 Bank customers and API logins stay separate. A record in `users` owns bank accounts. A record in `auth_users` proves that a person may call the API. Registration creates a Customer login. It does not create a bank customer, and it does not grant staff or admin authority.
+
+## AWS Deployment
+
+This is an additional deployment for the AWS course. It does not replace the Vercel and Render production environment.
+
+Production frontend: https://simple-bank-production.vercel.app
+
+Production backend: https://simple-bank-api-production.onrender.com/api
+
+The course site is published by `infra/aws/deploy.sh` from AWS CloudShell in us-east-1. After that script succeeds, the public link is the CloudFront URL in [docs/aws-deployment.md](docs/aws-deployment.md).
+
+```text
+CloudFront
+  -> private S3 frontend
+browser
+  -> App Runner backend
+  -> managed MongoDB
+```
 
 ## Architecture
 

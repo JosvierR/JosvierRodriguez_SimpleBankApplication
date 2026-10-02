@@ -38,6 +38,8 @@ build/
 .env.production
 .env.staging
 application-local.properties
+.simple-bank-aws-identities.json
+.simple-bank-aws-state.env
 
 ### React / Vite ###
 frontend/node_modules/
