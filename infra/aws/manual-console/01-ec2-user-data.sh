@@ -8,7 +8,7 @@ PHASE=start
 RESTORED=0
 APP_SHA="dafc89b4b804cddaa2f443a55b05d48ffa3bd921"
 APP_DIR="/opt/simple-bank/app"
-IMAGE="josvier-simple-bank-api:dafc89b4"
+IMAGE="josvier-simple-bank-api:${APP_SHA:0:12}"
 
 restore_bootstrap() {
   [ "${RESTORED}" -eq 1 ] && return 0
@@ -135,11 +135,12 @@ if ! docker ps -a --format '{{.Names}}' | grep -qx simple-bank-mongo; then
     -v simple-bank-mongo-data:/data/db \
     -e MONGO_INITDB_ROOT_USERNAME=root \
     -e MONGO_INITDB_ROOT_PASSWORD="${MONGO_ROOT_PASSWORD}" \
-    mongo:7 >/dev/null
+    mongo:7 --replSet rs0 --bind_ip_all >/dev/null
 fi
 docker start simple-bank-mongo >/dev/null
 umask 077
 cat > /opt/simple-bank/create-user.js <<EOF
+try { rs.status(); } catch (e) { rs.initiate({_id: "rs0", members: [{_id: 0, host: "simple-bank-mongo:27017"}]}); }
 const appDb = db.getSiblingDB("simple_bank_aws");
 if (appDb.getUser("simplebank_app") == null) {
   appDb.createUser({
@@ -168,7 +169,7 @@ echo "mongo=PASS"
 PHASE=backend-env
 db_name="simple_bank_aws"
 mongo_scheme="mongodb"
-mongo_uri="${mongo_scheme}://simplebank_app:${MONGO_APP_PASSWORD}@simple-bank-mongo:27017/${db_name}?authSource=${db_name}"
+mongo_uri="${mongo_scheme}://simplebank_app:${MONGO_APP_PASSWORD}@simple-bank-mongo:27017/${db_name}?authSource=${db_name}&replicaSet=rs0"
 cat > /opt/simple-bank/backend.env <<EOF
 SPRING_PROFILES_ACTIVE=production
 MONGODB_DATABASE=${db_name}
