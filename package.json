@@ -1,0 +1,13 @@
+{
+  "name": "simple-bank-platform",
+  "private": true,
+  "scripts": {
+    "e2e": "playwright test",
+    "e2e:staging": "playwright test --grep-invert @mutation",
+    "e2e:production": "playwright test --grep @readonly",
+    "e2e:aws": "playwright test --grep @readonly"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.1"
+  }
+}
