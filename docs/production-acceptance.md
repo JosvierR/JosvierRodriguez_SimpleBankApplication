@@ -1,37 +1,34 @@
 # Production acceptance
 
-This page records the production promotion of the approved staging SHA. It does not contain passwords, tokens, database URIs, or JWT secrets.
+This page records the production release that staging, canonical, and production shared before the cross-environment spike evidence. It does not contain passwords, tokens, database URIs, or JWT secrets.
 
-## Recorded result
+## Baseline release
 
 | Item | Value |
 | --- | --- |
 | Date | 2026-10-02 |
-| Accepted runtime SHA | `1e8323d1f83458a9488a916f1d65db5bf017db6c` |
-| Canonical, staging, and production at promotion | `1e8323d1f83458a9488a916f1d65db5bf017db6c` |
-| Promotion workflow | https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/runs/36957841488 SUCCESS |
+| BASELINE_RELEASE_SHA | `b6791524a61c4590e80a9a87ea42e6ee9c782c37` |
+| Promotion workflow | https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/runs/36960935729 SUCCESS |
 | Approval | completed by the production environment reviewer |
-| Fast-forward | `0bf185c6e1b875d98f30f20b7e9f7619d43d980d` to `1e8323d1f83458a9488a916f1d65db5bf017db6c`, no merge commit |
 | Render URL | https://simple-bank-api-production.onrender.com |
-| Render deploy ID | `dep-davhnc1srm7s73c23dqg` |
-| Render hook | HTTP 200 during the promotion; the service was already live on this SHA |
+| Render service | `srv-davgjgad0e5s73ftrgpg` |
+| Render deploy ID | `dep-davirgu7bikc73e81pm0` |
+| Render deploy trigger | `api` |
 | Vercel URL | https://simple-bank-production.vercel.app |
-| Vercel deployment ID | `dpl_GEDLHcwmZDsLoMeoknHWMtEpWZjH` |
 | Vercel project | `prj_WrGbS4OOJBKAyuryDfoXj54TgSLx` |
+| Vercel deployment ID | `dpl_7MnmrCcS5V8xwCaLytLxX6L4cBL8` |
 | Health | PASS |
-| Ready | PASS, status `UP` |
-| Revision | PASS, `1e8323d1f83458a9488a916f1d65db5bf017db6c` |
-| Public config | PASS, environment `production`, `demoMode` false |
+| Ready | PASS, status `UP`, environment `production` |
+| Revision | PASS, `b6791524a61c4590e80a9a87ea42e6ee9c782c37` |
+| Public config | PASS, `demoMode` false |
 | Customer smoke | PASS, `prod.customer.sender` |
 | CORS isolation | PASS |
 | Bootstrap | OFF |
 | Demo seed | OFF |
 | Production database | `simple_bank_prod`, isolated |
 
-`scripts/staging-smoke.mjs` passed inside the promotion workflow with `EXPECTED_ENVIRONMENT=production` and `REQUIRE_ADMIN=false`. Customer login, `/api/me`, `/api/dashboard`, and `/api/me/accounts` returned 200. The account list contained one valid 12-digit number. Customer `/api/admin/whoami` returned 403.
+The first attempt of that promotion fast-forwarded `deploy/vercel-production` and then waited 15 minutes. Render stayed on `1e8323d1f83458a9488a916f1d65db5bf017db6c`. The stored production deploy hook returned HTTP 200 and did not create a deploy. The live deploy `dep-davirgu7bikc73e81pm0` was created through the Render API for the same SHA. The rerun then found that revision, deployed Vercel, and passed smoke. This page does not claim that the hook created that deploy.
 
-The production frontend `/`, `/login`, and `/app` return the SPA. The built frontend calls `https://simple-bank-api-production.onrender.com/api`. It does not call the staging API. `localhost` strings in the main bundle come from the URL parser, not from the API base URL.
+## Replacement hook
 
-CORS allows exactly `https://simple-bank-production.vercel.app`. It does not allow `https://simple-bank-staging.vercel.app`, `https://evil.example`, or a wildcard.
-
-Render runs `SPRING_PROFILES_ACTIVE=production` and `MONGODB_DATABASE=simple_bank_prod`. `DEMO_SEED_ENABLED` and `DEMO_SEED_RESET` are false. `BOOTSTRAP_ADMIN_ENABLED` is false and the bootstrap username is absent. The production JWT secret is different from the staging JWT secret. The Atlas user `simple-bank-production-user` has `readWrite` on `simple_bank_prod` only and is scoped to cluster `Bank-Project`.
+`RENDER_PRODUCTION_DEPLOY_HOOK_URL` was replaced in the production environment at 2026-10-02T13:21:39Z. Its value is not recorded here. That replacement is not yet proven. The next production promotion must create a new Render deploy, with trigger `api`, for the promoted SHA. An already-running revision is not evidence that the hook works.

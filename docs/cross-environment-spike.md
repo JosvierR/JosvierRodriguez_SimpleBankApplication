@@ -70,47 +70,59 @@ A later mutation run refuses because those accounts are no longer at the pristin
 
 Hosted language checks need `FRONTEND_URL`. They look for the English, Spanish, and French account-number labels in the built frontend.
 
-## Matrix
+## Controlled transfers
 
-These cells stay blank until that check is executed in that environment.
+Each environment submitted one `1.00` transfer from Sofia checking to Ethan checking. Deposit `1.00`, `10.25`, and `100.10`, then the matching withdrawals, netted to zero before that transfer. A second mutation run was refused in development and production because the accounts were no longer at the pristine targets.
+
+| Environment | Before Sofia / Ethan | After Sofia / Ethan | Reference |
+| --- | --- | --- | --- |
+| Development `simple_bank_demo` | 3200.00 / 1850.00 | 3199.00 / 1851.00 | `TRF-87B8C8615548` |
+| Staging `simple_bank_staging` | 3200.00 / 1850.00 | 3199.00 / 1851.00 | `TRF-E3266EAFE98F` |
+| Production `simple_bank_prod` | 3200.00 / 1850.00 | 3199.00 / 1851.00 | `TRF-2D144E8E1CAA` |
+
+Generated account numbers differ. Staging masked the destination as ending 2885. Production masked it as ending 3362. The sender still received 404 for the foreign account and its history.
+
+Staging was provisioned and verified by https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/runs/37016585005 using `stg.admin`. The admin password stayed in the staging environment.
+
+## Matrix
 
 | Test | DEV | STG | PROD |
 | --- | --- | --- | --- |
-| Health | | | |
-| Config | | | |
-| Customer login | | | |
-| Teller RBAC | | | |
-| Manager RBAC | | | |
-| Auditor RBAC | | | |
-| Admin RBAC | | | |
-| Dashboard | | | |
-| Own accounts | | | |
-| Ownership 404 | | | |
-| Deposit | | | |
-| Withdraw | | | |
-| Transfer preview | | | |
-| Transfer submit | | | |
-| Ledger pair | | | |
-| Invalid JWT 401 | | | |
-| Wrong role 403 | | | |
-| CORS isolation | | | |
-| EN | | | |
-| ES | | | |
-| FR | | | |
+| Health | PASS | PASS | PASS |
+| Config | PASS | PASS | PASS |
+| 20 logical identities | PASS | PASS | PASS |
+| Role distribution | PASS | PASS | PASS |
+| Customer login | PASS | PASS | PASS |
+| Teller positive permission | PASS | PASS | PASS |
+| Teller negative permission | PASS | PASS | PASS |
+| Manager positive permission | PASS | PASS | PASS |
+| Manager negative permission | PASS | PASS | PASS |
+| Auditor positive permission | PASS | PASS | PASS |
+| Auditor mutation 403 | PASS | PASS | PASS |
+| Admin permission | PASS | PASS | PASS |
+| Dashboard | PASS | PASS | PASS |
+| Own accounts | PASS | PASS | PASS |
+| Ownership 404 | PASS | PASS | PASS |
+| Foreign history 404 | PASS | PASS | PASS |
+| Deposit | PASS | PASS | PASS |
+| Withdraw | PASS | PASS | PASS |
+| Transfer preview privacy | PASS | PASS | PASS |
+| Transfer submit | PASS | PASS | PASS |
+| Ledger pair | PASS | PASS | PASS |
+| Invalid JWT 401 | PASS | PASS | PASS |
+| Missing JWT 401 | PASS | PASS | PASS |
+| Wrong role 403 | PASS | PASS | PASS |
+| CORS isolation | PASS | PASS | PASS |
+| EN browser | PASS | PASS | PASS |
+| ES browser | PASS | PASS | PASS |
+| FR browser | PASS | PASS | PASS |
+| Responsive |  | PASS | PASS |
+| Console | PASS | PASS | PASS |
 
 ## Screenshots
 
-Capture these later under `docs/screenshots/cross-environment-spike/` after the identities exist in each environment:
+Captured in `docs/screenshots/cross-environment-spike/`.
 
-- `dev-dashboard.png`
-- `staging-dashboard.png`
-- `production-dashboard.png`
-- `dev-admin.png`
-- `staging-admin.png`
-- `production-admin.png`
-- `staging-transfer-preview.png`
-- `production-transfer-preview.png`
-- `production-ready.png`
-- `production-actions-green.png`
+Development responsive widths were not part of this run. Staging and production were checked at 1440, 1024, 768, 430, 390, and 360. The files are `01-dev-dashboard.png` through `20-production-mobile-390.png`, including dashboards, admin, teller, manager, auditor, masked previews, ledgers, production readiness, the green baseline promotion, and the 390px mobile views.
 
-Do not include passwords, tokens, or database URIs.
+The images show usernames, owned account numbers, and masked destinations. They do not show passwords, tokens, database URIs, or deploy hooks.
