@@ -16,7 +16,8 @@ React, Spring Boot, and MongoDB Atlas. Sign-in uses a JWT. Passwords are BCrypt 
 | Trainer mapping | [Requirements](docs/trainer-requirements.md), [answers](docs/trainer-qa.md), [12-minute order](docs/trainer-demo-runbook.md) |
 | API calls | [Postman collection](postman/SimpleBank_Backend_API.postman_collection.json) |
 | Links to paste | [Submission links](docs/submission-links.md) |
-| AWS course submission | [AWS deployment](docs/aws-deployment.md), [CloudShell script](infra/aws/README.md) |
+| AWS course submission | [AWS deployment](docs/aws-deployment.md), [Terraform](docs/terraform.md) |
+| DevOps platform | [Platform](docs/devops-platform.md), [Playwright](docs/playwright.md), [Jenkins](docs/jenkins.md), [Observability](docs/observability.md) |
 
 Canonical branch: `ReactFrontend-BankApp-Making-RestCall-To-Backend`. Staging and production stay on an approved SHA. Existing production remains https://simple-bank-production.vercel.app with the API at https://simple-bank-api-production.onrender.com/api. The AWS course deployment is separate and does not replace it.
 

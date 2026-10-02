@@ -25,7 +25,17 @@ Spring Boot API
 MongoDB Atlas
 ```
 
-The API is hosted on Render. The staging service is `simple-bank-api-staging`. Production hosting is prepared and is not deployed by the staging workflow.
+The API is hosted on Render. Staging is `simple-bank-api-staging`. Production is `simple-bank-api-production`.
+
+## Live URLs
+
+| Environment | Frontend | API |
+| --- | --- | --- |
+| Production | https://simple-bank-production.vercel.app | https://simple-bank-api-production.onrender.com/api |
+| Staging | https://simple-bank-staging.vercel.app | https://simple-bank-api-staging.onrender.com/api |
+| AWS | https://d1sh3vurxc4laf.cloudfront.net | `https://d1sh3vurxc4laf.cloudfront.net/api` |
+
+Vercel project `simple-bank-staging` builds `frontend` with Node 24, `npm run build`, and output `dist`. Its API base is `https://simple-bank-api-staging.onrender.com/api` and `VITE_APP_ENV=staging`. Production uses the production Render API and `VITE_APP_ENV=production`. Tokens stay in GitHub environment secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_STAGING_PROJECT_ID`, and `VERCEL_PRODUCTION_PROJECT_ID`. Render hooks are `RENDER_STAGING_DEPLOY_HOOK_URL` and `RENDER_PRODUCTION_DEPLOY_HOOK_URL`.
 
 ## Staging
 

@@ -15,8 +15,10 @@ That branch is the submission branch. It contains the React frontend, RBAC and o
 | Canonical CI | https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/runs/36943343343 |
 | Staging deploy | https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/runs/36943523075 |
 | Staging frontend | https://simple-bank-staging.vercel.app |
-| Staging backend | https://simple-bank-api-staging.onrender.com |
-| Production | Not deployed / pending approval |
+| Staging backend | https://simple-bank-api-staging.onrender.com/api |
+| Production frontend | https://simple-bank-production.vercel.app |
+| Production backend | https://simple-bank-api-production.onrender.com/api |
+| AWS | https://d1sh3vurxc4laf.cloudfront.net |
 
 Local demo paths, after Docker or the Vite dev server is running on your machine:
 
