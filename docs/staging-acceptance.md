@@ -41,26 +41,40 @@ On the deployed staging frontend, confirm English, Spanish, and French, a deskto
 
 ## Recorded result
 
+`ACCEPTED_RUNTIME_SHA` is the application commit that staging is running. A later documentation commit is recorded separately and is not this SHA.
+
 | Item | Value |
 | --- | --- |
 | Date | 2026-10-01 |
-| STAGING_APPROVED_SHA | `f4e5471b8287413fab6037c7abc52640bced0d84` |
+| ACCEPTED_RUNTIME_SHA | `ab422dc4bc7b2cd680e38e889e747ac0536dc925` |
+| Canonical CI | https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/runs/36943343343 SUCCESS |
+| Staging Deploy | https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/runs/36943523075 SUCCESS |
 | Backend URL | https://simple-bank-api-staging.onrender.com |
 | Frontend URL | https://simple-bank-staging.vercel.app |
-| Health | 200, environment `staging` |
-| Ready | 200, status `UP` |
+| Health | PASS |
+| Ready | PASS, status `UP` |
 | Environment | `staging` |
-| Revision | `f4e5471b8287413fab6037c7abc52640bced0d84` |
-| Customer login | `stg.customer.sender` HTTP 200 |
-| Admin login | `stg.admin` HTTP 200, and still ADMIN after bootstrap was turned off |
-| Dashboard | HTTP 200 |
-| Accounts | sender checking `224892789540` and savings `242273814917`; recipient checking `121927304771` |
-| Transfer preview | HTTP 200, destination masked, ending in 4771 |
-| Manual transfer | `TRF-68A0F061680B` for 1.00; sender checking 3200.00 to 3199.00; recipient checking 2500.00 to 2501.00; `TRANSFER_OUT` and `TRANSFER_IN` share that reference |
-| Ownership 404 | customer read of the recipient account and its history returned 404 |
-| CORS | `https://simple-bank-staging.vercel.app` allowed; `https://evil.example` not allowed |
-| EN / ES / FR | not clicked in a browser during this run |
-| Responsive | not checked at 390px during this run |
-| Staging workflow run | not run; the branch has not been fast-forwarded |
+| Revision | `ab422dc4bc7b2cd680e38e889e747ac0536dc925` |
+| Smoke | PASS |
+| Customer | PASS, `stg.customer.sender` |
+| Admin | PASS, `stg.admin` opens Administration and is not shown as a banking customer |
+| Dashboard | PASS in Chromium |
+| Accounts | PASS, sender checking `224892789540` and savings `242273814917` shown in full |
+| Account details | PASS, full owned number and balance |
+| Transfer form | PASS, source shows type, full owned number, and balance |
+| Transfer preview | PASS, recipient `Staging R.` and masked number ending 4771 |
+| Copy account number | PASS, confirmation shown |
+| Manual transfer | already verified via `TRF-68A0F061680B` |
+| Ownership | PASS |
+| CORS | PASS |
+| EN | PASS |
+| ES | PASS |
+| FR | PASS |
+| Responsive | PASS at 1440x900, 1280x800, 1024x768, 768x1024, 430x932, 390x844, and 360x800 |
+| Browser console | no critical application errors |
+| API host | `simple-bank-api-staging.onrender.com`; no request targeted localhost |
+| Screenshots | `docs/screenshots/final-staging/` |
 
-`scripts/staging-smoke.mjs` passed against those URLs for revision `f4e5471b8287413fab6037c7abc52640bced0d84`. The Atlas user `simple-bank-staging-user` has `readWrite` on `simple_bank_staging` only and is scoped to cluster `Bank-Project`. Production branch `deploy/vercel-production` stays at `0bf185c6e1b875d98f30f20b7e9f7619d43d980d` until a human runs the manual production workflow.
+Chromium opened the live staging frontend. English, Spanish, and French rendered translated labels, including account number, copy, copied confirmation, and the 12-digit hint, with no raw translation keys. Dashboard, accounts, transfer, and transfer preview had no horizontal overflow at the viewports above. Balances and owned account numbers stayed readable. The preview did not show the full foreign account number, a foreign balance, a foreign internal id, or foreign history. No second transfer was submitted.
+
+`scripts/staging-smoke.mjs` passed inside staging deploy `36943523075` for revision `ab422dc4bc7b2cd680e38e889e747ac0536dc925`. The Atlas user `simple-bank-staging-user` has `readWrite` on `simple_bank_staging` only and is scoped to cluster `Bank-Project`. Production branch `deploy/vercel-production` stays at `0bf185c6e1b875d98f30f20b7e9f7619d43d980d` until a human runs the manual production workflow.

@@ -12,6 +12,8 @@ That branch is the submission branch. It contains the React frontend, RBAC and o
 | --- | --- |
 | Canonical branch | https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/tree/ReactFrontend-BankApp-Making-RestCall-To-Backend |
 | GitHub Actions | https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/workflows/ci.yml?query=branch%3AReactFrontend-BankApp-Making-RestCall-To-Backend |
+| Canonical CI | https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/runs/36943343343 |
+| Staging deploy | https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/runs/36943523075 |
 | Staging frontend | https://simple-bank-staging.vercel.app |
 | Staging backend | https://simple-bank-api-staging.onrender.com |
 | Production | Not deployed / pending approval |

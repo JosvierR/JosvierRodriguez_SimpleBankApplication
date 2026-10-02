@@ -9,8 +9,9 @@ Complete this before sharing the screen. Keep passwords in a private note, not i
 - [ ] Postman imported the collection and the local environment, with passwords typed locally
 - [ ] Atlas page is open on the database you will show
 - [ ] GitHub Actions is open on the canonical CI workflow
-- [ ] Screenshot folder is available if the network fails
-- [ ] English, Spanish, and French have been clicked once
+- [x] Screenshot folder is available at `docs/screenshots/final-staging/`
+- [x] English, Spanish, and French have been checked in the browser
+- [x] Responsive browser validation passed at 1440, 1280, 1024, 768, 430, 390, and 360
 - [ ] The browser starts signed out
 - [ ] Tabs are in presentation order: landing, app, Atlas, Actions, C4 doc
 

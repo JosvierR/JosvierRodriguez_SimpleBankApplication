@@ -10,6 +10,12 @@ Staging frontend: https://simple-bank-staging.vercel.app
 
 Staging backend: https://simple-bank-api-staging.onrender.com
 
+Accepted runtime CI: https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/runs/36943343343
+
+Accepted staging deploy: https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/runs/36943523075
+
+Browser evidence: `docs/screenshots/final-staging/`
+
 Production is not deployed and stays pending approval. Do not open `deploy/vercel-production` as if it were live.
 
 ## Order
