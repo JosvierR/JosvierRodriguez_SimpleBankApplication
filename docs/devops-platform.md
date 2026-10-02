@@ -65,8 +65,10 @@ The AWS URL is the existing QuickLabs deployment. Automation is prepared and is 
 2. Fast-forward `ReactFrontend-BankApp-Making-RestCall-To-Backend`.
 3. Fast-forward `staging` to that exact SHA.
 4. Wait for Render, Vercel, Playwright, and the `staging/deploy` success status.
-5. Promote that same SHA to `deploy/vercel-production` through the production workflow. Do not force-push.
+5. Promote that same SHA with the Promote Production workflow. The workflow deploys Render and Vercel, runs smoke tests and read-only Playwright, and only then fast-forwards `deploy/vercel-production`. Do not force-push.
 
 ## Secrets
 
-GitHub environment secrets hold the Vercel token, Render deploy hooks, and end-to-end passwords. AWS uses `AWS_ROLE_ARN` for OIDC. None of those values belong in the repository. If `AWS_ROLE_ARN` is missing, Deploy AWS stops with `AWS_AUTOMATION_UNAVAILABLE`.
+GitHub environment secrets hold the Vercel token, Vercel organization and project ids, Render deploy hooks, and end-to-end passwords. AWS uses `AWS_ROLE_ARN` plus the remote-state variables in `docs/terraform.md`. None of those values belong in the repository. If the AWS role or remote state settings are missing, Deploy AWS stops with `AWS_AUTOMATION_UNAVAILABLE`.
+
+The QuickLabs site at https://d1sh3vurxc4laf.cloudfront.net is a separate course deployment. Terraform in this repository is not applied to it.

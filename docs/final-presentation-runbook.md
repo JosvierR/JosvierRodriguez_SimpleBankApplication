@@ -8,15 +8,35 @@ GitHub Actions: https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplicati
 
 Staging frontend: https://simple-bank-staging.vercel.app
 
-Staging backend: https://simple-bank-api-staging.onrender.com
+Staging backend: https://simple-bank-api-staging.onrender.com/api
 
-Accepted runtime CI: https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/runs/36943343343
+Production frontend: https://simple-bank-production.vercel.app
 
-Accepted staging deploy: https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/actions/runs/36943523075
+Production backend: https://simple-bank-api-production.onrender.com/api
+
+QuickLabs AWS, separate from Vercel and Render: https://d1sh3vurxc4laf.cloudfront.net
+
+## Release evidence
+
+1. GitHub repository and architecture docs.
+2. Required CI green on the canonical branch.
+3. Staging branch and `/api/public/ready` on the same SHA.
+4. Production branch and `/api/public/ready` on that SHA after promotion.
+5. Vercel production frontend.
+6. Render production readiness.
+7. Role-based login.
+8. A customer cannot open another customer's data or `/api/admin/whoami`.
+9. Admin access to customers, accounts, and audit.
+10. Banking history for an owned account.
+11. The staging Playwright run in GitHub Actions.
+12. `infra/terraform` modules and remote-state bootstrap.
+13. `Jenkinsfile` as secondary CI. GitHub Actions deploys.
+14. Grafana Simple Bank Overview, after the local observability stack is running.
+15. Loki queries `{container=~".+"}` and `{container="simple-bank-mongo"}`.
+16. AWS architecture: CloudFront, private S3, EC2, Mongo replica set `rs0`. The QuickLabs site is not managed by this Terraform.
+17. Secret scanning: `scripts/secret-scan.mjs` and gitleaks. No live credentials in Git.
 
 Browser evidence: `docs/screenshots/final-staging/`
-
-Production is not deployed and stays pending approval. Do not open `deploy/vercel-production` as if it were live.
 
 ## Order
 
