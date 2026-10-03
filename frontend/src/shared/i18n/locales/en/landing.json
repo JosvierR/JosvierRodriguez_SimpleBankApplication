@@ -54,6 +54,13 @@
   "demoIsolation": "Separate simple_bank_demo database",
   "demoNoProduction": "No production or real customer data",
   "viewCredentials": "View demo accounts",
+  "reviewTitle": "Review the live production bank.",
+  "reviewBody": "Sign in with the published reviewer accounts. Each role opens only the screens that role is allowed to use.",
+  "reviewRoles": "Customer, teller, manager, auditor, and admin",
+  "reviewIsolation": "One customer cannot open another customer's accounts",
+  "reviewHistory": "Sample balances and a transfer are already on the accounts",
+  "viewReviewAccounts": "View review accounts",
+  "reviewAccounts": "Review accounts",
   "demoAccounts": "Demo accounts",
   "repository": "Repository",
   "footer": "An educational banking application. Not a production bank or regulated financial institution."

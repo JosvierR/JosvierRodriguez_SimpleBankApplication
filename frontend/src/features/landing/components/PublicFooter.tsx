@@ -4,10 +4,11 @@ import { LanguageSwitcher } from '@/shared/components/LanguageSwitcher';
 
 export interface PublicFooterProps {
   credentialsUrl: string;
+  credentialsLabel?: string;
   repositoryUrl: string;
 }
 
-export function PublicFooter({ credentialsUrl, repositoryUrl }: PublicFooterProps) {
+export function PublicFooter({ credentialsUrl, credentialsLabel, repositoryUrl }: PublicFooterProps) {
   const { t } = useTranslation('landing');
   return (
     <footer className="landing__footer">
@@ -22,7 +23,7 @@ export function PublicFooter({ credentialsUrl, repositoryUrl }: PublicFooterProp
       </div>
       <div>
         <LanguageSwitcher />
-        <a href={credentialsUrl}>{t('demoAccounts')}</a>
+        <a href={credentialsUrl}>{credentialsLabel ?? t('demoAccounts')}</a>
         <a href={repositoryUrl}>{t('repository')}</a>
       </div>
     </footer>

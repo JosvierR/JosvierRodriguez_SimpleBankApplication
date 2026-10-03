@@ -1,0 +1,67 @@
+{
+  "purpose": "Synthetic production accounts for a visual recruiter review. They are not the demo dataset and they are not infrastructure secrets.",
+  "frontendUrl": "https://simple-bank-production.vercel.app",
+  "apiBaseUrl": "https://simple-bank-api-production.onrender.com/api",
+  "accounts": [
+    {
+      "role": "ADMIN",
+      "name": "Ava Review",
+      "username": "review.admin",
+      "email": "review.admin@review.simplebank.test",
+      "password": "Review!Admin2026#01",
+      "accounts": []
+    },
+    {
+      "role": "MANAGER",
+      "name": "Marcus Review",
+      "username": "review.manager",
+      "email": "review.manager@review.simplebank.test",
+      "password": "Review!Manager2026#02",
+      "accounts": []
+    },
+    {
+      "role": "TELLER",
+      "name": "Mia Review",
+      "username": "review.teller",
+      "email": "review.teller@review.simplebank.test",
+      "password": "Review!Teller2026#03",
+      "accounts": []
+    },
+    {
+      "role": "AUDITOR",
+      "name": "Leo Audit",
+      "username": "review.auditor",
+      "email": "review.auditor@review.simplebank.test",
+      "password": "Review!Auditor2026#04",
+      "accounts": []
+    },
+    {
+      "role": "CUSTOMER",
+      "name": "Nora Review",
+      "username": "nora.review",
+      "email": "nora.review@review.simplebank.test",
+      "password": "Review!Nora2026#05",
+      "accounts": [
+        { "type": "CHECKING", "openingBalance": 1500 },
+        { "type": "SAVINGS", "openingBalance": 4200 }
+      ]
+    },
+    {
+      "role": "CUSTOMER",
+      "name": "Leo Review",
+      "username": "leo.review",
+      "email": "leo.review@review.simplebank.test",
+      "password": "Review!Leo2026#06",
+      "accounts": [
+        { "type": "CHECKING", "openingBalance": 800 }
+      ]
+    }
+  ],
+  "sampleTransfer": {
+    "fromUsername": "nora.review",
+    "fromType": "CHECKING",
+    "toUsername": "leo.review",
+    "toType": "CHECKING",
+    "amount": 25
+  }
+}

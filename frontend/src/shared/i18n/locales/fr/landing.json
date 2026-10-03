@@ -54,6 +54,13 @@
   "demoIsolation": "Base simple_bank_demo distincte",
   "demoNoProduction": "Aucune donnée réelle ou de production",
   "viewCredentials": "Voir les comptes de démo",
+  "reviewTitle": "Parcourez la banque en production.",
+  "reviewBody": "Connectez-vous avec les comptes de revue publiés. Chaque rôle n’ouvre que les écrans qui lui sont permis.",
+  "reviewRoles": "Client, guichetier, responsable, auditeur et administrateur",
+  "reviewIsolation": "Un client ne peut pas ouvrir les comptes d’un autre client",
+  "reviewHistory": "Des soldes d’exemple et un virement sont déjà présents",
+  "viewReviewAccounts": "Voir les comptes de revue",
+  "reviewAccounts": "Comptes de revue",
   "demoAccounts": "Comptes de démo",
   "repository": "Dépôt de code",
   "footer": "Une application bancaire pédagogique. Ce n’est ni une banque en production ni un établissement financier réglementé."

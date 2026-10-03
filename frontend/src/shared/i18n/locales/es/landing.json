@@ -54,6 +54,13 @@
   "demoIsolation": "Base de datos simple_bank_demo separada",
   "demoNoProduction": "Sin datos reales ni de producción",
   "viewCredentials": "Ver cuentas demo",
+  "reviewTitle": "Revisa el banco en producción.",
+  "reviewBody": "Entra con las cuentas de revisión publicadas. Cada rol abre solo las pantallas que le corresponden.",
+  "reviewRoles": "Cliente, cajero, gerente, auditor y administrador",
+  "reviewIsolation": "Un cliente no puede abrir las cuentas de otro cliente",
+  "reviewHistory": "Los saldos de ejemplo y una transferencia ya están en las cuentas",
+  "viewReviewAccounts": "Ver cuentas de revisión",
+  "reviewAccounts": "Cuentas de revisión",
   "demoAccounts": "Cuentas demo",
   "repository": "Repositorio",
   "footer": "Una aplicación bancaria educativa. No es un banco de producción ni una institución financiera regulada."

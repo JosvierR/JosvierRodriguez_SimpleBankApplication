@@ -15,8 +15,10 @@ interface PublicConfig {
   supportedLanguages: string[];
 }
 
-const credentialsUrl =
-  'https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/blob/ReactFrontend-BankApp-Making-RestCall-To-Backend/docs/demo-credentials.txt';
+const demoCredentialsUrl =
+  'https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/blob/staging/docs/demo-credentials.txt';
+const productionReviewerUrl =
+  'https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/blob/staging/docs/production-reviewer-access.md';
 const repositoryUrl = 'https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication';
 
 export function LandingPage() {
@@ -37,6 +39,9 @@ export function LandingPage() {
 
   const accessLabel = isAuthenticated ? t('common:openApp') : t('auth:signIn');
   const accessPath = isAuthenticated ? APP_HOME : '/login';
+  const productionReview = environment === 'production';
+  const credentialsUrl = productionReview ? productionReviewerUrl : demoCredentialsUrl;
+  const credentialsLabel = productionReview ? t('landing:viewReviewAccounts') : t('landing:viewCredentials');
 
   return (
     <div className="landing">
@@ -113,26 +118,26 @@ export function LandingPage() {
           </div>
           <div>
             <p className="landing__eyebrow">{t('landing:demoEyebrow')}</p>
-            <h2>{t('landing:demoTitle')}</h2>
-            <p>{t('landing:demoBody')}</p>
+            <h2>{productionReview ? t('landing:reviewTitle') : t('landing:demoTitle')}</h2>
+            <p>{productionReview ? t('landing:reviewBody') : t('landing:demoBody')}</p>
             <ul>
               <li>
                 <Check size={15} aria-hidden="true" />
-                {t('landing:demoIdentity')}
+                {productionReview ? t('landing:reviewRoles') : t('landing:demoIdentity')}
               </li>
               <li>
                 <Check size={15} aria-hidden="true" />
-                {t('landing:demoIsolation')}
+                {productionReview ? t('landing:reviewIsolation') : t('landing:demoIsolation')}
               </li>
               <li>
                 <Check size={15} aria-hidden="true" />
-                {t('landing:demoNoProduction')}
+                {productionReview ? t('landing:reviewHistory') : t('landing:demoNoProduction')}
               </li>
             </ul>
           </div>
           <div className="landing__demo-actions">
             <a className="button" href={credentialsUrl}>
-              {t('landing:viewCredentials')}
+              {credentialsLabel}
             </a>
             <Link className="button button--secondary" to={accessPath}>
               {accessLabel}
@@ -141,7 +146,11 @@ export function LandingPage() {
         </section>
       </main>
 
-      <PublicFooter credentialsUrl={credentialsUrl} repositoryUrl={repositoryUrl} />
+      <PublicFooter
+        credentialsUrl={credentialsUrl}
+        credentialsLabel={productionReview ? t('landing:reviewAccounts') : undefined}
+        repositoryUrl={repositoryUrl}
+      />
     </div>
   );
 }

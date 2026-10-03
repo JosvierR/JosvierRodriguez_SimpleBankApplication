@@ -8,6 +8,8 @@ description = "Published placeholders and the isolated demo password file"
 paths = [
   '''\.env\.example''',
   '''docs/demo-credentials\.txt''',
+  '''docs/production-reviewer-access\.md''',
+  '''docs/production-reviewer-accounts\.json''',
   '''src/test/resources/application\.properties''',
   '''src/test/java/com/josvier/simplebank/auth/service/AdminAuthUserServiceTest\.java''',
   '''src/test/java/com/josvier/simplebank/auth/service/AuthServiceImplTest\.java''',

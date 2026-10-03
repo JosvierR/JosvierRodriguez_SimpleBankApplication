@@ -56,6 +56,13 @@ describe('landing page', () => {
     expect(document.documentElement.lang).toBe('es');
   });
 
+  it('points production visitors at the reviewer accounts', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ demoMode: false, environment: 'production' })));
+    renderLanding();
+    const link = await screen.findByRole('link', { name: 'View review accounts' });
+    expect(link).toHaveAttribute('href', expect.stringContaining('production-reviewer-access.md'));
+  });
+
   it('offers Open app instead of Sign in to authenticated visitors', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ demoMode: true })));
     renderLanding({ ...signedOut, token: 'token', username: 'sofia', roles: ['CUSTOMER'], primaryRole: 'CUSTOMER', isAuthenticated: true });
