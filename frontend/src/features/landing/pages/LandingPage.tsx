@@ -15,8 +15,7 @@ interface PublicConfig {
   supportedLanguages: string[];
 }
 
-const demoCredentialsUrl =
-  'https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/blob/staging/docs/demo-credentials.txt';
+const demoCredentialsUrl = 'https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/blob/staging/docs/demo-credentials.txt';
 const productionReviewerUrl =
   'https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication/blob/staging/docs/production-reviewer-access.md';
 const repositoryUrl = 'https://github.com/JosvierR/JosvierRodriguez_SimpleBankApplication';
