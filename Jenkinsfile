@@ -72,6 +72,11 @@ pipeline {
         '''
       }
     }
+    stage('Observability config') {
+      steps {
+        sh 'docker compose -f infra/observability/docker-compose.observability.yml config --quiet'
+      }
+    }
     stage('Playwright suite') {
       steps {
         sh 'npm ci'
