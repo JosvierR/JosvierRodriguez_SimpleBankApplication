@@ -73,16 +73,16 @@ const noraAccounts = await call('/me/accounts', { token: nora.token });
 check('nora sees own accounts', noraAccounts.status === 200 && noraAccounts.payload?.length === 2);
 const noraChecking = noraAccounts.payload?.find((item) => item.accountType === 'CHECKING');
 const noraHistory = await call(`/me/accounts/${noraChecking?.accountId}/transactions`, { token: nora.token });
-check('nora has transfer history', noraHistory.status === 200 && noraHistory.payload?.some((item) => item.type === 'TRANSFER_OUT'));
+check('nora has the sample withdrawal', noraHistory.status === 200 && noraHistory.payload?.some((item) => item.type === 'WITHDRAW' && Number(item.amount) === 25));
 
 const leoAccounts = await call('/me/accounts', { token: leo.token });
 const leoChecking = leoAccounts.payload?.find((item) => item.accountType === 'CHECKING');
 check('leo sees own checking', leoAccounts.status === 200 && leoAccounts.payload?.length === 1);
 const leoHistory = await call(`/me/accounts/${leoChecking?.accountId}/transactions`, { token: leo.token });
-check('leo sees incoming transfer', leoHistory.status === 200 && leoHistory.payload?.some((item) => item.type === 'TRANSFER_IN'));
+check('leo sees the sample deposit', leoHistory.status === 200 && leoHistory.payload?.some((item) => item.type === 'DEPOSIT' && Number(item.amount) === 25));
 
 const noraReadsLeo = await call(`/accounts/${leoChecking?.accountId}`, { token: nora.token });
-check('nora cannot read leo account', noraReadsLeo.status === 403);
+check('nora cannot read leo account', noraReadsLeo.status === 404);
 const noraUsers = await call('/users', { token: nora.token });
 check('nora cannot list customers', noraUsers.status === 403);
 const noraAdmin = await call('/admin/whoami', { token: nora.token });
