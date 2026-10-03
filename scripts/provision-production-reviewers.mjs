@@ -134,7 +134,10 @@ const toAccounts = await call(`/users/${toAuth.bankUserId}/accounts`, { token })
 const fromAccount = fromAccounts.find((item) => item.accountType === transfer.fromType);
 const toAccount = toAccounts.find((item) => item.accountType === transfer.toType);
 const history = await call(`/accounts/${fromAccount.accountId}/transactions`, { token });
-const alreadyTransferred = history.some((item) => item.type === 'TRANSFER_OUT');
+const alreadyTransferred = history.some(
+  (item) =>
+    item.type === 'TRANSFER_OUT' || (item.type === 'WITHDRAW' && money(item.amount) === transfer.amount),
+);
 if (!alreadyTransferred) {
   await call('/accounts/transfer', {
     method: 'POST',

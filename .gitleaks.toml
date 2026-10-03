@@ -10,6 +10,7 @@ paths = [
   '''docs/demo-credentials\.txt''',
   '''docs/production-reviewer-access\.md''',
   '''docs/production-reviewer-accounts\.json''',
+  '''postman/SimpleBank_Production\.postman_environment\.json''',
   '''src/test/resources/application\.properties''',
   '''src/test/java/com/josvier/simplebank/auth/service/AdminAuthUserServiceTest\.java''',
   '''src/test/java/com/josvier/simplebank/auth/service/AuthServiceImplTest\.java''',

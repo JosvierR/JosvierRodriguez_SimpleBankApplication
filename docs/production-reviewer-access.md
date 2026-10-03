@@ -1,8 +1,8 @@
 # Production reviewer access
 
-These accounts exist so a recruiter can click through production. They are synthetic identities in the production database. They are not the demo dataset from `docs/demo-credentials.txt`, and those demo passwords do not work here.
+These accounts exist so a recruiter can click through the live course site. They are synthetic identities. They are not the demo dataset from `docs/demo-credentials.txt`, and those demo passwords do not work here.
 
-Open https://simple-bank-production.vercel.app and sign in. The first load can take about a minute while the API wakes up. Use the language switcher for English, Spanish, or French.
+Open https://d1sh3vurxc4laf.cloudfront.net and sign in. Use the language switcher for English, Spanish, or French. The same six accounts also sign in at https://simple-bank-production.vercel.app. On that Vercel site the first load can take about a minute while the API wakes up.
 
 | Role | Name | Username | Password | What you should see |
 | --- | --- | --- | --- | --- |

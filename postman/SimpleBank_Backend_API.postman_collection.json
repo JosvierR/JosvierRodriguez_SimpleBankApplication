@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Simple Bank Backend API",
-    "description": "Simple Bank API on MongoDB Atlas with JWT and role-based access. Fill customerUsername, customerPassword, adminUsername, and adminPassword locally from docs/demo-credentials.txt. Do not commit live passwords. Authentication > Admin Login stores adminToken and jwtToken. Staff folders use Bearer {{jwtToken}}. Authentication > Customer Login stores customerToken only. A customer token cannot list users or call /admin/whoami. Public registration creates CUSTOMER, never the reserved username admin.",
+    "description": "Simple Bank API with JWT and role-based access. For the course site, select the Simple Bank Production environment. It calls https://d1sh3vurxc4laf.cloudfront.net/api with the reviewer accounts from docs/production-reviewer-access.md. Authentication > Admin Login stores adminToken and jwtToken. Staff folders use Bearer {{jwtToken}}. Authentication > Customer Login stores customerToken only. A customer token cannot list users or call /admin/whoami. Public registration creates CUSTOMER, never the reserved username admin. The local demo environment leaves passwords blank; copy those only from docs/demo-credentials.txt and only against localhost.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {

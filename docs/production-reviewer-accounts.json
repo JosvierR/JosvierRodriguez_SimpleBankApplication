@@ -1,7 +1,7 @@
 {
   "purpose": "Synthetic production accounts for a visual recruiter review. They are not the demo dataset and they are not infrastructure secrets.",
-  "frontendUrl": "https://simple-bank-production.vercel.app",
-  "apiBaseUrl": "https://simple-bank-api-production.onrender.com/api",
+  "frontendUrl": "https://d1sh3vurxc4laf.cloudfront.net",
+  "apiBaseUrl": "https://d1sh3vurxc4laf.cloudfront.net/api",
   "accounts": [
     {
       "role": "ADMIN",
